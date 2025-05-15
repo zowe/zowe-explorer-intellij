@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -26,7 +27,6 @@ import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.nullable
 import org.zowe.explorer.utils.validateTsoSessionSelection
-import org.zowe.explorer.utils.initialize
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -69,7 +69,7 @@ class SelectTSOSessionDialog(
 
   init {
     title = "Select TSO Session"
-    initialize { init() }
+    init()
   }
 }
 

@@ -10,13 +10,15 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.ui
 
+import com.intellij.ide.CopyProvider
+import com.intellij.ide.CutProvider
 import com.intellij.ide.PasteProvider
-import com.intellij.ide.dnd.DnDAction
-import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDSource
 import com.intellij.ide.dnd.TransferableWrapper
@@ -29,13 +31,11 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.treeStructure.Tree
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.AttributesService
-import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.MaskedRequester
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
@@ -43,37 +43,41 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.attributes.UssRequester
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSetImpl
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.vfs.MFVirtualFile
 import groovy.lang.Tuple4
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.spyk
+import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.datatransfer.DataFlavor
-import java.io.File
 import javax.swing.JRootPane
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
-class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-
-  context("explorer module: ui/FileExplorerViewDropTarget") {
-
+// TODO: make shoulds independent
+class FileExplorerViewDropTargetTestSpec : AppInitShouldSpec("explorer/ui/FileExplorerViewDropTarget", {
+  context("all functions") {
     var isUpdatePerformed = false
     var isDropPossible = false
     var isDragHighlighted = false
+
+    val mockedDnDEvent = mockk<DnDEvent> {
+      every {
+        setDropPossible(any<Boolean>())
+      } answers {
+        isDropPossible = true
+      }
+      every {
+        setHighlighting(any<RelativeRectangle>(), any<Int>())
+      } answers {
+        isDragHighlighted = true
+        isUpdatePerformed = true
+      }
+    }
+
+    val dataOpsManagerService = DataOpsManager.getService()
 
     beforeEach {
       isUpdatePerformed = false
@@ -81,20 +85,39 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       isDragHighlighted = false
     }
 
-    val mockedDnDEvent = mockk<DnDEvent>()
-    every { mockedDnDEvent.isDropPossible = any() as Boolean } answers {
-      isDropPossible = true
-    }
-    every { mockedDnDEvent.setHighlighting(any() as RelativeRectangle, any() as Int) } answers {
-      isDragHighlighted = true
-      isUpdatePerformed = true
-    }
-
     context("perform various drops and perform update") {
+      var isCutPerformed = false
+      var isCopyPerformed = false
+      var isPastePerformed = false
 
       val mockedJTree = mockk<Tree>()
       val mockedFileExplorer = mockk<Explorer<ConnectionConfig, FilesWorkingSetImpl>>()
-      val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport>()
+      val cutProviderMock = mockk<CutProvider> {
+        every { isCutEnabled(any<DataContext>()) } returns true
+        every {
+          performCut(any<DataContext>())
+        } answers {
+          isCutPerformed = true
+        }
+      }
+      val copyProviderMock = mockk<CopyProvider> {
+        every { isCopyEnabled(any<DataContext>()) } returns true
+        every {
+          performCopy(any<DataContext>())
+        } answers {
+          isCopyPerformed = true
+        }
+      }
+      val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport> {
+        every { project } returns mockk()
+        every { pasteProvider } returns mockk {
+          every {
+            performPaste(any<DataContext>())
+          } answers {
+            isPastePerformed = true
+          }
+        }
+      }
 
       val fileExplorerViewDropTarget = spyk(
         FileExplorerViewDropTarget(mockedJTree, mockedFileExplorer, mockedCopyPasterProvider), recordPrivateCalls = true
@@ -111,19 +134,10 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       var defaultSourcesList = defaultSources.toList()
       mockkObject(defaultSourcesList)
 
-      every { fileExplorerViewDropTarget["getSourcesTargetAndBounds"](mockedDnDEvent) } returns defaultSourceTargetBounds
-      every { mockedCopyPasterProvider.pasteProvider } returns mockk()
-      every { mockedCopyPasterProvider.copyProvider } returns mockk()
-      every { mockedCopyPasterProvider.cutProvider } returns mockk()
+      every {
+        fileExplorerViewDropTarget["getSourcesTargetAndBounds"](mockedDnDEvent)
+      } returns defaultSourceTargetBounds
       every { defaultSourceTargetBounds.v1 } returns defaultSources
-
-      every { mockedCopyPasterProvider.project } returns mockk()
-      every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
-      every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns true
-
-      var isCutPerformed: Boolean
-      var isCopyPerformed: Boolean
-      var isPastePerformed: Boolean
 
       val userDefinedExplorerPasteProvider = object : PasteProvider {
         override fun performPaste(dataContext: DataContext) {
@@ -146,33 +160,23 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         }
       }
 
-      every { mockedCopyPasterProvider.cutProvider.performCut(any() as DataContext) } answers {
-        isCutPerformed = true
-      }
-      every { mockedCopyPasterProvider.copyProvider.performCopy(any() as DataContext) } answers {
-        isCopyPerformed = true
-      }
-      every { mockedCopyPasterProvider.pasteProvider.performPaste(any() as DataContext) } answers {
-        isPastePerformed = true
+      beforeEach {
+        isCutPerformed = false
+        isCopyPerformed = false
+        isPastePerformed = false
+
+        every { mockedCopyPasterProvider.cutProvider } returns cutProviderMock
+        every { mockedCopyPasterProvider.copyProvider } returns copyProviderMock
+        every { mockedFileExplorer.componentManager } returns mockk()
       }
 
       // drop
       should("perform paste from project files to the mainframe files through the copy provider") {
-        every { mockedDnDEvent.attachedObject } answers {
-          object : DnDSource {
-            override fun canStartDragging(action: DnDAction?, dragOrigin: Point): Boolean {
-              TODO("Not yet implemented")
-            }
-
-            override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
-              TODO("Not yet implemented")
-            }
-          }
-        }
+        every { mockedDnDEvent.attachedObject } returns mockk<DnDEvent>()
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
-        isCopyPerformed = false
-        isPastePerformed = false
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -180,13 +184,13 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
 
       should("perform paste from mainframe files to the project files through the copy provider") {
-        every { mockedDnDEvent.attachedObject } answers {
-          FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        }
+        every {
+          mockedDnDEvent.attachedObject
+        } returns FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         every { defaultSourceTargetBounds.v4 } returns mockk()
-        isCopyPerformed = false
-        isPastePerformed = false
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -194,65 +198,71 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
 
       should("perform paste from local/remote through the cut provider") {
-        every { mockedDnDEvent.attachedObject } answers {
-          FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        }
+        every {
+          mockedDnDEvent.attachedObject
+        } returns FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
-        isCutPerformed = false
-        isPastePerformed = false
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe true
           isPastePerformed shouldBe true
-
         }
       }
 
       should("perform paste from local/remote if no cut/copy provider enabled") {
-        every { mockedDnDEvent.attachedObject } answers {
-          FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        }
+        every {
+          mockedDnDEvent.attachedObject
+        } returns FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         every { defaultSourceTargetBounds.v4 } returns mockk()
-        every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns false
-        every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns false
-        isCutPerformed = false
-        isCopyPerformed = false
-        isPastePerformed = false
+        every { cutProviderMock.isCutEnabled(any<DataContext>()) } returns false
+        every { copyProviderMock.isCopyEnabled(any<DataContext>()) } returns false
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe false
           isCopyPerformed shouldBe false
           isPastePerformed shouldBe true
-
         }
       }
 
       should("perform paste from mainframe z/OS datasets to the USS files within one remote system") {
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
         every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
-        val mockedAttributeService = mockk<AttributesService<FileAttributes, VirtualFile>>()
-        val mockedParentDatasetAttributes = mockk<RemoteDatasetAttributes>()
-        val mockedVirtualFileTarget = mockk<MFVirtualFile>()
-        val mockedVirtualFileSource = mockk<MFVirtualFile>()
-        val targetAttributes = mockk<RemoteUssAttributes>()
-        val sourceAttributes = mockk<RemoteMemberAttributes>()
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
-            attributesClass: Class<out A>,
-            vFileClass: Class<out F>
-          ): AttributesService<A, F> {
-            return mockedAttributeService as AttributesService<A, F>
-          }
 
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return when (file) {
-              mockedVirtualFileTarget -> targetAttributes
-              mockedVirtualFileSource -> sourceAttributes
-              else -> super.tryToGetAttributes(file)
-            }
+        val requester1 = mockk<UssRequester> {
+          every { connectionConfig } returns mockk {
+            every { url } returns "https://test1:10443"
+            every { isAllowSelfSigned } returns true
           }
         }
-        every { mockedAttributeService.getAttributes(any() as VirtualFile) } returns mockedParentDatasetAttributes
+        val requester2 = mockk<MaskedRequester> {
+          every { connectionConfig } returns mockk {
+            every { url } returns "https://test1:10443"
+            every { isAllowSelfSigned } returns true
+          }
+        }
+        val targetAttributes = mockk<RemoteUssAttributes> {
+          every { requesters } returns mutableListOf(requester1)
+        }
+        val sourceAttributes = mockk<RemoteMemberAttributes> {
+          every { parentFile } returns mockk()
+        }
+        val mockedParentDatasetAttributes = mockk<RemoteDatasetAttributes> {
+          every { requesters } returns mutableListOf(requester2)
+        }
+        val mockedAttributeService = mockk<AttributesService<RemoteDatasetAttributes, MFVirtualFile>> {
+          every { getAttributes(any<MFVirtualFile>()) } returns mockedParentDatasetAttributes
+        }
+        val mockedVirtualFileTarget = mockk<MFVirtualFile>()
+        val mockedVirtualFileSource = mockk<MFVirtualFile>()
+
+        every {
+          dataOpsManagerService.getAttributesService(RemoteDatasetAttributes::class.java, MFVirtualFile::class.java)
+        } returns mockedAttributeService
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileTarget) } returns targetAttributes
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileSource) } returns sourceAttributes
 
         defaultTarget = TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD"))
         defaultSources = arrayOf(TreePath(arrayOf("ARST.*", "ARST.TEST", "SAMPLE")))
@@ -262,12 +272,10 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         mockkObject(defaultTarget)
         val sources = defaultSourcesList[0]
         mockkObject(sources)
-        every { mockedDnDEvent.attachedObject } answers {
-          FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        }
+        every {
+          mockedDnDEvent.attachedObject
+        } returns FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
-        isCutPerformed = false
-        isPastePerformed = false
 
         val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
         val mockedStructureTreeModelNodeSource = mockk<DefaultMutableTreeNode>()
@@ -280,23 +288,10 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
-        every { mockedFileExplorer.componentManager } returns mockk()
-        every { sourceAttributes.parentFile } returns mockk()
-        val conn1 = mockk<ConnectionConfig>()
-        val conn2 = mockk<ConnectionConfig>()
-        every { conn1.url } returns "https://test1:10443"
-        every { conn2.url } returns "https://test1:10443"
-        every { conn1.isAllowSelfSigned } returns true
-        every { conn2.isAllowSelfSigned } returns true
-        val requester1 = mockk<UssRequester>()
-        val requester2 = mockk<MaskedRequester>()
-        every { requester1.connectionConfig } returns conn1
-        every { requester2.connectionConfig } returns conn2
-        every { targetAttributes.requesters } returns mutableListOf(requester1)
-        every { mockedParentDatasetAttributes.requesters } returns mutableListOf(requester2)
+        every { cutProviderMock.isCutEnabled(any<DataContext>()) } returns true
 
-        every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -312,58 +307,54 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         mockkObject(defaultTarget)
         val sources = defaultSourcesList[0]
         mockkObject(sources)
-        every { mockedDnDEvent.attachedObject } answers {
-          FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        }
+        every {
+          mockedDnDEvent.attachedObject
+        } returns FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
-        isCutPerformed = false
-        isPastePerformed = false
 
         val mockedVirtualFileTarget = mockk<MFVirtualFile>()
         val mockedVirtualFileSource = mockk<MFVirtualFile>()
 
-        val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
-        val mockedStructureTreeModelNodeSource = mockk<DefaultMutableTreeNode>()
-        val mockedNodeTarget = mockk<LibraryNode>()
-        val mockedNodeSource = mockk<UssFileNode>()
-        every { defaultTarget.lastPathComponent } returns mockedStructureTreeModelNodeTarget
-        every { sources.lastPathComponent } returns mockedStructureTreeModelNodeSource
-        every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
-        every { mockedStructureTreeModelNodeSource.userObject } returns mockedNodeSource
-        every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
-        every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
-
-        every { mockedFileExplorer.componentManager } returns mockk()
-
-        val targetAttributes = mockk<RemoteDatasetAttributes>()
-        val sourceAttributes = mockk<RemoteUssAttributes>()
-
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return when (file) {
-              mockedVirtualFileTarget -> targetAttributes
-              mockedVirtualFileSource -> sourceAttributes
-              else -> super.tryToGetAttributes(file)
-            }
+        every { defaultTarget.lastPathComponent } returns mockk<DefaultMutableTreeNode> {
+          every { userObject } returns mockk<LibraryNode> {
+            every { virtualFile } returns mockedVirtualFileTarget
+          }
+        }
+        every { sources.lastPathComponent } returns mockk<DefaultMutableTreeNode> {
+          every { userObject } returns mockk<UssFileNode> {
+            every { virtualFile } returns mockedVirtualFileSource
           }
         }
 
-        val conn1 = mockk<ConnectionConfig>()
-        val conn2 = mockk<ConnectionConfig>()
-        every { conn1.url } returns "https://test1:10443"
-        every { conn2.url } returns "https://test1:10443"
-        every { conn1.isAllowSelfSigned } returns true
-        every { conn2.isAllowSelfSigned } returns true
-        val requester1 = mockk<MaskedRequester>()
-        val requester2 = mockk<UssRequester>()
-        every { requester1.connectionConfig } returns conn1
-        every { requester2.connectionConfig } returns conn2
-        every { targetAttributes.requesters } returns mutableListOf(requester1)
-        every { sourceAttributes.requesters } returns mutableListOf(requester2)
+        every {
+          dataOpsManagerService.tryToGetAttributes(mockedVirtualFileTarget)
+        } returns mockk<RemoteDatasetAttributes> {
+          every { requesters } returns mutableListOf(
+            mockk<MaskedRequester> {
+              every { connectionConfig } returns mockk {
+                every { url } returns "https://test1:10443"
+                every { isAllowSelfSigned } returns true
+              }
+            }
+          )
+        }
+        every {
+          dataOpsManagerService.tryToGetAttributes(mockedVirtualFileSource)
+        } returns mockk<RemoteUssAttributes> {
+          every { requesters } returns mutableListOf(
+            mockk<UssRequester> {
+              every { connectionConfig } returns mockk {
+                every { url } returns "https://test1:10443"
+                every { isAllowSelfSigned } returns true
+              }
+            }
+          )
+        }
 
-        every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
+        every { cutProviderMock.isCutEnabled(any<DataContext>()) } returns true
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -383,8 +374,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
           FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         }
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
-        isCutPerformed = false
-        isPastePerformed = false
 
         val mockedVirtualFileTarget = mockk<MFVirtualFile>()
         val mockedVirtualFileSource = mockk<MFVirtualFile>()
@@ -400,20 +389,11 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
-        every { mockedFileExplorer.componentManager } returns mockk()
         val targetAttributes = mockk<RemoteDatasetAttributes>()
         val sourceAttributes = mockk<RemoteUssAttributes>()
 
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return when (file) {
-              mockedVirtualFileTarget -> targetAttributes
-              mockedVirtualFileSource -> sourceAttributes
-              else -> super.tryToGetAttributes(file)
-            }
-          }
-        }
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileTarget) } returns targetAttributes
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileSource) } returns sourceAttributes
 
         val conn1 = mockk<ConnectionConfig>()
         val conn2 = mockk<ConnectionConfig>()
@@ -428,8 +408,10 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { targetAttributes.requesters } returns mutableListOf(requester1)
         every { sourceAttributes.requesters } returns mutableListOf(requester2)
 
-        every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns false
+        every { cutProviderMock.isCutEnabled(any<DataContext>()) } returns false
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe false
           isPastePerformed shouldBe true
@@ -449,8 +431,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
           FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         }
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
-        isCopyPerformed = false
-        isPastePerformed = false
 
         val mockedVirtualFileTarget = mockk<MFVirtualFile>()
         val mockedVirtualFileSource = mockk<MFVirtualFile>()
@@ -466,20 +446,11 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
-        every { mockedFileExplorer.componentManager } returns mockk()
         val targetAttributes = mockk<RemoteUssAttributes>()
         val sourceAttributes = mockk<RemoteUssAttributes>()
 
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return when (file) {
-              mockedVirtualFileTarget -> targetAttributes
-              mockedVirtualFileSource -> sourceAttributes
-              else -> super.tryToGetAttributes(file)
-            }
-          }
-        }
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileTarget) } returns targetAttributes
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileSource) } returns sourceAttributes
 
         val conn1 = mockk<ConnectionConfig>()
         val conn2 = mockk<ConnectionConfig>()
@@ -494,8 +465,10 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { targetAttributes.requesters } returns mutableListOf(requester1)
         every { sourceAttributes.requesters } returns mutableListOf(requester2)
 
-        every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns true
+        every { copyProviderMock.isCopyEnabled(any<DataContext>()) } returns true
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -508,16 +481,15 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         defaultSources = arrayOf(TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2")))
         every { defaultSourceTargetBounds.v1 } returns defaultSources
         every { defaultSourceTargetBounds.v2 } returns defaultTarget
-        every { mockedDnDEvent.isDataFlavorSupported(any() as DataFlavor) } returns true
+        every { mockedDnDEvent.isDataFlavorSupported(any<DataFlavor>()) } returns true
         every {
-          mockedCopyPasterProvider.isPastePossibleFromPath(
-            any() as List<TreePath>,
-            any() as List<TreePath>
-          )
+          mockedCopyPasterProvider.isPastePossibleFromPath(any<List<TreePath>>(), any<List<TreePath>>())
         } returns true
         every { mockedJTree.parent } returns mockk<JRootPane>()
         every { mockedJTree.isShowing } returns false
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDropPossible shouldBe true
           isUpdatePerformed shouldBe true
@@ -527,7 +499,9 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
 
       should("highlight is not possible if Tuple4 of sources and target is null") {
         every { fileExplorerViewDropTarget["getSourcesTargetAndBounds"](mockedDnDEvent) } returns null
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDragHighlighted shouldBe false
           isUpdatePerformed shouldBe false
@@ -537,7 +511,9 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       should("highlight is not possible if sources from Tuple4 is null") {
         every { fileExplorerViewDropTarget["getSourcesTargetAndBounds"](mockedDnDEvent) } returns defaultSourceTargetBounds
         every { defaultSourceTargetBounds.v1 } returns null
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDragHighlighted shouldBe false
           isUpdatePerformed shouldBe false
@@ -549,7 +525,9 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         defaultSources = arrayOf(TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2")))
         every { defaultSourceTargetBounds.v1 } returns defaultSources
         every { mockedDnDEvent.isDataFlavorSupported(any() as DataFlavor) } returns false
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDragHighlighted shouldBe false
           isUpdatePerformed shouldBe false
@@ -567,14 +545,18 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
         val mockedProject = mockk<Project>()
         every { mockedCopyPasterProvider.project } returns mockedProject
-        every { ProjectViewImpl.getInstance(mockedProject) } returns mockk()
-        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane } returns mockk()
-        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane.tree } returns mockedJTree
+        every { ProjectViewImpl.getInstance(mockedProject) } returns mockk {
+          every { currentProjectViewPane } returns mockk {
+            every { tree } returns mockedJTree
+          }
+        }
         val mockedStructureTreeModelNode = mockk<DefaultMutableTreeNode>()
         val mockedNode = mockk<ProjectViewNode<*>>()
         every { defaultTarget.lastPathComponent } returns mockedStructureTreeModelNode
         every { mockedStructureTreeModelNode.userObject } returns mockedNode
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDragHighlighted shouldBe false
           isUpdatePerformed shouldBe false
@@ -598,25 +580,14 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
         every { mockedFileExplorer.componentManager } returns mockk()
-        val sourceAttributes = mockk<RemoteUssAttributes>()
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return if (file == mockedVirtualFileSource) {
-              sourceAttributes
-            } else {
-              super.tryToGetAttributes(file)
-            }
-          }
-        }
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileSource) } returns mockk<RemoteUssAttributes>()
 
         every {
-          mockedCopyPasterProvider.isPastePossible(
-            any() as List<VirtualFile>,
-            any() as List<NodeData<*>>
-          )
+          mockedCopyPasterProvider.isPastePossible(any<List<VirtualFile>>(), any<List<NodeData<*>>>())
         } returns true
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDropPossible shouldBe true
           isDragHighlighted shouldBe true
@@ -626,12 +597,11 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
 
       should("highlight is not possible if target virtual file is not null and paste is not possible") {
         every {
-          mockedCopyPasterProvider.isPastePossible(
-            any() as List<VirtualFile>,
-            any() as List<NodeData<*>>
-          )
+          mockedCopyPasterProvider.isPastePossible(any<List<VirtualFile>>(), any<List<NodeData<*>>>())
         } returns false
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDragHighlighted shouldBe false
           isUpdatePerformed shouldBe false
@@ -639,17 +609,7 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
 
       should("highlight is possible if paste is possible and isCopiedFromRemote is false") {
-        every { mockedDnDEvent.attachedObject } answers {
-          object : DnDSource {
-            override fun canStartDragging(action: DnDAction?, dragOrigin: Point): Boolean {
-              TODO("Not yet implemented")
-            }
-
-            override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
-              TODO("Not yet implemented")
-            }
-          }
-        }
+        every { mockedDnDEvent.attachedObject } returns mockk<DnDEvent>()
         every { defaultSourceTargetBounds.v4 } returns mockedJTree
         defaultTarget = TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2"))
         val source = TreePath(arrayOf("project", "project", "test1", "test2"))
@@ -672,24 +632,14 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         val mockedVirtualFileTarget = mockk<MFVirtualFile>()
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
         val targetAttributes = mockk<RemoteUssAttributes>()
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return if (file == mockedVirtualFileTarget) {
-              targetAttributes
-            } else {
-              super.tryToGetAttributes(file)
-            }
-          }
-        }
+
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileTarget) } returns targetAttributes
         every {
-          mockedCopyPasterProvider.isPastePossibleForFiles(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>
-          )
+          mockedCopyPasterProvider.isPastePossibleForFiles(any<List<VirtualFile>>(), any<List<VirtualFile>>())
         } returns true
 
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDropPossible shouldBe true
           isDragHighlighted shouldBe true
@@ -698,11 +648,13 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
 
       should("highlight is not possible if everything is not met conditions") {
-        every { mockedDnDEvent.attachedObject } answers {
-          FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        }
+        every {
+          mockedDnDEvent.attachedObject
+        } returns FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
         every { defaultSourceTargetBounds.v4 } returns mockk()
+
         fileExplorerViewDropTarget.update(mockedDnDEvent)
+
         assertSoftly {
           isDragHighlighted shouldBe false
           isUpdatePerformed shouldBe false
@@ -710,7 +662,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
 
       should("perform paste with predefined dataContext") {
-        isPastePerformed = false
         val defaultSourceTest = TreePath(arrayOf("u/root", "/test1", "/u/ARST", "test5"))
         val target = TreePath(arrayOf("/u/root", "test"))
         val mockedStructureTreeModelNodeSource = mockk<DefaultMutableTreeNode>()
@@ -736,34 +687,23 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
 
-        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return when (file) {
-              mockedVirtualFileTarget -> mockedTargetAttributes
-              mockedVirtualFileSource -> mockedSourceAttributes
-              else -> super.tryToGetAttributes(file)
-            }
-          }
-        }
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileTarget) } returns mockedTargetAttributes
+        every { dataOpsManagerService.tryToGetAttributes(mockedVirtualFileSource) } returns mockedSourceAttributes
 
         every {
-          fileExplorerViewDropTarget["isCrossSystemCopy"](
-            any() as Collection<TreePath>,
-            any() as TreePath
-          )
+          fileExplorerViewDropTarget["isCrossSystemCopy"](any<Collection<TreePath>>(), any<TreePath>())
         } returns false
 
         every { mockedCopyPasterProvider.pasteProvider } returns userDefinedExplorerPasteProvider
 
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isPastePerformed shouldBe true
         }
       }
 
       should("perform paste with predefined dataContext when source is not ExplorerTreeNode instance") {
-        isPastePerformed = false
         val defaultSourceTest = TreePath(arrayOf("u/root", "/test1", "/u/ARST", "test6"))
         mockkObject(defaultSourceTest)
         val mockedStructureTreeModelNodeSource = mockk<DefaultMutableTreeNode>()
@@ -774,14 +714,15 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedNodeVirtualFile
         val sourceArray = arrayOf(defaultSourceTest)
         every { defaultSourceTargetBounds.v1 } returns sourceArray
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isPastePerformed shouldBe true
         }
       }
 
       should("perform paste with predefined dataContext when sources tree is not myTree") {
-        isPastePerformed = false
         every { defaultSourceTargetBounds.v4 } returns mockk()
         val target = TreePath(arrayOf("project", "test_folder"))
         mockkObject(target)
@@ -792,31 +733,37 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
         every { defaultSourceTargetBounds.v2 } returns target
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isPastePerformed shouldBe true
         }
       }
 
       should("perform paste from local to remote with predefined dataContext") {
-        isPastePerformed = false
-        every { mockedDnDEvent.attachedObject } returns mockk()
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isPastePerformed shouldBe true
         }
       }
-
     }
   }
 
   context("explorer module: ui/ExplorerDropTarget additional tests") {
     context("defined getSourcesTargetAndBounds") {
-
-      val mockedDnDEvent = mockk<DnDEvent>()
       var isDropPossibleForEvent = false
-      every { mockedDnDEvent.setDropPossible(any() as Boolean, any() as String) } answers {
-        isDropPossibleForEvent = false
+      var isCutPerformed = false
+      var isCopyPerformed = false
+      var isPastePerformed = false
+
+      val mockedDnDEvent = mockk<DnDEvent> {
+        every {
+          setDropPossible(any<Boolean>(), any<String>())
+        } answers {
+          isDropPossibleForEvent = false
+        }
       }
       val mockedJTree = mockk<Tree>()
       val mockedProjectTree = mockk<Tree>()
@@ -824,11 +771,8 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport>()
       val mockedProject = mockk<Project>()
 
-      var isCutPerformed = false
-      var isCopyPerformed = false
-      var isPastePerformed = false
-
       beforeEach {
+        isDropPossibleForEvent = false
         isCutPerformed = false
         isCopyPerformed = false
         isPastePerformed = false
@@ -849,19 +793,7 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         } returns TreePath(arrayOf("project", "project", "test1", "test2"))
         every { mockedJTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
         val mockedDnDWrapper = FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
-        val mockedDefaultWrapper = object : TransferableWrapper {
-          override fun asFileList(): MutableList<File>? {
-            TODO("Not yet implemented")
-          }
-
-          override fun getTreeNodes(): Array<TreeNode>? {
-            TODO("Not yet implemented")
-          }
-
-          override fun getPsiElements(): Array<PsiElement>? {
-            TODO("Not yet implemented")
-          }
-        }
+        val mockedDefaultWrapper = mockk<TransferableWrapper>()
         mockkObject(mockedDnDWrapper)
         mockkObject(mockedDefaultWrapper)
         every {
@@ -874,27 +806,39 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         mockkStatic(FileExplorerViewDragSource::class)
         mockkStatic(FileExplorerViewDragSource.ExplorerTransferableWrapper::class)
 
-        every { mockedCopyPasterProvider.pasteProvider } returns mockk()
-        every { mockedCopyPasterProvider.copyProvider } returns mockk()
-        every { mockedCopyPasterProvider.cutProvider } returns mockk()
+        val pasteProviderMock = mockk<PasteProvider> {
+          every {
+            performPaste(any<DataContext>())
+          } answers {
+            isPastePerformed = true
+          }
+        }
+        val copyProviderMock = mockk<CopyProvider> {
+          every { isCopyEnabled(any<DataContext>()) } returns true
+          every {
+            performCopy(any<DataContext>())
+          } answers {
+            isCopyPerformed = true
+          }
+        }
+        val cutProviderMock = mockk<CutProvider> {
+          every { isCutEnabled(any<DataContext>()) } returns true
+          every {
+            performCut(any<DataContext>())
+          } answers {
+            isCutPerformed = true
+          }
+        }
 
         every { mockedCopyPasterProvider.project } returns mockk()
-        every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
-        every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns true
-
-        every { mockedCopyPasterProvider.cutProvider.performCut(any() as DataContext) } answers {
-          isCutPerformed = true
-        }
-        every { mockedCopyPasterProvider.copyProvider.performCopy(any() as DataContext) } answers {
-          isCopyPerformed = true
-        }
-        every { mockedCopyPasterProvider.pasteProvider.performPaste(any() as DataContext) } answers {
-          isPastePerformed = true
-        }
+        every { mockedCopyPasterProvider.cutProvider } returns cutProviderMock
+        every { mockedCopyPasterProvider.copyProvider } returns copyProviderMock
+        every { mockedCopyPasterProvider.pasteProvider } returns pasteProviderMock
 
         every { mockedDnDEvent.attachedObject } returns mockedDefaultWrapper
 
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -921,8 +865,12 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every {
           mockedProjectTree.getClosestPathForLocation(any<Int>(), any<Int>())
         } returns TreePath(arrayOf("project", "project", "test1", "test2"))
-        every { mockedProjectTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
+        every {
+          mockedProjectTree.getPathBounds(any<TreePath>())
+        } returns Rectangle(50, 200, 100, 50)
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -931,7 +879,9 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
 
       should("perform drop with defined getSourcesTargetAndBounds when event tree is new tree, but current tree is the project tree") {
         every { mockedDnDEvent.currentOverComponent } returns mockk()
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe false
           isCopyPerformed shouldBe false
@@ -941,8 +891,12 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
 
       should("perform drop with defined getSourcesTargetAndBounds when bounds are not suitable") {
         every { mockedDnDEvent.currentOverComponent } returns mockedProjectTree
-        every { mockedProjectTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 400, 100, 50)
+        every {
+          mockedProjectTree.getPathBounds(any<TreePath>())
+        } returns Rectangle(50, 400, 100, 50)
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe false
           isCopyPerformed shouldBe false
@@ -963,7 +917,9 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       should("perform drop with defined getSourcesTargetAndBounds when project tree getClosestPathForLocation returns null") {
         every { mockedCopyPasterProvider.project } returns mockedProject
         every { mockedProjectTree.getClosestPathForLocation(any() as Int, any() as Int) } returns null
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe false
           isCopyPerformed shouldBe false
@@ -976,18 +932,10 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
           mockedProjectTree.getClosestPathForLocation(any<Int>(), any<Int>())
         } returns TreePath(arrayOf("project", "project", "test1", "test2"))
         every { mockedProjectTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
-        every { mockedDnDEvent.attachedObject } answers {
-          object : DnDSource {
-            override fun canStartDragging(action: DnDAction?, dragOrigin: Point): Boolean {
-              TODO("Not yet implemented")
-            }
+        every { mockedDnDEvent.attachedObject } returns mockk<DnDSource>()
 
-            override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
-              TODO("Not yet implemented")
-            }
-          }
-        }
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
@@ -996,7 +944,9 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
 
       should("perform drop with defined getSourcesTargetAndBounds when current event point is null") {
         every { mockedDnDEvent.point } returns null
+
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
+
         assertSoftly {
           isCutPerformed shouldBe false
           isCopyPerformed shouldBe false
@@ -1005,5 +955,4 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
     }
   }
-
 })

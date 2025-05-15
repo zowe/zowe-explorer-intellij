@@ -1,97 +1,107 @@
 /*
- * Copyright (c) 2020-2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.content.synchronizer
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.AttributesService
-import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.MaskedRequester
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributesService
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
-import io.mockk.unmockkAll
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
 
-class MemberContentSynchronizerTest : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
+class MemberContentSynchronizerTestSpec : AppInitShouldSpec("dataops/content/synchronizer/MemberContentSynchronizer", {
+  context("all functions") {
+    var isApiCallSuccessful = false
+    var isExceptionThrown = false
 
-  context("MemberContentSynchronizer:") {
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-    val mockedRemoteDatasetAttributes = mockk<RemoteDatasetAttributes>()
-    val mockedMaskedRequester = mockk<MaskedRequester>()
-    val connConf = ConnectionConfig("000", "connName", "url", true, ZVersion.ZOS_2_1, "owner")
-    every { mockedMaskedRequester.connectionConfig } returns connConf
-    every { mockedRemoteDatasetAttributes.requesters } returns mutableListOf(mockedMaskedRequester)
-    val rdaName = "RemoteDatasetAttributes.name"
-    every { mockedRemoteDatasetAttributes.name } returns rdaName
-    val mockedRemoteDatasetAttributesService = mockk<RemoteDatasetAttributesService>()
-    every { mockedRemoteDatasetAttributesService.getAttributes(any<MFVirtualFile>()) } returns mockedRemoteDatasetAttributes
-    dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-      override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
-        attributesClass: Class<out A>,
-        vFileClass: Class<out F>
-      ): AttributesService<A, F> {
-        @Suppress("UNCHECKED_CAST")
-        return mockedRemoteDatasetAttributesService as AttributesService<A, F>
-      }
+    val connConf = ConnectionConfig(
+      "000",
+      "connName",
+      "url",
+      true,
+      ZVersion.ZOS_2_1,
+      "owner"
+    )
+    val mockedMaskedRequester = mockk<MaskedRequester> {
+      every { connectionConfig } returns connConf
     }
+    val rdaName = "RemoteDatasetAttributes.name"
+    val mockedRemoteDatasetAttributes = mockk<RemoteDatasetAttributes> {
+      every { requesters } returns mutableListOf(mockedMaskedRequester)
+      every { name } returns rdaName
+    }
+    val mockedRemoteDatasetAttributesService = mockk<RemoteDatasetAttributesService> {
+      every { getAttributes(any<MFVirtualFile>()) } returns mockedRemoteDatasetAttributes
+    }
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
+
+    val dataOpsManager = DataOpsManager.getService()
+    every { dataOpsManager.componentManager } returns ApplicationManager.getApplication()
+    every {
+      dataOpsManager.getAttributesService(RemoteDatasetAttributes::class.java, MFVirtualFile::class.java)
+    } returns mockedRemoteDatasetAttributesService
 
     val memberContentSynchronizer = spyk(MemberContentSynchronizer(dataOpsManager))
 
-    val mockedMFVirtualFile = mockk<MFVirtualFile>()
-    val mockedParentMFVirtualFile = mockk<MFVirtualFile>()
-    every { mockedParentMFVirtualFile.getParent() } returns null
-    every { mockedMFVirtualFile.parent } returns mockedParentMFVirtualFile
+    val mockedParentMFVirtualFile = mockk<MFVirtualFile> {
+      every { getParent() } returns null
+    }
     val pathToFile = "/path/to/file"
-    every { mockedMFVirtualFile.path } returns pathToFile
-    val mockedRemoteMemberAttributes = mockk<RemoteMemberAttributes>()
-    every { mockedRemoteMemberAttributes.contentMode } returns XIBMDataType(XIBMDataType.Type.BINARY)
-    every { mockedRemoteMemberAttributes.parentFile } returns mockedMFVirtualFile
+    val mockedMFVirtualFile = mockk<MFVirtualFile> {
+      every { parent } returns mockedParentMFVirtualFile
+      every { path } returns pathToFile
+    }
     val rmaName = "RemoteMemberAttributes.name"
-    every { mockedRemoteMemberAttributes.name } returns rmaName
+    val mockedRemoteMemberAttributes = mockk<RemoteMemberAttributes> {
+      every { contentMode } returns XIBMDataType(XIBMDataType.Type.BINARY)
+      every { parentFile } returns mockedMFVirtualFile
+      every { name } returns rmaName
+    }
     val mockedProgressIndicator = mockk<ProgressIndicator>()
 
     val mockedDataAPI = mockk<DataAPI>()
-    val mockedCall = mockk<retrofit2.Call<String>>()
-    val mockedResponse = mockk<retrofit2.Response<String>>()
-    var isApiCallSuccessful = false
-    every { mockedResponse.isSuccessful } answers {
-      isApiCallSuccessful = true
-      true
+    val mockedResponse = mockk<retrofit2.Response<String>> {
+      every {
+        isSuccessful
+      } answers {
+        isApiCallSuccessful = true
+        true
+      }
+      every { body() } returns "Response.body"
     }
-    every { mockedResponse.body() } returns "Response.body"
-    every { mockedCall.execute() } returns mockedResponse
+    val mockedCall = mockk<retrofit2.Call<String>> {
+      every { execute() } returns mockedResponse
+    }
     every {
       mockedDataAPI.retrieveMemberContent(
         any<String>(),
@@ -107,13 +117,18 @@ class MemberContentSynchronizerTest : WithApplicationShouldSpec({
         any()
       )
     } returns mockedCall
-    val mockedCall1 = mockk<retrofit2.Call<Void>>()
-    val mockedResponse1 = mockk<retrofit2.Response<Void>>()
-    every { mockedCall1.execute() } returns mockedResponse1
-    every { mockedResponse1.isSuccessful } answers {
-      isApiCallSuccessful = true
-      true
+    val mockedResponse1 = mockk<retrofit2.Response<Void>> {
+      every {
+        isSuccessful
+      } answers {
+        isApiCallSuccessful = true
+        true
+      }
     }
+    val mockedCall1 = mockk<retrofit2.Call<Void>> {
+      every { execute() } returns mockedResponse1
+    }
+
     every {
       mockedDataAPI.writeToDatasetMember(
         any<String>(),
@@ -129,53 +144,39 @@ class MemberContentSynchronizerTest : WithApplicationShouldSpec({
         any()
       )
     } returns mockedCall1
-    val testZosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
-    testZosmfApi.testInstance = object : TestZosmfApiImpl() {
-      override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-        @Suppress("UNCHECKED_CAST")
-        return mockedDataAPI as Api
-      }
 
-      override fun <Api : Any> getApiWithBytesConverter(
-        apiClass: Class<out Api>,
-        connectionConfig: ConnectionConfig
-      ): Api {
-        @Suppress("UNCHECKED_CAST")
-        return mockedDataAPI as Api
-      }
-    }
+    val testZosmfApi = ZosmfApi.getService()
+    every { testZosmfApi.getApi(DataAPI::class.java, any<ConnectionConfig>()) } returns mockedDataAPI
+    every { testZosmfApi.getApiWithBytesConverter(DataAPI::class.java, any<ConnectionConfig>()) } returns mockedDataAPI
 
-    val fetchRemoteContentBytes = memberContentSynchronizer.javaClass.getDeclaredMethod(
-      "fetchRemoteContentBytes",
-      RemoteMemberAttributes::class.java,
-      ProgressIndicator::class.java
-    )
+    val fetchRemoteContentBytes = memberContentSynchronizer.javaClass
+      .getDeclaredMethod(
+        "fetchRemoteContentBytes",
+        RemoteMemberAttributes::class.java,
+        ProgressIndicator::class.java
+      )
     fetchRemoteContentBytes.isAccessible = true
-    val parameters = arrayOfNulls<Any>(2)
-    parameters[0] = mockedRemoteMemberAttributes
-    parameters[1] = mockedProgressIndicator
+
+    val parameters = arrayOf(mockedRemoteMemberAttributes, mockedProgressIndicator)
 
     val newContentBytes = "newContentBytes".toByteArray()
-    val uploadNewContent = memberContentSynchronizer.javaClass.getDeclaredMethod(
-      "uploadNewContent",
-      RemoteMemberAttributes::class.java,
-      ByteArray::class.java,
-      ProgressIndicator::class.java
-    )
+    val uploadNewContent = memberContentSynchronizer.javaClass
+      .getDeclaredMethod(
+        "uploadNewContent",
+        RemoteMemberAttributes::class.java,
+        ByteArray::class.java,
+        ProgressIndicator::class.java
+      )
     uploadNewContent.isAccessible = true
-    val parameters1 = arrayOfNulls<Any>(3)
-    parameters1[0] = mockedRemoteMemberAttributes
-    parameters1[1] = newContentBytes
-    parameters1[2] = mockedProgressIndicator
 
-    var isExceptionThrown = false
+    val parameters1 = arrayOf(mockedRemoteMemberAttributes, newContentBytes, mockedProgressIndicator)
+
+    val code = 405
 
     afterEach {
       isApiCallSuccessful = false
       isExceptionThrown = false
     }
-
-    val code = 405
 
     should("Fetch remote content bytes for the dataset member") {
       val res = fetchRemoteContentBytes.invoke(memberContentSynchronizer, *parameters) as ByteArray

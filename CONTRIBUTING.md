@@ -49,9 +49,9 @@ There are two types of tests, used in here:
 
 Unit-tests are written using chain [Kotest](https://kotest.io/) + [MockK](https://mockk.io/) + [Kover](https://github.com/Kotlin/kotlinx-kover).
 All the unit-tests are stored under [src/test](src/test/).
-We use Kotest's `ShouldSpec` testing style to write our tests.
-To provide mocked interfaces and semi-initialized IntelliJ platform's components during the tests execution time, there is a [WithApplicationShouldSpec](src/test/kotlin/org/zowe/explorer/testutils/WithApplicationShouldSpec.kt) abstract class. This class allows testers to mock out some services without the need to fully initialize them, and provides the IntelliJ application in a lightweight headless mode.
-To see how we mock our services, investigate [this folder](src/test/kotlin/org/zowe/explorer/testutils/testServiceImpl/)
+We use Kotest's `ShouldSpec` testing style to write our tests. It is extended with [MockkAwareShouldSpec](src/test/kotlin/org/zowe/explorer/testutils/MockkAwareShouldSpec.kt) abstract class that prevents the need to clear mocks after the spec is finished. It is a cleaner method to write unit tests with the MockK library, so prefer to use this class instead of the bare ShouldSpec.
+To provide mocked interfaces and semi-initialized IntelliJ platform's components during the tests execution time, there is an [AppInitShouldSpec](src/test/kotlin/org/zowe/explorer/testutils/AppInitShouldSpec.kt) abstract class. This class allows testers to mock out some services without the need to fully initialize them, and provides the IntelliJ application in a lightweight headless mode. Also, this class allows to write tests on the classes that have Kotlin DSL structures.
+To see how we mock our services, look into [this folder](src/test/kotlin/org/zowe/explorer/testutils/testServiceImpl/)
 For more info on how to deal with tests in IntelliJ platform, refer to [this guide](https://plugins.jetbrains.com/docs/intellij/testing-plugins.html).
 
 UI regression tests are written using chain [JUnit](https://junit.org/) + [IntellIJ UI test framework](https://github.com/JetBrains/intellij-ui-test-robot).

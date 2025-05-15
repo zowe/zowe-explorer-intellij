@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.operations
@@ -19,102 +21,79 @@ import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import org.junit.jupiter.api.assertThrows
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.Member
 import org.zowe.kotlinsdk.MembersList
 import retrofit2.Call
 import retrofit2.Response
 
-class MemberAllocatorTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-  }
-
+class MemberAllocatorTestSpec : AppInitShouldSpec("dataops/operations/MemberAllocator", {
   context("MemberAllocator test spec") {
-
     val classUnderTest = spyk<MemberAllocator>()
 
     context("run operation") {
-
-      val progressIndicator = mockk<ProgressIndicator>()
-      every { progressIndicator.checkCanceled() } just Runs
-
-      val credentialService = CredentialService.getService() as TestCredentialsServiceImpl
-      credentialService.testInstance = object : TestCredentialsServiceImpl() {
-        override fun getUsernameByKey(connectionConfigUuid: String): String {
-          return "test"
-        }
-
-        override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
-          return "test".toCharArray()
-        }
+      val progressIndicator = mockk<ProgressIndicator> {
+        every { checkCanceled() } just Runs
       }
 
-      val connectionConfig = mockk<ConnectionConfig>()
-      every { connectionConfig.name } returns "test_connection"
-      every { connectionConfig.uuid } returns "test_uuid"
-      val memberAllocationParams = mockk<MemberAllocationParams>()
-      val memberAllocationOperation = mockk<MemberAllocationOperation>()
-      every { memberAllocationParams.memberName } returns "test"
-      every { memberAllocationParams.datasetName } returns "ZOSMFAD.TEST"
-      every { memberAllocationOperation.request } returns memberAllocationParams
-      every { memberAllocationOperation.connectionConfig } returns connectionConfig
+      val credentialService = CredentialService.getService()
+      every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+      every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
-      val dataApi = mockk<DataAPI>()
+      val connectionConfigMock = mockk<ConnectionConfig> {
+        every { name } returns "test_connection"
+        every { uuid } returns "test_uuid"
+      }
+      val memberAllocationParams = mockk<MemberAllocationParams> {
+        every { memberName } returns "test"
+        every { datasetName } returns "ZOSMFAD.TEST"
+      }
+      val memberAllocationOperation = mockk<MemberAllocationOperation> {
+        every { request } returns memberAllocationParams
+        every { connectionConfig } returns connectionConfigMock
+      }
+
       val listCall = mockk<Call<MembersList>>()
       val listResponse = mockk<Response<MembersList>>()
       val writeCall = mockk<Call<Void>>()
       val writeResponse = mockk<Response<Void>>()
-      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
-      zosmfApi.testInstance = object : TestZosmfApiImpl() {
-        override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-          return if (apiClass == DataAPI::class.java) {
-            dataApi as Api
-          } else {
-            super.getApi(apiClass, connectionConfig)
-          }
-        }
 
-        override fun <Api : Any> getApiWithBytesConverter(
-          apiClass: Class<out Api>,
-          connectionConfig: ConnectionConfig
-        ): Api {
-          return if (apiClass == DataAPI::class.java) {
-            dataApi as Api
-          } else {
-            super.getApiWithBytesConverter(apiClass, connectionConfig)
-          }
-        }
+      val dataApi = mockk<DataAPI> {
+        every { listDatasetMembers(any(), any(), any(), any(), any(), any(), any()) } returns listCall
+        every {
+          writeToDatasetMember(
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any()
+          )
+        } returns writeCall
       }
-      every { dataApi.listDatasetMembers(any(), any(), any(), any(), any(), any(), any()) } returns listCall
-      every {
-        dataApi.writeToDatasetMember(
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          any()
-        )
-      } returns writeCall
+
+      val zosmfApi = ZosmfApi.getService()
+      every { zosmfApi.getApi(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
+      every { zosmfApi.getApiWithBytesConverter(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
 
       val membersList = mockk<MembersList>()
       val member1 = mockk<Member>()
       val member2 = mockk<Member>()
+
+      afterEach {
+        clearMocks(dataApi, answers = false, childMocks = false)
+      }
 
       should("run successfully given valid params and members list is empty") {
         //given
@@ -144,7 +123,6 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
             any()
           )
         }
-        clearMocks(dataApi, answers = false, childMocks = false)
       }
 
       should("run successfully given valid params") {
@@ -177,7 +155,6 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
             any()
           )
         }
-        clearMocks(dataApi, answers = false, childMocks = false)
       }
 
       should("throw error if writeResponse was not successful") {
@@ -229,7 +206,6 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
           exception.message shouldBe "Cannot create member TEST in ZOSMFAD.TEST on test_connection. Member with name TEST already exists.\n" + "Code: 404"
         }
       }
-      unmockkAll()
     }
   }
 })

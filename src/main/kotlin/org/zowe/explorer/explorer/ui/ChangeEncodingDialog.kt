@@ -69,7 +69,7 @@ class ChangeEncodingDialog(
       title = message("encoding.reload.dialog.title", virtualFile.name, charset.name())
       message = message("encoding.reload.dialog.message", virtualFile.name, charset.name())
     }
-    initialize { init() }
+    init()
   }
 
   override fun createCenterPanel(): JComponent {

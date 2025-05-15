@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.vfs
@@ -112,11 +113,11 @@ class MFVirtualFile internal constructor(
 
   override fun isDirectory() = isDirectoryInternal
 
-  /** Get virtual file if it is the symbolic link */
+  /** @see [VirtualFile.getCanonicalFile] */
   override fun getCanonicalFile(): VirtualFile? {
     return if (fs.isSymLink(this)) {
       fs.model.resolveAndGetSymlink(this)
-    } else null
+    } else super.getCanonicalFile()
   }
 
   override fun isValid() = fs.model.isFileValid(this)
@@ -242,6 +243,11 @@ inline fun <T> MFVirtualFile.validWriteLock(default: T, block: () -> T): T {
   return this.genericLockOr(this.writeLock(), { default }, block)
 }
 
+@Deprecated(
+  "Not used, usage information is not clear. Will be removed in v3",
+  replaceWith = ReplaceWith("/* any supportable locking mechanism */"),
+  level = DeprecationLevel.ERROR
+)
 inline fun <T> MFVirtualFile.validWriteLock(default: () -> T, block: () -> T): T {
   return this.genericLockOr(this.writeLock(), default, block)
 }
@@ -253,10 +259,21 @@ inline fun <T> MFVirtualFile.validWriteLock(
   return this.genericLockOr(this.writeLock(), { throw exception() }, block)
 }
 
+
+@Deprecated(
+  "Not used, usage information is not clear. Will be removed in v3",
+  replaceWith = ReplaceWith("/* any supportable locking mechanism */"),
+  level = DeprecationLevel.ERROR
+)
 inline fun <T> validReadLock(vararg files: MFVirtualFile, default: T, block: () -> T): T {
   return genericVarargLockOr(files, files.map { it.readLock() }.toTypedArray(), { { default } }, block)
 }
 
+@Deprecated(
+  "Not used, usage information is not clear. Will be removed in v3",
+  replaceWith = ReplaceWith("/* any supportable locking mechanism */"),
+  level = DeprecationLevel.ERROR
+)
 inline fun <T> validReadLock(
   vararg files: MFVirtualFile,
   exception: (MFVirtualFile) -> Exception = { InvalidFileException(it) },
@@ -276,6 +293,11 @@ inline fun <T> validReadLock(
   )
 }
 
+@Deprecated(
+  "Not used, usage information is not clear. Will be removed in v3",
+  replaceWith = ReplaceWith("/* any supportable locking mechanism */"),
+  level = DeprecationLevel.ERROR
+)
 inline fun <reified T> validWriteLock(vararg files: MFVirtualFile, default: T, block: () -> T): T {
   return genericVarargLockOr(files, files.map { it.writeLock() }.toTypedArray(), { { default } }, block)
 }

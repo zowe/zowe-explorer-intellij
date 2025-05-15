@@ -15,7 +15,7 @@
 
 package org.zowe.explorer.v3.state.config.migration
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Application
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
@@ -30,21 +30,16 @@ import org.zowe.explorer.v3.state.settings.OtherSettingsService
 import org.zowe.explorer.v3.state.storage.StableStorage
 import org.zowe.explorer.v3.state.storage.StorageService
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.jdom.Attribute
 import org.jdom.Element
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import java.util.stream.Stream
 
 @OptIn(StableStorage::class)
-class UtilsTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("v3/state/config/migration/utils") {
+class UtilsTestSpec : AppInitShouldSpec("v3/state/config/migration/utils", {
+  context("all functions") {
     context("doesXmlHasConfigs") {
       should("return true if the structure contains at least one config") {
         val savedConfigsRoot = Element("test_root")
@@ -226,6 +221,12 @@ class UtilsTestSpec : ShouldSpec({
       val configCacheServiceMock = mockk<ConfigCacheService>()
       val configServiceMock = mockk<ConfigService>()
 
+      mockkConstructor(Application::class)
+      mockkObject(StorageService)
+      mockkObject(OtherSettingsService)
+      mockkObject(ConfigCacheService)
+      mockkObject(ConfigService)
+
       beforeEach {
         didCallUpdateOtherSettings = false
         didCallSaveOtherSettings = false
@@ -271,13 +272,15 @@ class UtilsTestSpec : ShouldSpec({
           every { getAll(any<Class<*>>()) } answers { Stream.empty() }
         }
 
-        mockkStatic(ApplicationManager::getApplication)
-        every { ApplicationManager.getApplication() } returns mockk {
-          every { getService(StorageService::class.java) } returns storageServiceMock
-          every { getService(OtherSettingsService::class.java) } returns otherSettingsServiceMock
-          every { getService(ConfigCacheService::class.java) } returns configCacheServiceMock
-          every { getService(ConfigService::class.java) } returns configServiceMock
-        }
+        every { anyConstructed<Application>().getService(StorageService::class.java) } returns storageServiceMock
+        every { anyConstructed<Application>().getService(OtherSettingsService::class.java) } returns otherSettingsServiceMock
+        every { anyConstructed<Application>().getService(ConfigCacheService::class.java) } returns configCacheServiceMock
+        every { anyConstructed<Application>().getService(ConfigService::class.java) } returns configServiceMock
+
+        every { StorageService.getService() } returns storageServiceMock
+        every { OtherSettingsService.getService() } returns otherSettingsServiceMock
+        every { ConfigCacheService.getService() } returns configCacheServiceMock
+        every { ConfigService.getService() } returns configServiceMock
       }
 
       should("not perform any migrations as there are no configs and the settings are the same") {

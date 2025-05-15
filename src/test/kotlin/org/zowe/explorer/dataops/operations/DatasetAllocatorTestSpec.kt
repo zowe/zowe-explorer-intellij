@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.operations
@@ -17,83 +18,65 @@ package org.zowe.explorer.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.explorer.config.Presets
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import org.junit.jupiter.api.assertThrows
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.CreateDataset
 import org.zowe.kotlinsdk.DataAPI
 import retrofit2.Call
 import retrofit2.Response
 import kotlin.coroutines.cancellation.CancellationException
 
-class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    unmockkAll()
-    clearAllMocks()
-  }
-
+class DatasetAllocatorTestSpec : AppInitShouldSpec("dataops/operations/DatasetAllocator", {
   context("run dataset allocation operation") {
     val datasetAllocator = spyk<DatasetAllocator>()
     val progressIndicator = mockk<ProgressIndicator>()
-    val connectionConfig = mockk<ConnectionConfig>()
-    val datasetAllocationParams = mockk<DatasetAllocationParams>()
+    val connectionConfig = mockk<ConnectionConfig> {
+      every { name } returns "test_connection"
+      every { uuid } returns "test_uuid"
+    }
+    val datasetAllocationParams = mockk<DatasetAllocationParams> {
+      every { memberName } returns "test"
+      every { datasetName } returns "ZOSMFAD.TEST"
+    }
     val datasetAllocationOperation = mockk<DatasetAllocationOperation>()
     val createDataset = mockk<CreateDataset>()
-    val dataApi = mockk<DataAPI>()
     val createDatasetCall = mockk<Call<Void>>()
     val createDatasetResponse = mockk<Response<Void>>()
     val writeMemberCall = mockk<Call<Void>>()
     val writeMemberResponse = mockk<Response<Void>>()
-    val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
 
-    every { dataApi.createDataset(any(), any(), any()) } returns createDatasetCall
-    every {
-      dataApi.writeToDatasetMember(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
-    } returns writeMemberCall
-
-    zosmfApi.testInstance = object : TestZosmfApiImpl() {
-      override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-        return if (apiClass == DataAPI::class.java) {
-          dataApi as Api
-        } else {
-          super.getApi(apiClass, connectionConfig)
-        }
-      }
-
-      override fun <Api : Any> getApiWithBytesConverter(
-        apiClass: Class<out Api>,
-        connectionConfig: ConnectionConfig
-      ): Api {
-        return if (apiClass == DataAPI::class.java) {
-          dataApi as Api
-        } else {
-          super.getApiWithBytesConverter(apiClass, connectionConfig)
-        }
-      }
+    val dataApi = mockk<DataAPI> {
+      every { createDataset(any(), any(), any()) } returns createDatasetCall
+      every {
+        writeToDatasetMember(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+      } returns writeMemberCall
     }
+
+    val zosmfApi = ZosmfApi.getService()
+    every { zosmfApi.getApi(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
+    every { zosmfApi.getApiWithBytesConverter(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
     beforeEach {
       every { progressIndicator.checkCanceled() } just Runs
 
-      every { connectionConfig.name } returns "test_connection"
-      every { connectionConfig.authToken } returns "auth_token"
-      every { connectionConfig.uuid } returns "test_uuid"
-
-      every { datasetAllocationParams.memberName } returns "test"
-      every { datasetAllocationParams.datasetName } returns "ZOSMFAD.TEST"
-
       every { datasetAllocationParams.allocationParameters } returns createDataset
       every { datasetAllocationOperation.request } returns datasetAllocationParams
       every { datasetAllocationOperation.connectionConfig } returns connectionConfig
+    }
+
+    afterEach {
+      clearMocks(dataApi, answers = false, childMocks = false)
     }
 
     should("run successfully for presets without members") {
@@ -102,19 +85,21 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
         Presets.SEQUENTIAL_DATASET,
         Presets.PDS_DATASET,
         Presets.PDSE_DATASET
-      ).forEach { preset ->
-        //given
-        every { datasetAllocationParams.presets } returns preset
-        every { createDatasetCall.execute() } returns createDatasetResponse
-        every { createDatasetResponse.isSuccessful } returns true
+      )
+        .forEach { preset ->
+          //given
+          every { datasetAllocationParams.presets } returns preset
+          every { createDatasetCall.execute() } returns createDatasetResponse
+          every { createDatasetResponse.isSuccessful } returns true
 
-        //when
-        datasetAllocator.run(datasetAllocationOperation, progressIndicator)
+          //when
+          datasetAllocator.run(datasetAllocationOperation, progressIndicator)
 
-        //then
-        verify(exactly = 1) { dataApi.createDataset(any(), any(), any()) }
-        clearMocks(dataApi, answers = false, childMocks = false)
-      }
+          //then
+          verify(exactly = 1) { dataApi.createDataset(any(), any(), any()) }
+
+          clearMocks(dataApi, answers = false, childMocks = false)
+        }
     }
     should("throw error if createDatasetResponse was not successful") {
       //given
@@ -131,7 +116,6 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
         exception shouldNotBe null
         exception.message shouldBe "Cannot allocate dataset ZOSMFAD.TEST on test_connection\n" + "Code: 403"
       }
-      clearMocks(dataApi, answers = false, childMocks = false)
     }
 
     should("run successfully for presets with members") {
@@ -159,6 +143,7 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
           verify(exactly = 1) {
             dataApi.writeToDatasetMember(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
           }
+
           clearMocks(dataApi, answers = false, childMocks = false)
         }
     }
@@ -189,6 +174,7 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
             exception shouldNotBe null
             exception.message shouldBe "Error allocating a new sample member test"
           }
+
           clearMocks(dataApi, answers = false, childMocks = false)
         }
     }
@@ -221,6 +207,7 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
             exception shouldNotBe null
             exception.cause?.message shouldBe "Cannot create sample member test in ZOSMFAD.TEST on test_connection\n" + "Code: 403"
           }
+
           clearMocks(dataApi, answers = false, childMocks = false)
         }
     }
@@ -229,7 +216,8 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
       //given
       every { progressIndicator.checkCanceled() } throws CancellationException() // Simulate cancellation
       every { dataApi.createDataset(any(), any(), any()) } returns mockk()
-      var isExceptionOccurred: Boolean = false
+      var isExceptionOccurred = false
+
       //when
       try {
         datasetAllocator.run(datasetAllocationOperation, progressIndicator)

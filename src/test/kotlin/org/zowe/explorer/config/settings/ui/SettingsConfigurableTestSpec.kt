@@ -10,37 +10,49 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config.settings.ui
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
+import io.kotest.assertions.assertSoftly
 import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.getPrivateFieldValue
-import org.zowe.explorer.testutils.setPrivateFieldValue
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.utils.validateJobReturnCode
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.testutils.getPrivateFieldValue
+import org.zowe.explorer.testutils.setPrivateFieldValue
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JButton
 
-class SettingsConfigurableTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
+class SettingsConfigurableTestSpec : AppInitShouldSpec("config/settings/ui/SettingsConfigurable", {
+  context("all functions") {
+    var didChangeSuccessMaxCode = false
+    var didChangeWarningMaxCode = false
 
-  context("SettingsConfigurable test") {
+    val configService = ConfigService.getService()
+    every { configService.successMaxCode } returns 0
+    every {
+      configService.successMaxCode = any()
+    } answers {
+      didChangeSuccessMaxCode = true
+    }
+    every { configService.warningMaxCode } returns 7
+    every {
+      configService.warningMaxCode = any()
+    } answers {
+      didChangeWarningMaxCode = true
+    }
+
     val settingsConfigurable = spyk<SettingsConfigurable>(recordPrivateCalls = true)
-    val configService = ConfigService.getService() as TestConfigServiceImpl
 
     val panel = settingsConfigurable.createPanel()
 
@@ -48,134 +60,189 @@ class SettingsConfigurableTestSpec : WithApplicationShouldSpec({
     val warningTextField = panel.getComponent(4) as JBTextField
     val batchTextField = panel.getComponent(8) as JBTextField
 
-    should("isModified") {
+    beforeEach {
+      successTextField.text = "0"
+      warningTextField.text = "7"
+      setPrivateFieldValue(settingsConfigurable, "isReturnCodesValid", true)
+      settingsConfigurable.apply()
 
+      didChangeSuccessMaxCode = false
+      didChangeWarningMaxCode = false
+    }
+
+    should("isModified") {
       settingsConfigurable.isModified shouldBe false
       val isAutoSyncEnabledField = panel.getComponent(9) as JBCheckBox
-      isAutoSyncEnabledField.isSelected = false
+      isAutoSyncEnabledField.doClick()
       settingsConfigurable.isModified shouldBe true
       settingsConfigurable.reset()
+      settingsConfigurable.isModified shouldBe false
       batchTextField.text = "200"
       settingsConfigurable.isModified shouldBe true
       settingsConfigurable.reset()
+      settingsConfigurable.isModified shouldBe false
       successTextField.text = "2"
       settingsConfigurable.isModified shouldBe true
       settingsConfigurable.reset()
+      settingsConfigurable.isModified shouldBe false
       warningTextField.text = "9"
       settingsConfigurable.isModified shouldBe true
       settingsConfigurable.reset()
+      settingsConfigurable.isModified shouldBe false
     }
 
     should("Rate Us") {
       var isRateUsOpened = false
       mockkStatic(BrowserUtil::class)
-      every { BrowserUtil.browse(any<String>()) } answers {
+      every {
+        BrowserUtil.browse(any<String>())
+      } answers {
         isRateUsOpened = true
       }
-      val rateUsButton = panel.getComponent(13) as JButton
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          rateUsButton.doClick()
-        }
+      ApplicationManager.getApplication().invokeAndWait {
+        val rateUsButton = panel.getComponent(13) as JButton
+        rateUsButton.doClick()
+        isRateUsOpened shouldBe true
       }
-      isRateUsOpened shouldBe true
     }
 
     should("Validation") {
-      configService.resetTestService()
       successTextField.text = "-1"
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid", true)
+      setPrivateFieldValue(settingsConfigurable, "isReturnCodesValid", true)
       settingsConfigurable.apply()
       settingsConfigurable.reset()
-      getPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid") shouldBe false
+      getPrivateFieldValue(settingsConfigurable, "isReturnCodesValid") shouldBe false
 
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "panel", null)
-      configService.resetTestService()
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid", true)
+      setPrivateFieldValue(settingsConfigurable, "panel", null)
+      setPrivateFieldValue(settingsConfigurable, "isReturnCodesValid", true)
       successTextField.text = "2"
       settingsConfigurable.apply()
       settingsConfigurable.reset()
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "panel", panel)
-      getPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid") shouldBe true
+      setPrivateFieldValue(settingsConfigurable, "panel", panel)
+      getPrivateFieldValue(settingsConfigurable, "isReturnCodesValid") shouldBe true
     }
 
     should("JES Explorer") {
-      configService.resetTestService()
-      successTextField.text = "2"
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid", true)
-      settingsConfigurable.apply()
-      configService.resetTestService()
       successTextField.text = "-1"
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid", false)
+      setPrivateFieldValue(settingsConfigurable, "isReturnCodesValid", false)
       settingsConfigurable.apply()
-      configService.isSuccessMinCodeChanged shouldBe false
-      configService.isWarningMinCodeeChanged shouldBe false
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "isReturnCodesValid", true)
+      assertSoftly {
+        didChangeSuccessMaxCode shouldBe false
+        didChangeWarningMaxCode shouldBe false
+      }
+      setPrivateFieldValue(settingsConfigurable, "isReturnCodesValid", true)
       successTextField.text = "2"
       warningTextField.text = "9"
       settingsConfigurable.apply()
-      configService.isSuccessMinCodeChanged shouldBe true
-      configService.isWarningMinCodeeChanged shouldBe true
+      assertSoftly {
+        didChangeSuccessMaxCode shouldBe true
+        didChangeWarningMaxCode shouldBe true
+      }
       settingsConfigurable.cancel()
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "panel", null)
+      setPrivateFieldValue(settingsConfigurable, "panel", null)
       settingsConfigurable.reset()
-      setPrivateFieldValue(settingsConfigurable, SettingsConfigurable::class.java, "panel", panel)
+      setPrivateFieldValue(settingsConfigurable, "panel", panel)
     }
 
     should("validateJobReturnCode") {
-      validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) shouldBe null
+      val jobReturnCodeValidationInfo1 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      )
+      jobReturnCodeValidationInfo1 shouldBe null
 
       successTextField.text = "-1"
-      (validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) as ValidationInfo).message shouldBe "Return code should be greater or equal than 0"
+      val jobReturnCodeValidationInfo2 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      ) as ValidationInfo
+      jobReturnCodeValidationInfo2.message shouldBe "Return code should be greater or equal than 0"
       successTextField.text = "1"
 
       successTextField.text = "T"
-      (validateJobReturnCode(
-        successTextField, AtomicInteger(-1), warningTextField, AtomicInteger(8), successTextField
-      ) as ValidationInfo).message shouldBe "Return code should be greater or equal than 0"
+      val jobReturnCodeValidationInfo3 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(-1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      ) as ValidationInfo
+      jobReturnCodeValidationInfo3.message shouldBe "Return code should be greater or equal than 0"
       successTextField.text = "1"
 
       warningTextField.text = "-1"
       successTextField.text = "-1"
-      (validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) as ValidationInfo).message shouldBe "Return code should be greater or equal than 0"
+      val jobReturnCodeValidationInfo4 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      ) as ValidationInfo
+      jobReturnCodeValidationInfo4.message shouldBe "Return code should be greater or equal than 0"
       successTextField.text = "1"
 
       warningTextField.text = "-1"
-      (validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) as ValidationInfo).message shouldBe "Return code should be greater or equal than 0"
+      val jobReturnCodeValidationInfo5 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      ) as ValidationInfo
+      jobReturnCodeValidationInfo5.message shouldBe "Return code should be greater or equal than 0"
       warningTextField.text = "8"
 
       warningTextField.text = "T"
-      (validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(-1), successTextField
-      ) as ValidationInfo).message shouldBe "Return code should be greater or equal than 0"
+      val jobReturnCodeValidationInfo6 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(-1),
+        successTextField
+      ) as ValidationInfo
+      jobReturnCodeValidationInfo6.message shouldBe "Return code should be greater or equal than 0"
       warningTextField.text = "8"
 
       successTextField.text = "-"
-      validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) shouldBe null
+      val jobReturnCodeValidationInfo7 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      )
+      jobReturnCodeValidationInfo7 shouldBe null
       successTextField.text = "1"
 
       warningTextField.text = "-"
-      validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) shouldBe null
+      val jobReturnCodeValidationInfo8 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      )
+      jobReturnCodeValidationInfo8 shouldBe null
       warningTextField.text = "8"
 
       successTextField.text = "9"
-      (validateJobReturnCode(
-        successTextField, AtomicInteger(1), warningTextField, AtomicInteger(8), successTextField
-      ) as ValidationInfo).message shouldBe "Success return code should be less than warning return code"
+      val jobReturnCodeValidationInfo9 = validateJobReturnCode(
+        successTextField,
+        AtomicInteger(1),
+        warningTextField,
+        AtomicInteger(8),
+        successTextField
+      ) as ValidationInfo
+      jobReturnCodeValidationInfo9.message shouldBe "Success return code should be less than warning return code"
+
       settingsConfigurable.apply()
     }
   }
-
 })

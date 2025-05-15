@@ -52,7 +52,7 @@ class AddOrEditMaskDialog(
 
   init {
     title = dialogTitle
-    initialize { init() }
+    init()
   }
 
   override fun createCenterPanel(): JComponent {

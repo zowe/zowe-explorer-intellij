@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.tso.config.ui
@@ -63,7 +64,7 @@ class TSOSessionDialog(
   private var codepageComboBoxModel = CollectionComboBoxModel(TsoCodePage.entries)
 
   /**
-   * Represents an UI panel with values
+   * Represents a UI panel with values
    */
   private val mainPanel by lazy {
     val defaultWidthLabelsGroup = "DEFAULT_DIALOG_LABELS_WIDTH_GROUP"
@@ -93,8 +94,11 @@ class TSOSessionDialog(
           .bindItem(
             {
               crudable.getByUniqueKey<ConnectionConfig>(state.connectionConfigUuid)
-                ?: crudable.getAll<ConnectionConfig>().findFirst().nullable
-                  ?.also { state.connectionConfigUuid = it.uuid }
+                ?: crudable
+                    .getAll<ConnectionConfig>()
+                    .findFirst()
+                    .nullable
+                    ?.also { state.connectionConfigUuid = it.uuid }
             },
             { state.connectionConfigUuid = it?.uuid ?: "" }
           )
@@ -280,6 +284,6 @@ class TSOSessionDialog(
     mainPanel.registerValidators(myDisposable) { map ->
       isOKActionEnabled = map.isEmpty()
     }
-    initialize { init() }
+    init()
   }
 }

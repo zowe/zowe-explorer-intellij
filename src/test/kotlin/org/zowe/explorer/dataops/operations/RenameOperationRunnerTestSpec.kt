@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.operations
@@ -18,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.MaskedRequester
@@ -29,9 +29,6 @@ import org.zowe.explorer.dataops.attributes.UssRequester
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.explorer.actions.DuplicateMemberAction
 import org.zowe.explorer.explorer.actions.RenameAction
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
@@ -39,13 +36,13 @@ import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.shouldBe
 import io.mockk.Called
 import io.mockk.Runs
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.verify
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.CopyDataZOS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.Dataset
@@ -55,39 +52,31 @@ import org.zowe.kotlinsdk.MoveUssFile
 import org.zowe.kotlinsdk.RenameData
 import retrofit2.Response
 
-class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
-
-  beforeSpec {
-    clearAllMocks()
-  }
-
-  context("RenameOperationRunner common spec") {
-
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+class RenameOperationRunnerTestSpec : AppInitShouldSpec("dataops/operations/RenameOperationRunner", {
+  context("common functions") {
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
     val dataApi = mockk<DataAPI>()
-    val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
-    zosmfApi.testInstance = object : TestZosmfApiImpl() {
-      override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-        @Suppress("UNCHECKED_CAST")
-        return dataApi as Api
-      }
-    }
+    val zosmfApi = ZosmfApi.getService()
+    every { zosmfApi.getApi(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
+    val dataOpsManager = DataOpsManager.getService()
 
     val classUnderTest = spyk(RenameOperationRunner(dataOpsManager))
 
     context("canRun") {
-
-      val operation = mockk<RenameOperation>()
-      every { operation.attributes }.returnsMany(
-        mockk<RemoteMemberAttributes>(),
-        mockk<RemoteDatasetAttributes>(),
-        mockk<RemoteUssAttributes>(),
-        mockk<FileAttributes>()
-      )
+      val operation = mockk<RenameOperation> {
+        every {
+          attributes
+        }.returnsMany(
+          mockk<RemoteMemberAttributes>(),
+          mockk<RemoteDatasetAttributes>(),
+          mockk<RemoteUssAttributes>(),
+          mockk<FileAttributes>()
+        )
+      }
 
       should("returnTrue_whenCanRun_givenRemoteMemberAttributes") {
-        // given
-
         // when
         val canRun = classUnderTest.canRun(operation)
 
@@ -98,8 +87,6 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
       }
 
       should("returnTrue_whenCanRun_givenRemoteDatasetAttributes") {
-        // given
-
         // when
         val canRun = classUnderTest.canRun(operation)
 
@@ -110,8 +97,6 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
       }
 
       should("returnTrue_whenCanRun_givenRemoteUssAttributes") {
-        // given
-
         // when
         val canRun = classUnderTest.canRun(operation)
 
@@ -122,8 +107,6 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
       }
 
       should("returnFalse_whenCanRun_givenFileAttributes") {
-        // given
-
         // when
         val canRun = classUnderTest.canRun(operation)
 
@@ -135,18 +118,19 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
     }
 
     context("run operation") {
-
       val operation = mockk<RenameOperation>()
-      val progressIndicator = mockk<ProgressIndicator>()
-      val datasetRequester = mockk<MaskedRequester>()
-      val ussRequester = mockk<UssRequester>()
-      val connectionConfig = mockk<ConnectionConfig>()
-
-      mockkStatic("org.zowe.explorer.config.connect.CredentialServiceKt")
-      every { connectionConfig.authToken } returns "TEST_TOKEN"
-      every { datasetRequester.connectionConfig } returns connectionConfig
-      every { ussRequester.connectionConfig } returns connectionConfig
-      every { progressIndicator.checkCanceled() } just Runs
+      val progressIndicator = mockk<ProgressIndicator> {
+        every { checkCanceled() } just Runs
+      }
+      val connectionConfigMock = mockk<ConnectionConfig> {
+        every { uuid } returns "test_uuid"
+      }
+      val datasetRequester = mockk<MaskedRequester> {
+        every { connectionConfig } returns connectionConfigMock
+      }
+      val ussRequester = mockk<UssRequester> {
+        every { connectionConfig } returns connectionConfigMock
+      }
 
       should("not run rename operation on invalid attributes given") {
         // given
@@ -161,17 +145,19 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("run rename operation on RemoteDatasetAttributes given") {
         // given
-        val datasetAttributes = mockk<RemoteDatasetAttributes>()
-        val mfFile = mockk<MFVirtualFile>()
-        val apiResponse = mockk<Response<Void>>()
-
-        every { datasetAttributes.requesters } returns mutableListOf(datasetRequester)
-        every { datasetAttributes.name } returns "OLD_FILE_NAME"
+        val mfFile = mockk<MFVirtualFile> {
+          every { rename(any(), any()) } just Runs
+        }
+        val apiResponse = mockk<Response<Void>> {
+          every { isSuccessful } returns true
+        }
+        val datasetAttributes = mockk<RemoteDatasetAttributes> {
+          every { requesters } returns mutableListOf(datasetRequester)
+          every { name } returns "OLD_FILE_NAME"
+        }
         every { operation.file } returns mfFile
-        every { mfFile.rename(any(), any()) } just Runs
         every { operation.attributes } returns datasetAttributes
         every { operation.newName } returns "NEW_FILE_NAME"
-        every { apiResponse.isSuccessful } returns true
 
         every {
           dataApi.renameDataset(any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()
@@ -183,11 +169,9 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
         // then
         verify(exactly = 1) {
           dataApi.renameDataset(
-            "TEST_TOKEN",
+            any(),
             null,
-            RenameData(
-              fromDataset = RenameData.FromDataset("OLD_FILE_NAME")
-            ),
+            RenameData(fromDataset = RenameData.FromDataset("OLD_FILE_NAME")),
             "NEW_FILE_NAME"
           )
         }
@@ -196,9 +180,10 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("throw CallException while running rename operation on RemoteDatasetAttributes, if response wan not successful") {
         // given
-        val apiResponse = mockk<Response<Void>>()
-        every { apiResponse.code() } returns 404
-        every { apiResponse.isSuccessful } returns false
+        val apiResponse = mockk<Response<Void>> {
+          every { code() } returns 404
+          every { isSuccessful } returns false
+        }
 
         every {
           dataApi.renameDataset(any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()
@@ -236,29 +221,30 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("run rename operation on RemoteMemberAttributes given DuplicateMember requester") {
         // given
-        val memberAttributes = mockk<RemoteMemberAttributes>()
-        val parentAttributes = mockk<RemoteDatasetAttributes>()
-        val datasetMock = mockk<Dataset>()
-        val memberMock = mockk<Member>()
-        val parentFile = mockk<MFVirtualFile>()
-        val apiResponse = mockk<Response<Void>>()
+        val datasetMock = mockk<Dataset> {
+          every { name } returns "DATASET_NAME"
+        }
+        val parentAttributes = mockk<RemoteDatasetAttributes> {
+          every { datasetInfo } returns datasetMock
+          every { requesters } returns mutableListOf(datasetRequester)
+        }
+        val parentFileMock = mockk<MFVirtualFile>()
+        val memberMock = mockk<Member> {
+          every { name } returns "MEMBER_NAME"
+        }
+        val memberAttributes = mockk<RemoteMemberAttributes> {
+          every { parentFile } returns parentFileMock
+          every { info } returns memberMock
+        }
+        val apiResponse = mockk<Response<Void>> {
+          every { isSuccessful } returns true
+        }
 
-        every { datasetMock.name } returns "DATASET_NAME"
-        every { parentAttributes.datasetInfo } returns datasetMock
-        every { memberAttributes.parentFile } returns parentFile
-        every { parentAttributes.requesters } returns mutableListOf(datasetRequester)
-        every { memberMock.name } returns "MEMBER_NAME"
-        every { memberAttributes.info } returns memberMock
         every { operation.attributes } returns memberAttributes
         every { operation.requester } returns mockk<DuplicateMemberAction>()
         every { operation.newName } returns "NEW_MEMBER_NAME"
-        every { apiResponse.isSuccessful } returns true
 
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-            return parentAttributes
-          }
-        }
+        every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns parentAttributes
 
         every {
           dataApi.copyToDatasetMember(any(), any(), any(), any(), any(), any()).cancelByIndicator(progressIndicator)
@@ -271,7 +257,7 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
         // then
         verify(exactly = 1) {
           dataApi.copyToDatasetMember(
-            "TEST_TOKEN",
+            any(),
             null,
             null,
             CopyDataZOS.CopyFromDataset(
@@ -286,9 +272,10 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("throw CallException while running rename operation on RemoteMemberAttributes, if response wan not successful for DuplicateMember requester") {
         // given
-        val apiResponse = mockk<Response<Void>>()
-        every { apiResponse.code() } returns 404
-        every { apiResponse.isSuccessful } returns false
+        val apiResponse = mockk<Response<Void>> {
+          every { code() } returns 404
+          every { isSuccessful } returns false
+        }
 
         every {
           dataApi.copyToDatasetMember(any(), any(), any(), any(), any(), any()).cancelByIndicator(progressIndicator)
@@ -308,14 +295,14 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("run rename operation on RemoteMemberAttributes given non DuplicateMember requester") {
         // given
-        val apiResponse = mockk<Response<Void>>()
-        val memberFile = mockk<MFVirtualFile>()
-
+        val memberFile = mockk<MFVirtualFile> {
+          every { rename(any(), any()) } just Runs
+        }
         every { operation.requester } returns mockk<RenameAction>()
         every { operation.file } returns memberFile
-        every { memberFile.rename(any(), any()) } just Runs
-        every { apiResponse.isSuccessful } returns true
-
+        val apiResponse = mockk<Response<Void>> {
+          every { isSuccessful } returns true
+        }
         every {
           dataApi.renameDatasetMember(any(), any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()
         } returns apiResponse
@@ -326,7 +313,7 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
         // then
         verify(exactly = 1) {
           dataApi.renameDatasetMember(
-            "TEST_TOKEN",
+            any(),
             null,
             RenameData(fromDataset = RenameData.FromDataset("DATASET_NAME", "MEMBER_NAME")),
             "DATASET_NAME",
@@ -338,9 +325,10 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("throw CallException while running rename operation on RemoteMemberAttributes, if response wan not successful for RenameAction requester") {
         // given
-        val apiResponse = mockk<Response<Void>>()
-        every { apiResponse.code() } returns 404
-        every { apiResponse.isSuccessful } returns false
+        val apiResponse = mockk<Response<Void>> {
+          every { code() } returns 404
+          every { isSuccessful } returns false
+        }
 
         every {
           dataApi.renameDatasetMember(any(), any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()
@@ -359,7 +347,6 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("throw RuntimeException while running rename operation on RemoteMemberAttributes, if response wan not successful for RenameAction requester") {
         // given
-
         every {
           dataApi.renameDatasetMember(any(), any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()
         } answers {
@@ -379,18 +366,21 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("run rename operation on RemoteUssAttributes given") {
         // given
-        val ussAttributes = mockk<RemoteUssAttributes>()
-        val ussFile = mockk<MFVirtualFile>()
-        val apiResponse = mockk<Response<Void>>()
+        val ussAttributes = mockk<RemoteUssAttributes> {
+          every { parentDirPath } returns "PARENT_PATH"
+          every { path } returns "TEST_FILE_PATH"
+          every { requesters } returns mutableListOf(ussRequester)
+        }
+        val ussFile = mockk<MFVirtualFile> {
+          every { rename(any(), any()) } just Runs
+        }
+        val apiResponse = mockk<Response<Void>> {
+          every { isSuccessful } returns true
+        }
 
-        every { ussAttributes.parentDirPath } returns "PARENT_PATH"
-        every { ussAttributes.path } returns "TEST_FILE_PATH"
-        every { ussAttributes.requesters } returns mutableListOf(ussRequester)
         every { operation.attributes } returns ussAttributes
         every { operation.newName } returns "NEW_FILE_NAME"
         every { operation.file } returns ussFile
-        every { ussFile.rename(any(), any()) } just Runs
-        every { apiResponse.isSuccessful } returns true
 
         every {
           dataApi.moveUssFile(any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()
@@ -402,7 +392,7 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
         // then
         verify(exactly = 1) {
           dataApi.moveUssFile(
-            "TEST_TOKEN",
+            any(),
             null,
             MoveUssFile(
               from = "TEST_FILE_PATH"
@@ -415,9 +405,10 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
       should("throw CallException while running rename operation on RemoteUssAttributes, if response wan not successful") {
         // given
-        val apiResponse = mockk<Response<Void>>()
-        every { apiResponse.code() } returns 404
-        every { apiResponse.isSuccessful } returns false
+        val apiResponse = mockk<Response<Void>> {
+          every { code() } returns 404
+          every { isSuccessful } returns false
+        }
 
         every {
           dataApi.moveUssFile(any(), any(), any(), any()).cancelByIndicator(progressIndicator).execute()

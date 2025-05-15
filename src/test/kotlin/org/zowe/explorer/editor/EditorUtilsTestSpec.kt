@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.editor
@@ -19,66 +20,59 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import io.mockk.unmockkAll
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
 
-class EditorUtilsTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-
-  context("Utils common test spec") {
-
-    val editorMock = mockk<Editor>()
+class EditorUtilsTestSpec : MockkAwareShouldSpec({
+  context("editor/utils") {
     val documentMock = mockk<Document>()
     val projectMock = mockk<Project>()
-    every { editorMock.document } returns documentMock
-    every { editorMock.project } returns projectMock
+    val editorMock = mockk<Editor> {
+      every { document } returns documentMock
+      every { project } returns projectMock
+    }
+
     mockkStatic(FileDocumentManager::getInstance)
     mockkStatic(EditorModificationUtil::checkModificationAllowed)
 
     should("requestDocumentWriting. Check if current document is writable") {
       var isFileWritable = false
-      every { FileDocumentManager.getInstance().requestWritingStatus(documentMock, projectMock) } answers {
+      every {
+        FileDocumentManager.getInstance().requestWritingStatus(documentMock, projectMock)
+      } answers {
         isFileWritable = true
         FileDocumentManager.WriteAccessStatus.WRITABLE
       }
 
       requestDocumentWriting(editorMock)
 
-      assertSoftly {
-        isFileWritable shouldBe true
-      }
-
+      assertSoftly { isFileWritable shouldBe true }
     }
 
     should("requestDocumentWriting. Check if current document is not writable") {
       var isFileWritable = true
-      every { FileDocumentManager.getInstance().requestWritingStatus(documentMock, projectMock) } answers {
+      every {
+        FileDocumentManager.getInstance().requestWritingStatus(documentMock, projectMock)
+      } answers {
         FileDocumentManager.WriteAccessStatus.NON_WRITABLE
       }
-      every { EditorModificationUtil.setReadOnlyHint(editorMock, any() as String) } just Runs
-      every { EditorModificationUtil.checkModificationAllowed(editorMock) } answers {
+      every { EditorModificationUtil.setReadOnlyHint(editorMock, any<String>()) } just Runs
+      every {
+        EditorModificationUtil.checkModificationAllowed(editorMock)
+      } answers {
         isFileWritable = false
         false
       }
 
       requestDocumentWriting(editorMock)
 
-      assertSoftly {
-        isFileWritable shouldBe false
-      }
-
+      assertSoftly { isFileWritable shouldBe false }
     }
-
-    unmockkAll()
   }
 })

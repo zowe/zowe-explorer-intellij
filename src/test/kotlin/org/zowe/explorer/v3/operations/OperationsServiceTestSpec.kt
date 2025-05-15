@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.operations
@@ -20,34 +21,23 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.testAppFixture
 import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
 
-class OperationsServiceTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("v3/operations/OperationsService") {
+class OperationsServiceTestSpec : AppInitShouldSpec("v3/operations/OperationsService", {
+  context("all functions") {
     var didRenameOperationRun = false
     var isErrorNotificationTriggered = false
 
     val progressIndicator = mockk<ProgressIndicator>()
-    val extensionPointNameMock = mockk<ExtensionPointName<Any>>()
     val operationData = mockk<RenameOperationData<ConnectionConfigOldStruct>> {
       every { attributes } returns mockk()
     }
 
-    if (testAppFixture == null) {
-      mockkObject(ExtensionPointName)
-      every { ExtensionPointName.create<Any>(any()) } returns extensionPointNameMock
-    }
     val testAppEpName = ExtensionPointName<OperationRunner<*, *, *>>("org.zowe.explorer.operationRunnerV3")
     var testAppEpNameDisposable = Disposer.newDisposable()
 
@@ -82,11 +72,7 @@ class OperationsServiceTestSpec : ShouldSpec({
         }
       }
 
-      if (testAppFixture != null) {
-        ExtensionTestUtil.maskExtensions(testAppEpName, listOf(operationRunner), testAppEpNameDisposable)
-      } else {
-        every { extensionPointNameMock.extensionList } returns listOf(operationRunner)
-      }
+      ExtensionTestUtil.maskExtensions(testAppEpName, listOf(operationRunner), testAppEpNameDisposable)
 
       val result = OperationsService.getService()
         .performOperation(
@@ -100,11 +86,7 @@ class OperationsServiceTestSpec : ShouldSpec({
     }
 
     should("test operation is not run as operation runner is not found") {
-      if (testAppFixture != null) {
-        ExtensionTestUtil.maskExtensions(testAppEpName, listOf(), testAppEpNameDisposable)
-      } else {
-        every { extensionPointNameMock.extensionList } returns listOf()
-      }
+      ExtensionTestUtil.maskExtensions(testAppEpName, listOf(), testAppEpNameDisposable)
 
       val result = OperationsService.getService()
         .performOperation(
@@ -136,11 +118,7 @@ class OperationsServiceTestSpec : ShouldSpec({
         }
       }
 
-      if (testAppFixture != null) {
-        ExtensionTestUtil.maskExtensions(testAppEpName, listOf(operationRunner), testAppEpNameDisposable)
-      } else {
-        every { extensionPointNameMock.extensionList } returns listOf(operationRunner)
-      }
+      ExtensionTestUtil.maskExtensions(testAppEpName, listOf(operationRunner), testAppEpNameDisposable)
 
       val result = OperationsService.getService()
         .performOperation(

@@ -10,361 +10,769 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.tso
 
-import com.intellij.execution.process.NopProcessHandler
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.terminal.JBTerminalWidget
-import com.intellij.terminal.TerminalExecutionConsole
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
-import org.zowe.explorer.config.connect.ConnectionConfig
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
-import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
-import org.zowe.explorer.dataops.operations.MessageData
-import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.explorer.actions.rexx.ExecuteRexxAction
-import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
-import org.zowe.explorer.tso.config.TSOConfigWrapper
-import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.tso.ui.TSOConsoleView
-import org.zowe.explorer.utils.sendTopic
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.*
-import org.zowe.kotlinsdk.TsoData
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
+import org.zowe.explorer.dataops.operations.TsoOperation
+import org.zowe.explorer.telemetry.NotificationCompatibleException
+import org.zowe.explorer.telemetry.NotificationsService
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.testutils.setPrivateFieldValue
+import org.zowe.explorer.tso.config.TSOConfigWrapper
+import org.zowe.explorer.utils.sendTopic
 import org.zowe.kotlinsdk.TsoResponse
+import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KFunction
 
-class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
+class TSOWindowFactoryTestSpec : AppInitShouldSpec("tso/TSOWindowFactory", {
+    var didSetSelectedContent = false
+    var didActivate = false
+    var didChangeIsAvailable = false
+    var didTriggerShow = false
+    var didTriggerNotifyError = false
 
-  afterSpec {
-    clearAllMocks()
-  }
+    lateinit var notificationsService: NotificationsService
+    lateinit var dataOpsManager: DataOpsManager
 
-  context("TSOWindowFactory test spec") {
+    beforeEach {
+      didSetSelectedContent = false
+      didActivate = false
+      didChangeIsAvailable = false
+      didTriggerShow = false
+      didTriggerNotifyError = false
 
-    val connectionConfig = mockk<ConnectionConfig>()
-    val console = mockk<TSOConsoleView>()
-    val processHandler = spyk(NopProcessHandler())
-    val project = ProjectManager.getInstance().defaultProject
-    val toolWindow = spyk(MockToolWindow(project))
-    val classUnderTest = spyk(TSOWindowFactory(), recordPrivateCalls = true)
+      notificationsService = NotificationsService.getService()
+      every {
+        notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+      } answers {
+        didTriggerNotifyError = true
+      }
+      dataOpsManager = DataOpsManager.getService()
+    }
 
-    val tsoSessionConfig = mockk<TSOSessionConfig>()
-    every { tsoSessionConfig.timeout } returns 10
-    every { tsoSessionConfig.maxAttempts } returns 3
-    every { connectionConfig.name } returns "TEST CONNECTION"
-    every { console.getProcessHandler() } returns processHandler
-    every { processHandler.notifyTextAvailable(any(), any()) } just Runs
-    every { classUnderTest.addToolWindowContent(any(), any(), any()) } just Runs
+    context("init") {
+      var textAvailableTriggerCount = 0
 
-    // initialize topics to be able to call them
-    classUnderTest.init(toolWindow)
+      lateinit var contentManagerListener: ContentManagerListener
+      lateinit var tsoConfigWrapperMock: TSOConfigWrapper
 
-    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+      val contentManagerMock = mockk<ContentManager> {
+        every { setSelectedContent(any<Content>(), any<Boolean>()) } answers {
+          didSetSelectedContent = true
+        }
+        every { factory } returns mockk {
+          every { createContent(any(), any(), any()) } returns mockk {
+            every { preferredFocusableComponent = any() } returns Unit
+          }
+        }
+        every { addContent(any<Content>()) } returns Unit
+      }
+      val projectMock = mockk<Project> {
+        every { messageBus } returns ApplicationManager.getApplication().messageBus
+        every { getService(EncodingProjectManager::class.java) } returns mockk {
+          every { defaultCharset } returns mockk()
+        }
+      }
+      val processHandlerMock = mockk<ProcessHandler>(relaxUnitFun = true) {
+        every {
+          notifyTextAvailable(any<String>(), ProcessOutputType.STDOUT)
+        } answers {
+          textAvailableTriggerCount++
+        }
+      }
+      val toolWindow = mockk<ToolWindow> {
+        every { project } returns projectMock
+        every { addContentManagerListener(any<ContentManagerListener>()) } answers {
+          contentManagerListener = firstArg<ContentManagerListener>()
+        }
+        every { contentManager } returns contentManagerMock
+        every {
+          activate(any<Runnable>(), any<Boolean>())
+        } answers {
+          didActivate = true
+        }
+        every {
+          isAvailable = any<Boolean>()
+        } answers {
+          didChangeIsAvailable = true
+        }
+        every {
+          show()
+        } answers {
+          didTriggerShow = true
+        }
+      }
+      val tsoWindowFactory = TSOWindowFactory()
+      tsoWindowFactory.init(toolWindow)
 
-    context("Execute REXX from Explorer") {
+      beforeEach {
+        textAvailableTriggerCount = 0
 
-      val rexxConfig = ExecuteRexxAction.RexxParams(mutableListOf("arg1", "arg2"))
-      rexxConfig.tsoSessionConfig = tsoSessionConfig
-      rexxConfig.rexxLibrary = "ARST.TEST"
-      rexxConfig.execMember = "SAMPLE"
-      val tsoSendMessageResponse = TsoResponse("TEST KEY",
-        tsoData = mutableListOf(
-          TsoData(tsoMessage = org.zowe.kotlinsdk.MessageType(version = "0001", data = "COMMAND EXECUTED")),
-          TsoData(tsoPrompt = org.zowe.kotlinsdk.MessageType(version = "0001"))
-        )
-      )
+        every { contentManagerMock.contents } returns arrayOf()
+        every { contentManagerMock.selectedContent } returns mockk()
+        every { contentManagerMock.removeContent(any<Content>(), any<Boolean>()) } returns true
 
-      val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          @Suppress("UNCHECKED_CAST")
-          return tsoSendMessageResponse as R
+        tsoConfigWrapperMock = mockk<TSOConfigWrapper>(relaxed = true) {
+          every { getTSOResponse() } returns mockk {
+            every { servletKey } returns "test_servlet_key"
+            every { tsoData } returns listOf(
+              mockk {
+                every { tsoMessage } returns mockk {
+                  every { data } returns "test_tso_response"
+                }
+              }
+            )
+          }
+          every { unresponsive } returns false
+          every { getConnectionConfig() } returns mockk {
+            every { name } returns "test_connection_config"
+          }
+          every { getTSOResponseMessageQueue() } returns listOf(
+            mockk {
+              every { tsoPrompt } returns mockk()
+            }
+          )
+          every { getTSOSessionConfig() } returns mockk {
+            every { timeout } returns 1L
+            every { maxAttempts } returns 3
+          }
+          every { reconnectAttempts } returns 0
         }
       }
 
-      should("should execute REXX pgm by given REXX config with arguments") {
+      context("ContentManagerListener") {
+        should("trigger 'contentAdded' component event") {
+          val mockEvent = mockk<ContentManagerEvent> {
+            every { content } returns mockk()
+          }
 
-        val tsoSessionWrapper = TSOConfigWrapper(tsoSessionConfig, connectionConfig, TsoResponse(servletKey = "TEST KEY"))
-        val contentToAdd = toolWindow.contentManager.factory.createContent(console, "TEST CONTENT", false)
-        toolWindow.contentManager.addSelectedContent(contentToAdd)
-        sendTopic(SESSION_EXECUTE_REXX_TOPIC).executeRexx(project, tsoSessionWrapper, rexxConfig)
+          contentManagerListener.contentAdded(mockEvent)
 
-        verify { classUnderTest.addToolWindowContent(project, toolWindow, tsoSessionWrapper) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("EXEC '${rexxConfig.rexxLibrary}(${rexxConfig.execMember})' 'arg1,arg2'\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("COMMAND EXECUTED\n", ProcessOutputType.STDOUT) }
+          assertSoftly {
+            didSetSelectedContent shouldBe true
+            didActivate shouldBe true
+            didChangeIsAvailable shouldBe true
+            didTriggerShow shouldBe true
+          }
+        }
+        should("trigger 'contentRemoved' component event successfully closing TSO session") {
+          val mockEvent = mockk<ContentManagerEvent> {
+            every { content } returns mockk {
+              every { component } returns mockk<TSOConsoleView> {
+                every { tsoSession } returns mockk {
+                  every { getTSOResponse() } returns mockk {
+                    every { servletKey } returns ""
+                  }
+                }
+              }
+            }
+          }
+
+          every {
+            dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> {
+                mockk<TsoResponse>()
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+
+          contentManagerListener.contentRemoved(mockEvent)
+
+          assertSoftly {
+            didSetSelectedContent shouldBe false
+            didActivate shouldBe false
+            didChangeIsAvailable shouldBe true
+            didTriggerShow shouldBe false
+          }
+        }
+        should("trigger 'contentRemoved' component event closing TSO session with failure") {
+          val mockEvent = mockk<ContentManagerEvent> {
+            every { content } returns mockk {
+              every { component } returns mockk<TSOConsoleView> {
+                every { tsoSession } returns mockk {
+                  every { getTSOResponse() } returns mockk {
+                    every { servletKey } returns ""
+                  }
+                }
+              }
+            }
+          }
+
+          every {
+            dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> {
+                throw Exception("Test timeout during the request")
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+
+          every { contentManagerMock.contents } returns arrayOf(mockk())
+
+          contentManagerListener.contentRemoved(mockEvent)
+
+          assertSoftly {
+            didSetSelectedContent shouldBe false
+            didActivate shouldBe false
+            didChangeIsAvailable shouldBe false
+            didTriggerShow shouldBe false
+          }
+        }
       }
 
-      should("should execute REXX pgm by given REXX config without arguments") {
-        clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
-        val tsoSessionWrapper = TSOConfigWrapper(tsoSessionConfig, connectionConfig, TsoResponse(servletKey = "TEST KEY"))
-        rexxConfig.rexxArguments = mutableListOf()
-        sendTopic(SESSION_EXECUTE_REXX_TOPIC).executeRexx(project, tsoSessionWrapper, rexxConfig)
+      context("executeRexx") {
+        lateinit var rexxParamsMock: ExecuteRexxAction.RexxParams
 
-        verify { classUnderTest.addToolWindowContent(project, toolWindow, tsoSessionWrapper) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("EXEC '${rexxConfig.rexxLibrary}(${rexxConfig.execMember})'\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("COMMAND EXECUTED\n", ProcessOutputType.STDOUT) }
-      }
+        mockkConstructor(TSOConsoleView::class)
+        every { anyConstructed<TSOConsoleView>().processHandler } returns processHandlerMock
 
-      should("should call notifyError if TSO session was not found in the contentManager") {
-        var isCorrectErrorNotificationTriggered = false
-        clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
-        val tsoSessionWrapper = TSOConfigWrapper(tsoSessionConfig, connectionConfig, TsoResponse(servletKey = "TEST KEY"))
-        toolWindow.contentManager.removeAllContents(false)
-        notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-          override fun notifyError(
-            t: Throwable,
-            project: Project?,
-            custTitle: String?,
-            custDetailsShort: String?,
-            custDetailsLong: String?
-          ) {
-            if (custTitle == "Error getting TSO runtime session" ) {
-              isCorrectErrorNotificationTriggered = true
+        beforeEach {
+          rexxParamsMock = mockk {
+            every { rexxLibrary } returns "TEST.REXX.LIBRARY"
+            every { execMember } returns "TESTMEM"
+            every { rexxArguments } returns listOf()
+          }
+
+          var isFirstPrompt = true
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> mockk<TsoResponse> {
+                every { tsoData } returns listOf(
+                  mockk {
+                    every { tsoMessage } returns mockk {
+                      every { data } returns "test_tso_response"
+                    }
+                    every { tsoPrompt } answers {
+                      if (isFirstPrompt) {
+                        isFirstPrompt = false
+                        null
+                      } else {
+                        mockk()
+                      }
+                    }
+                  }
+                )
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+
+          every { contentManagerMock.selectedContent } returns mockk {
+            every { component } returns mockk<TSOConsoleView> {
+              every { processHandler } returns processHandlerMock
             }
           }
         }
 
-        sendTopic(SESSION_EXECUTE_REXX_TOPIC).executeRexx(project, tsoSessionWrapper, rexxConfig)
+        should("execute Rexx from explorer without arguments") {
+          ApplicationManager.getApplication().invokeAndWait {
+            sendTopic(SESSION_EXECUTE_REXX_TOPIC).executeRexx(projectMock, tsoConfigWrapperMock, rexxParamsMock)
+          }
 
-        assertSoftly {
-          isCorrectErrorNotificationTriggered shouldBe true
+          assertSoftly {
+            textAvailableTriggerCount shouldBe 6
+          }
         }
-      }
-    }
+        should("execute Rexx from explorer with arguments and a prompt once") {
+          var performTsoOperationCount = 0
 
-    context("Reconnect to the session") {
+          every { rexxParamsMock.rexxArguments } returns listOf("test_arg")
 
-      should("should call notifyError if session was not found in map") {
-        var isCorrectErrorNotificationTriggered = false
-        var triggerCount = 0
-
-        val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val oldSession = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
-
-        notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-          override fun notifyError(
-            t: Throwable,
-            project: Project?,
-            custTitle: String?,
-            custDetailsShort: String?,
-            custDetailsLong: String?
-          ) {
-            if (custTitle == "Error getting TSO session info" && custDetailsShort == "Could not find old TSO session ID") {
-              isCorrectErrorNotificationTriggered = true
-              triggerCount += 1
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> {
+                performTsoOperationCount++
+                mockk<TsoResponse> {
+                  every { tsoData } returns listOf(
+                    mockk {
+                      every { tsoMessage } returns mockk {
+                        every { data } returns "test_tso_response_$performTsoOperationCount"
+                      }
+                      every { tsoPrompt } returns mockk()
+                    }
+                  )
+                }
+              }
+              else -> fail("Operation handler is not defined: $operation")
             }
           }
+          var isFirstFetchForRexx = true
+          every { tsoConfigWrapperMock.getTSOResponseMessageQueue() } returns listOf(
+            mockk {
+              every { tsoPrompt } answers {
+                if (isFirstFetchForRexx) {
+                  isFirstFetchForRexx = false
+                  null
+                } else {
+                  mockk()
+                }
+              }
+            }
+          )
+
+          ApplicationManager.getApplication().invokeAndWait {
+            sendTopic(SESSION_EXECUTE_REXX_TOPIC).executeRexx(projectMock, tsoConfigWrapperMock, rexxParamsMock)
+          }
+
+          assertSoftly {
+            textAvailableTriggerCount shouldBe 6
+            performTsoOperationCount shouldBe 2
+          }
+        }
+        should("fail to execute Rexx from explorer cause the TSO session is not created for some reason") {
+          every { contentManagerMock.selectedContent } returns null
+
+          ApplicationManager.getApplication().invokeAndWait {
+            sendTopic(SESSION_EXECUTE_REXX_TOPIC).executeRexx(projectMock, tsoConfigWrapperMock, rexxParamsMock)
+          }
+
+          assertSoftly {
+            didTriggerNotifyError shouldBe true
+            textAvailableTriggerCount shouldBe 2
+          }
+        }
+      }
+
+      context("processCommand") {
+        lateinit var scheduledReconnectTask: TimerTask
+
+        var reconnectAttemptsCount = 0
+        var didCompleteReconnectTask = false
+        var performTsoOperationCount = 0
+
+        val newSingleThreadExecutorMock: () -> ScheduledExecutorService = Executors::newSingleThreadScheduledExecutor
+        mockkStatic(newSingleThreadExecutorMock as KFunction<*>)
+        every { Executors.newSingleThreadScheduledExecutor() } returns mockk<ScheduledExecutorService> {
+          every {
+            scheduleAtFixedRate(any(), 0L, any<Long>(), TimeUnit.SECONDS)
+          } answers {
+            scheduledReconnectTask = firstArg<TimerTask>()
+            mockk()
+          }
+          every {
+            awaitTermination(1L, TimeUnit.MINUTES)
+          } answers {
+            scheduledReconnectTask.run()
+            didCompleteReconnectTask
+          }
+          every {
+            shutdown()
+          } answers {
+            didCompleteReconnectTask = true
+          }
         }
 
-        sendTopic(SESSION_RECONNECT_TOPIC).reconnect(project, console, oldSession)
+        beforeEach {
+          reconnectAttemptsCount = 0
+          didCompleteReconnectTask = false
+          performTsoOperationCount = 0
 
-        assertSoftly { isCorrectErrorNotificationTriggered shouldBe true }
-        assertSoftly { triggerCount shouldBe 1 }
+          every {
+            tsoConfigWrapperMock.incrementReconnectAttempt()
+          } answers {
+            reconnectAttemptsCount++
+          }
+          every { tsoConfigWrapperMock.clearReconnectAttempts() } returns Unit
+        }
+
+        should("fail to process a command with one failed and one successful reconnection attempts") {
+          val tsoConsoleViewMock = mockk<TSOConsoleView>(relaxUnitFun = true) {
+            every { processHandler } returns processHandlerMock
+            every { tsoSession } returns tsoConfigWrapperMock
+          }
+
+          every {
+            dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> {
+                performTsoOperationCount++
+                if (performTsoOperationCount == 1 || performTsoOperationCount == 2) {
+                  throw Exception("Test exception", Exception("This is a test"))
+                } else {
+                  mockk<TsoResponse> {
+                    every { servletKey } returns "test_servlet_key_new"
+                    every { tsoData } returns listOf(
+                      mockk {
+                        every { tsoMessage } returns mockk {
+                          every { data } returns "test_tso_response_$performTsoOperationCount"
+                        }
+                        every { tsoPrompt } returns mockk()
+                      }
+                    )
+                  }
+                }
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+
+          setPrivateFieldValue(
+            tsoWindowFactory,
+            "tsoSessionToConfigMap",
+            mutableMapOf("test_servlet_key" to tsoConfigWrapperMock)
+          )
+
+          sendTopic(SESSION_COMMAND_ENTERED)
+            .processCommand(
+              projectMock,
+              tsoConsoleViewMock,
+              tsoConfigWrapperMock,
+              "test_command",
+              mockk(),
+              mockk(),
+              processHandlerMock
+            )
+
+          assertSoftly {
+            reconnectAttemptsCount shouldBe 2
+            textAvailableTriggerCount shouldBe 8
+            performTsoOperationCount shouldBe 3
+            didCompleteReconnectTask shouldBe true
+          }
+        }
+
+        should("fail to process a command and fail to reconnect after cause there is no associated session by servlet key") {
+          var isNotificationErrorCorrect = false
+          var didSessionFailed = false
+          var didProcessDestroy = false
+
+          val tsoConsoleViewMock = mockk<TSOConsoleView>(relaxUnitFun = true) {
+            every { processHandler } returns processHandlerMock
+            every { tsoSession } returns tsoConfigWrapperMock
+          }
+
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> {
+                performTsoOperationCount++
+                throw Exception("Test exception", Exception("This is a test"))
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+          every {
+            notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+          } answers {
+            val notificationException = firstArg<Throwable>()
+            if (
+              notificationException is NotificationCompatibleException
+              && notificationException.detailsShort == "Could not find old TSO session ID"
+            ) {
+              isNotificationErrorCorrect = true
+            }
+            didTriggerNotifyError = true
+          }
+          every {
+            tsoConfigWrapperMock.onSessionFailure(any<Throwable>())
+          } answers {
+            didSessionFailed = true
+          }
+          every { tsoConfigWrapperMock.getTSOSessionConfig() } returns mockk {
+            every { timeout } returns 1L
+            every { maxAttempts } returns 0
+          }
+          every {
+            processHandlerMock.destroyProcess()
+          } answers {
+            didProcessDestroy = true
+          }
+
+          sendTopic(SESSION_COMMAND_ENTERED)
+            .processCommand(
+              projectMock,
+              tsoConsoleViewMock,
+              tsoConfigWrapperMock,
+              "test_command",
+              mockk(),
+              mockk(),
+              processHandlerMock
+            )
+
+          assertSoftly {
+            reconnectAttemptsCount shouldBe 1
+            textAvailableTriggerCount shouldBe 5
+            performTsoOperationCount shouldBe 1
+            didCompleteReconnectTask shouldBe true
+            didTriggerNotifyError shouldBe true
+            isNotificationErrorCorrect shouldBe true
+            didSessionFailed shouldBe true
+            didProcessDestroy shouldBe true
+          }
+        }
+        should("fail to process a command and fail to reconnect to a session again as a new servlet key is null") {
+          var didSessionFailedWithCorrectMessage = false
+          var didProcessDestroy = false
+
+          val tsoConsoleViewMock = mockk<TSOConsoleView>(relaxUnitFun = true) {
+            every { processHandler } returns processHandlerMock
+            every { tsoSession } returns tsoConfigWrapperMock
+          }
+
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> {
+                performTsoOperationCount++
+                if (performTsoOperationCount == 1) {
+                  throw Exception("Test exception", Exception("This is a test"))
+                } else {
+                  mockk<TsoResponse> {
+                    every { servletKey } returns null
+                    every { tsoData } returns listOf(
+                      mockk {
+                        every { tsoMessage } returns mockk {
+                          every { data } returns "test_tso_response_$performTsoOperationCount"
+                        }
+                        every { tsoPrompt } returns mockk()
+                      }
+                    )
+                  }
+                }
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+          every {
+            tsoConfigWrapperMock.onSessionFailure(any<Throwable>())
+          } answers {
+            val messageToFind = "TSO session servletKey is null, TSO response is not correct."
+            val throwable = firstArg<Throwable>()
+            if (
+              throwable.message?.contains(messageToFind) == true
+              || throwable.cause?.message?.contains(messageToFind) == true
+            ) {
+              didSessionFailedWithCorrectMessage = true
+            }
+          }
+          every { tsoConfigWrapperMock.getTSOSessionConfig() } returns mockk {
+            every { timeout } returns 1L
+            every { maxAttempts } returns 0
+          }
+          every {
+            processHandlerMock.destroyProcess()
+          } answers {
+            didProcessDestroy = true
+          }
+
+          setPrivateFieldValue(
+            tsoWindowFactory,
+            "tsoSessionToConfigMap",
+            mutableMapOf("test_servlet_key" to tsoConfigWrapperMock)
+          )
+
+          sendTopic(SESSION_COMMAND_ENTERED)
+            .processCommand(
+              projectMock,
+              tsoConsoleViewMock,
+              tsoConfigWrapperMock,
+              "test_command",
+              mockk(),
+              mockk(),
+              processHandlerMock
+            )
+
+          assertSoftly {
+            reconnectAttemptsCount shouldBe 1
+            textAvailableTriggerCount shouldBe 5
+            performTsoOperationCount shouldBe 2
+            didCompleteReconnectTask shouldBe true
+            didSessionFailedWithCorrectMessage shouldBe true
+            didProcessDestroy shouldBe true
+          }
+        }
+        should("fail to process a command cause credentials are not correct") {
+          var didSessionFailedWithCorrectMessage = false
+          var didProcessDestroy = false
+
+          val tsoConsoleViewMock = mockk<TSOConsoleView>(relaxUnitFun = true) {
+            every { processHandler } returns processHandlerMock
+            every { tsoSession } returns tsoConfigWrapperMock
+          }
+
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> throw CredentialsNotFoundForConnectionException(mockk())
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+          every {
+            tsoConfigWrapperMock.onSessionFailure(any<Throwable>())
+          } answers {
+            val throwable = firstArg<Throwable>()
+            if (throwable is CredentialsNotFoundForConnectionException) {
+              didSessionFailedWithCorrectMessage = true
+            }
+          }
+          every {
+            processHandlerMock.destroyProcess()
+          } answers {
+            didProcessDestroy = true
+          }
+
+          sendTopic(SESSION_COMMAND_ENTERED)
+            .processCommand(
+              projectMock,
+              tsoConsoleViewMock,
+              tsoConfigWrapperMock,
+              "test_command",
+              mockk(),
+              mockk(),
+              processHandlerMock
+            )
+
+          assertSoftly {
+            textAvailableTriggerCount shouldBe 1
+            didSessionFailedWithCorrectMessage shouldBe true
+            didProcessDestroy shouldBe true
+          }
+        }
+      }
+
+      context("reopen") {
+        should("reopen the session with content") {
+          var didRemoveContent = false
+
+          mockkConstructor(TSOConsoleView::class)
+          every { anyConstructed<TSOConsoleView>().processHandler } returns processHandlerMock
+
+          every {
+            contentManagerMock.removeContent(any<Content>(), any<Boolean>())
+          } answers {
+            didRemoveContent = true
+            true
+          }
+
+          val tsoConsoleViewMock = mockk<TSOConsoleView>(relaxUnitFun = true) {
+            every { processHandler } returns processHandlerMock
+            every { tsoSession } returns tsoConfigWrapperMock
+          }
+
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> mockk<TsoResponse> {
+                every { servletKey } returns "test_servlet_key"
+                every { tsoData } returns listOf(
+                  mockk {
+                    every { tsoMessage } returns mockk {
+                      every { data } returns "test_tso_response"
+                    }
+                    every { tsoPrompt } returns mockk()
+                  }
+                )
+              }
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+
+          ApplicationManager.getApplication().invokeAndWait {
+            sendTopic(SESSION_REOPEN_TOPIC).reopen(projectMock, tsoConsoleViewMock)
+          }
+
+          assertSoftly {
+            didRemoveContent shouldBe true
+            didTriggerNotifyError shouldBe false
+            textAvailableTriggerCount shouldBe 2
+          }
+        }
+        should("fail to reopen the session cause a new servlet key is not acquired") {
+          mockkConstructor(TSOConsoleView::class)
+          every { anyConstructed<TSOConsoleView>().processHandler } returns processHandlerMock
+
+          every { contentManagerMock.selectedContent } returns null
+
+          val tsoConsoleViewMock = mockk<TSOConsoleView>(relaxUnitFun = true) {
+            every { processHandler } returns processHandlerMock
+            every { tsoSession } returns tsoConfigWrapperMock
+          }
+
+          every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+            when (val operation = firstArg<Operation<*>>()) {
+              is TsoOperation -> throw Exception("Test exception")
+              else -> fail("Operation handler is not defined: $operation")
+            }
+          }
+
+          sendTopic(SESSION_REOPEN_TOPIC).reopen(projectMock, tsoConsoleViewMock)
+
+          assertSoftly {
+            didTriggerNotifyError shouldBe true
+            textAvailableTriggerCount shouldBe 0
+          }
+        }
+      }
+
+      context("create") {
+        should("fail to create a new session as the TSO operation returns a response without a servlet key") {
+          var didTriggerCorrectNotifyError = false
+
+          every {
+            notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+          } answers {
+            if (arg<String>(3) == "Cannot create a new session, because new session ID was not recognized") {
+              didTriggerCorrectNotifyError = true
+            }
+          }
+
+          val tsoConfigWrapperForCreateMock = mockk<TSOConfigWrapper> {
+            every { getTSOResponse() } returns mockk {
+              every { servletKey } returns null
+            }
+          }
+
+          sendTopic(SESSION_ADDED_TOPIC).create(projectMock, tsoConfigWrapperForCreateMock)
+
+          assertSoftly {
+            didTriggerCorrectNotifyError shouldBe true
+          }
+        }
       }
     }
 
-    context("process tso command") {
-
-      should("should stop processing and shutdown processHandler in case of CredentialsNotFoundForConnection is thrown") {
-        // given
-        clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
-        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw CredentialsNotFoundForConnectionException(ConnectionConfig())
+    context("getTsoMessageQueue") {
+      should("show an error notification when the TSO operation is not performed successfully") {
+        every { dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>()) } answers {
+          when (val operation = firstArg<Operation<*>>()) {
+            is TsoOperation -> throw Exception("Test exception")
+            else -> fail("Operation handler is not defined: $operation")
           }
-
         }
 
-        val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val session = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
-        val command = "TIME"
-        val messageType = mockk<MessageType>()
-        val messageData = mockk<MessageData>()
-
-        every { console.getTsoSession() } returns session
-
-        // when
-        sendTopic(SESSION_COMMAND_ENTERED).processCommand(
-          project,
-          console,
-          session,
-          command,
-          messageType,
-          messageData,
-          processHandler
-        )
-
-        // then
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Unable to obtain the connection information for connection=${session.getConnectionConfig()}.\n Session will be closed.",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.destroyProcess()
-        }
-        assertSoftly {
-          session.unresponsive shouldBe true
-        }
-      }
-
-      should("should reconnect to the tso session after unsuccessful execution of the command") {
-        // given
-        clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw IllegalArgumentException("Error processing tso command")
-          }
-
-        }
-
-        val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val session = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
-        val command = "TIME"
-        val messageType = mockk<MessageType>()
-        val messageData = mockk<MessageData>()
-
-        every { console.getTsoSession() } returns session
-
-        val capturedFunc = slot<() -> Unit>()
-        every { classUnderTest.wrapInlineCall(capture(capturedFunc)) } just Runs
-
-        // when
-        sendTopic(SESSION_COMMAND_ENTERED).processCommand(
-          project,
-          console,
-          session,
-          command,
-          messageType,
-          messageData,
-          processHandler
-        )
-
-        // then
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Unsuccessful execution of the TSO request. Connection was broken.\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Attempting to reconnect 3 times with timeout 10(s) each respectively...\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Trying to connect (attempt 1 of 3)...\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Successfully reconnected to the TSO session.\n" + "READY\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-      }
-
-      should("should not reconnect 3 times to the tso session after unsuccessful execution of the command") {
-        // given
-        clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
-        val errorZOSMFMessage = "Error reconnecting to the tso session"
-        val cause = IllegalStateException(errorZOSMFMessage)
-        val capturedFunc = slot<() -> Unit>()
-        every { classUnderTest.wrapInlineCall(capture(capturedFunc)) } answers {
-          throw IllegalStateException(cause)
-        }
-
-        val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val session = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
-        val consoleView = mockk<TerminalExecutionConsole>()
-        val widget = mockk<JBTerminalWidget>()
-
-        every { consoleView.terminalWidget } returns widget
-        every { widget.stop() } just Runs
-        every { console.getTsoSession() } returns session
-        every { console.getTerminalConsole() } returns consoleView
-        val command = "TIME"
-        val messageType = mockk<MessageType>()
-        val messageData = mockk<MessageData>()
-
-        // when
-        sendTopic(SESSION_COMMAND_ENTERED).processCommand(
-          project,
-          console,
-          session,
-          command,
-          messageType,
-          messageData,
-          processHandler
-        )
-
-        // then
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Unsuccessful execution of the TSO request. Connection was broken.\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Attempting to reconnect 3 times with timeout 10(s) each respectively...\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Trying to connect (attempt 1 of 3)...\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Trying to connect (attempt 2 of 3)...\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            "Trying to connect (attempt 3 of 3)...\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 3) {
-          processHandler.notifyTextAvailable(
-            "Failed to reconnect. The error message is:\n $cause\n",
-            ProcessOutputType.STDOUT
-          )
-        }
-        verify(exactly = 1) {
-          processHandler.notifyTextAvailable(
-            SESSION_RECONNECT_ERROR_MESSAGE,
-            ProcessOutputType.STDOUT
-          )
-        }
+        getTsoMessageQueue(mockk())
 
         assertSoftly {
-          session.unresponsive shouldBe true
+          didTriggerNotifyError shouldBe true
         }
       }
     }
-  }
-
 })
