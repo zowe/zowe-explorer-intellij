@@ -22,9 +22,16 @@ import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.subscribe
 import org.zowe.explorer.v3.state.storage.StableStorage
 import org.zowe.explorer.v3.state.storage.StorageService
+import java.util.UUID
 
 @OptIn(StableStorage::class)
 class OtherSettingsServiceTestSpec : AppInitShouldSpec("v3/state/settings/OtherSettingsService", {
+  lateinit var currentTestUuid: UUID
+
+  beforeSpec {
+    currentTestUuid = AppInitShouldSpec.currentTestUuid ?: throw Exception("Test UUID must be defined before the spec run")
+  }
+
   context("all functions") {
     var otherSettingsReloadCount = 0
     var otherSettingsChangeCount = 0
@@ -37,11 +44,15 @@ class OtherSettingsServiceTestSpec : AppInitShouldSpec("v3/state/settings/OtherS
       StorageService.OTHER_SETTINGS_TOPIC,
       object : OtherSettingsEventListener {
         override fun otherSettingsReloaded(newSettings: OtherSettingsHolder) {
-          didSettingsReloadedFromStorage = true
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            didSettingsReloadedFromStorage = true
+          }
         }
 
         override fun otherSettingsChanged(newSettings: OtherSettingsHolder) {
-          didSettingsUpdatedInStorage = true
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            didSettingsUpdatedInStorage = true
+          }
         }
       }
     )
@@ -50,11 +61,15 @@ class OtherSettingsServiceTestSpec : AppInitShouldSpec("v3/state/settings/OtherS
       OtherSettingsService.TOPIC,
       object : OtherSettingsEventListener {
         override fun otherSettingsReloaded(newSettings: OtherSettingsHolder) {
-          otherSettingsReloadCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            otherSettingsReloadCount += 1
+          }
         }
 
         override fun otherSettingsChanged(newSettings: OtherSettingsHolder) {
-          otherSettingsChangeCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            otherSettingsChangeCount += 1
+          }
         }
       }
     )

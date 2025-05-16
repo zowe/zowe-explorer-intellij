@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -32,9 +33,7 @@ import org.zowe.explorer.utils.getSelectedNodesWorkingSets
  */
 class AddJobsFilterAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Opens AddJobsFilterDialog and saves result. */
   override fun actionPerformed(e: AnActionEvent) {

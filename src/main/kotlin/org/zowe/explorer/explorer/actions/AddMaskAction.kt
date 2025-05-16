@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -31,9 +32,7 @@ import org.zowe.explorer.utils.getSelectedNodesWorkingSets
 /** Action to add USS or z/OS mask */
 class AddMaskAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Add new mask to the working set, where the action is triggered */
   override fun actionPerformed(e: AnActionEvent) {
@@ -53,9 +52,7 @@ class AddMaskAction : AnAction() {
     }
   }
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 
   /**
    * Decides to show the add mask action or not.

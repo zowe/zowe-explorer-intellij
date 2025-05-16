@@ -16,126 +16,364 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
 import io.mockk.*
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
-import org.zowe.explorer.dataops.attributes.JobsRequester
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.JesWorkingSetImpl
-import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.kotlinsdk.Job
 import org.zowe.kotlinsdk.SpoolFile
 
 class GetJobPropertiesActionTestSpec : AppInitShouldSpec("explorer/actions/GetJobPropertiesAction", {
-  context("actionPerformed") {
-    val mockProject = mockk<Project>()
-    var jesView = mockk<JesExplorerView>()
-    val getPropertiesEvent = mockk<AnActionEvent> {
-      every { project } returns mockProject
+  context("all functions") {
+    var didCallTryToGetAttributes = false
+    var didTriggerJobPropertiesDialog = false
+    var didTriggerSpoolFilePropertiesDialog = false
+    var didChangeIsEnabledAndVisible = false
+    var didChangeIsVisible = false
+    var isEnabledAndVisibleNewValue: Boolean? = null
+    var isVisibleNewValue: Boolean? = null
+
+    val jesExplorerViewMock = mockk<JesExplorerView>()
+    val eventMock = mockk<AnActionEvent> {
+      every { project } returns mockk()
+      every { presentation } returns mockk {
+        every {
+          isEnabledAndVisible = any()
+        } answers {
+          didChangeIsEnabledAndVisible = true
+          isEnabledAndVisibleNewValue = firstArg<Boolean>()
+        }
+        every {
+          isVisible = any<Boolean>()
+        } answers {
+          didChangeIsVisible = true
+          isVisibleNewValue = firstArg<Boolean>()
+        }
+      }
     }
-    val mockVirtualFile = mockk<MFVirtualFile>()
-    val mockExplorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>> {
-      every { componentManager } returns ApplicationManager.getApplication()
-    }
-    val connectionConfig = mockk<ConnectionConfig> {
-      every { uuid } returns "uuid"
-    }
+
+    val getJobPropertiesAction = GetJobPropertiesAction()
 
     val dataOpsManager = DataOpsManager.getService()
 
-    mockkStatic(JobPropertiesDialog::class)
-    mockkObject(JobPropertiesDialog)
+    mockkConstructor(JobPropertiesDialog::class)
+    every {
+      anyConstructed<JobPropertiesDialog>().showAndGet()
+    } answers {
+      didTriggerJobPropertiesDialog = true
+      true
+    }
 
-    mockkStatic(SpoolFilePropertiesDialog::class)
-    mockkObject(SpoolFilePropertiesDialog)
+    mockkConstructor(SpoolFilePropertiesDialog::class)
+    every {
+      anyConstructed<SpoolFilePropertiesDialog>().showAndGet()
+    } answers {
+      didTriggerSpoolFilePropertiesDialog = true
+      true
+    }
 
     beforeEach {
-      jesView = mockk<JesExplorerView>()
-      every { getPropertiesEvent.getData(EXPLORER_VIEW) } returns jesView
+      didCallTryToGetAttributes = false
+      didTriggerJobPropertiesDialog = false
+      didTriggerSpoolFilePropertiesDialog = false
+      didChangeIsEnabledAndVisible = false
+      didChangeIsVisible = false
+      isEnabledAndVisibleNewValue = null
+      isVisibleNewValue = null
+
+      every { jesExplorerViewMock.mySelectedNodesData } returns listOf()
+      every { eventMock.getData(EXPLORER_VIEW) } returns jesExplorerViewMock
+
+      every {
+        dataOpsManager.tryToGetAttributes(any())
+      } answers {
+        didCallTryToGetAttributes = true
+        mockk {
+          every { clone() } returns mockk()
+        }
+      }
     }
 
-    should("get job properties") {
-      val jobNode = mockk<JobNode> {
-        every { virtualFile } returns mockVirtualFile
-        every { explorer } returns mockExplorer
+    context("actionPerformed") {
+      should("get job properties") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk {
+            every { node } returns mockk<JobNode> {
+              every { virtualFile } returns mockk()
+            }
+          }
+        )
+
+        every {
+          dataOpsManager.tryToGetAttributes(any())
+        } answers {
+          didCallTryToGetAttributes = true
+          mockk {
+            every { clone() } returns mockk<RemoteJobAttributes>(relaxed = true) {
+              every { jobInfo } returns Job(
+                jobId = "TESTJID",
+                jobName = "TESTJOB",
+                owner = "TESTOWNR",
+                type = Job.JobType.JOB,
+                url = "test",
+                filesUrl = "test",
+                phase = 0,
+                phaseName = "TEST"
+              )
+            }
+          }
+        }
+
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe true
+          didTriggerJobPropertiesDialog shouldBe true
+          didTriggerSpoolFilePropertiesDialog shouldBe false
+        }
       }
-      val nodeData = spyk(NodeData(jobNode, mockVirtualFile, null))
 
-      every { jesView.mySelectedNodesData } returns listOf(nodeData)
+      should("get spool file properties") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk {
+            every { node } returns mockk<SpoolFileNode> {
+              every { virtualFile } returns mockk()
+            }
+          }
+        )
 
-      val job = mockk<Job> {
-        every { jobName } returns "name"
-        every { jobId } returns "id"
+        every {
+          dataOpsManager.tryToGetAttributes(any())
+        } answers {
+          didCallTryToGetAttributes = true
+          mockk {
+            every { clone() } returns mockk<RemoteSpoolFileAttributes> {
+              every { info } returns SpoolFile(
+                jobname = "TESTJOB",
+                recfm = "F",
+                byteCount = 0,
+                recordCount = 1,
+                fileClass = "TEST",
+                jobId = "TESTJID",
+                id = 0,
+                ddName = "TEST.DD",
+                recordsUrl = "test",
+                recordLength = 80
+              )
+            }
+          }
+        }
+
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe true
+          didTriggerJobPropertiesDialog shouldBe false
+          didTriggerSpoolFilePropertiesDialog shouldBe true
+        }
       }
-      val jobsFilter = spyk(JobsFilter("owner", "prefix", "id"))
-      val jobAttr = spyk(RemoteJobAttributes(job, "test", mutableListOf(JobsRequester(connectionConfig, jobsFilter))))
 
-      every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns jobAttr
-      every {
-        dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-      } throws IllegalStateException("No operation is expected to be performed.")
+      should("not show a job properties dialog cause the selected node is not a job or a spool file node") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk {
+            every { node } returns mockk {
+              every { virtualFile } returns mockk()
+            }
+          }
+        )
 
-      val dialogMock = mockk<JobPropertiesDialog> {
-        every { showAndGet() } returns true
+        every {
+          dataOpsManager.tryToGetAttributes(any())
+        } answers {
+          didCallTryToGetAttributes = true
+          mockk {
+            every { clone() } returns mockk()
+          }
+        }
+
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe true
+          didTriggerJobPropertiesDialog shouldBe false
+          didTriggerSpoolFilePropertiesDialog shouldBe false
+        }
       }
 
-      every { JobPropertiesDialog.create(any<Project>(), any<JobState>()) } returns dialogMock
-      every {
-        SpoolFilePropertiesDialog.create(any<Project>(), any<SpoolFileState>())
-      } throws IllegalStateException("Spool file properties dialog should not be used.")
+      should("not show a job properties dialog cause the selected node has no attributes") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk {
+            every { node } returns mockk {
+              every { virtualFile } returns mockk()
+            }
+          }
+        )
 
-      GetJobPropertiesAction().actionPerformed(getPropertiesEvent)
+        every {
+          dataOpsManager.tryToGetAttributes(any())
+        } answers {
+          didCallTryToGetAttributes = true
+          null
+        }
 
-      verify { dialogMock.showAndGet() }
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe true
+          didTriggerJobPropertiesDialog shouldBe false
+          didTriggerSpoolFilePropertiesDialog shouldBe false
+        }
+      }
+
+      should("not show a job properties dialog cause the selected node has no virtual file") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk {
+            every { node } returns mockk {
+              every { virtualFile } returns null
+            }
+          }
+        )
+
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe false
+          didTriggerJobPropertiesDialog shouldBe false
+          didTriggerSpoolFilePropertiesDialog shouldBe false
+        }
+      }
+
+      should("not show a job properties dialog cause there is no selected node") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf()
+
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe false
+          didTriggerJobPropertiesDialog shouldBe false
+          didTriggerSpoolFilePropertiesDialog shouldBe false
+        }
+      }
+
+      should("not show a job properties dialog cause the JES Explorer view is not initialized yet") {
+        every { eventMock.getData(EXPLORER_VIEW) } returns null
+
+        runInEdtAndWait {
+          getJobPropertiesAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didCallTryToGetAttributes shouldBe false
+          didTriggerJobPropertiesDialog shouldBe false
+          didTriggerSpoolFilePropertiesDialog shouldBe false
+        }
+      }
     }
 
-    should("get spool file properties") {
-      val spoolFileNode = mockk<SpoolFileNode> {
-        every { virtualFile } returns mockVirtualFile
-        every { explorer } returns mockExplorer
-      }
-      val nodeData = spyk(NodeData(spoolFileNode, mockVirtualFile, null))
+    context("update") {
+      should("show the Properties action for a job node") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk { every { node } returns mockk<JobNode>() }
+        )
 
-      every { jesView.mySelectedNodesData } returns listOf(nodeData)
+        getJobPropertiesAction.update(eventMock)
 
-      val spoolFile = mockk<SpoolFile> {
-        every { ddName } returns "ddname"
-        every { jobId } returns "jobid"
-        every { id } returns 1
-      }
-
-      val parentFile = mockk<MFVirtualFile>()
-      val spoolFileAttr = spyk(RemoteSpoolFileAttributes(spoolFile, parentFile))
-
-      every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns spoolFileAttr
-      every {
-        dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-      } throws IllegalStateException("No operation is expected to be performed.")
-
-      val dialogMock = mockk<SpoolFilePropertiesDialog> {
-        every { showAndGet() } returns true
+        assertSoftly {
+          didChangeIsEnabledAndVisible shouldBe false
+          didChangeIsVisible shouldBe true
+          isEnabledAndVisibleNewValue shouldBe null
+          isVisibleNewValue shouldBe true
+        }
       }
 
-      every {
-        JobPropertiesDialog.create(any<Project>(), any<JobState>())
-      } throws IllegalStateException("Job properties dialog should not be used.")
-      every {
-        SpoolFilePropertiesDialog.create(any() as Project?, any() as SpoolFileState)
-      } returns dialogMock
+      should("show the Properties action for a spool file node") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk { every { node } returns mockk<SpoolFileNode>() }
+        )
 
-      GetJobPropertiesAction().actionPerformed(getPropertiesEvent)
+        getJobPropertiesAction.update(eventMock)
 
-      verify { dialogMock.showAndGet() }
+        assertSoftly {
+          didChangeIsEnabledAndVisible shouldBe false
+          didChangeIsVisible shouldBe true
+          isEnabledAndVisibleNewValue shouldBe null
+          isVisibleNewValue shouldBe true
+        }
+      }
+
+      should("not show the Properties action for a non-job and non-spool file node") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk { every { node } returns mockk() }
+        )
+
+        getJobPropertiesAction.update(eventMock)
+
+        assertSoftly {
+          didChangeIsEnabledAndVisible shouldBe false
+          didChangeIsVisible shouldBe true
+          isEnabledAndVisibleNewValue shouldBe null
+          isVisibleNewValue shouldBe false
+        }
+      }
+
+      should("not show the Properties action when there is more than one node selected") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf(
+          mockk { every { node } returns mockk() },
+          mockk { every { node } returns mockk() }
+        )
+
+        getJobPropertiesAction.update(eventMock)
+
+        assertSoftly {
+          didChangeIsEnabledAndVisible shouldBe false
+          didChangeIsVisible shouldBe true
+          isEnabledAndVisibleNewValue shouldBe null
+          isVisibleNewValue shouldBe false
+        }
+      }
+
+      should("not show the Properties action when there is no nodes selected") {
+        every { jesExplorerViewMock.mySelectedNodesData } returns listOf()
+
+        getJobPropertiesAction.update(eventMock)
+
+        assertSoftly {
+          didChangeIsEnabledAndVisible shouldBe false
+          didChangeIsVisible shouldBe true
+          isEnabledAndVisibleNewValue shouldBe null
+          isVisibleNewValue shouldBe false
+        }
+      }
+
+      should("not show the Properties action when the JES Explorer view is not initialized yet") {
+        every { eventMock.getData(EXPLORER_VIEW) } returns null
+
+        getJobPropertiesAction.update(eventMock)
+
+        assertSoftly {
+          didChangeIsEnabledAndVisible shouldBe true
+          didChangeIsVisible shouldBe false
+          isEnabledAndVisibleNewValue shouldBe false
+          isVisibleNewValue shouldBe null
+        }
+      }
     }
   }
 })

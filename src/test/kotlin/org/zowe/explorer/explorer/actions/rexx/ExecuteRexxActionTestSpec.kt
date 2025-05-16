@@ -15,7 +15,6 @@
 
 package org.zowe.explorer.explorer.actions.rexx
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.progress.ProgressIndicator
@@ -252,8 +251,8 @@ class ExecuteRexxActionTestSpec : AppInitShouldSpec("explorer/actions/rexx/Execu
     }
 
     context("update") {
-      var isVisible = false
-      var isEnabled = false
+      var isVisibleNewValue: Boolean? = null
+      var isEnabledNewValue: Boolean? = null
       val tsoSessionConfig = mockk<TSOSessionConfig>()
       val nodeDataForPositiveTest = NodeData(
         node = mockk<FileLikeDatasetNode>(),
@@ -261,82 +260,71 @@ class ExecuteRexxActionTestSpec : AppInitShouldSpec("explorer/actions/rexx/Execu
         attributes = mockk<RemoteMemberAttributes>()
       )
 
-      every { presentationMock.setVisible(true) } answers { isVisible = true }
-      every { presentationMock.setEnabled(true) } answers { isEnabled = true }
-      every { presentationMock.setVisible(false) } answers { isVisible = false }
-      every { presentationMock.setEnabled(false) } answers { isEnabled = false }
       every {
-        presentationMock.setEnabledAndVisible(false)
+        presentationMock.isVisible = any()
       } answers {
-        isVisible = false
-        isEnabled = false
+        isVisibleNewValue = firstArg<Boolean>()
       }
       every {
-        presentationMock.setEnabledAndVisible(true)
+        presentationMock.isEnabled = any()
       } answers {
-        isVisible = true
-        isEnabled = true
+        isEnabledNewValue = firstArg<Boolean>()
+      }
+      every {
+        presentationMock.isEnabledAndVisible = any()
+      } answers {
+        presentationMock.isVisible = firstArg<Boolean>()
+        presentationMock.isEnabled = firstArg<Boolean>()
       }
 
       beforeEach {
-        isVisible = false
-        isEnabled = false
+        isVisibleNewValue = null
+        isEnabledNewValue = null
       }
 
       should("action should be enabled and visible if all conditions met") {
-        every { presentationMock.isEnabled } returns true
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForPositiveTest)
         every { configService.crudable.getAll<TSOSessionConfig>() } returns Stream.of(tsoSessionConfig)
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe true
-          isEnabled shouldBe true
+          isVisibleNewValue shouldBe true
+          isEnabledNewValue shouldBe true
         }
       }
 
       should("action should be visible, but not enabled if no TSO sessions defined") {
-        isEnabled = true
-
-        every { presentationMock.isEnabled } returns false
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForPositiveTest)
         every { configService.crudable.getAll(TSOSessionConfig::class.java) } returns Stream.of()
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe true
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe true
+          isEnabledNewValue shouldBe false
         }
       }
 
       should("action should not be visible if attributes of selected node is not RemoteMemberAttributes") {
-        isVisible = true
-        isEnabled = true
-
         val nodeDataForBadAttributesTest = NodeData(
           node = mockk<FileLikeDatasetNode>(),
           file = mockk<MFVirtualFile>(),
           attributes = mockk<RemoteUssAttributes>()
         )
 
-        every { presentationMock.isEnabled } returns false
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForBadAttributesTest)
         every { configService.crudable.getAll<TSOSessionConfig>() } returns Stream.of()
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe false
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe false
+          isEnabledNewValue shouldBe false
         }
       }
 
       should("action should not be visible and not be enabled if selectedNodesData contains 2 nodes") {
-        isVisible = true
-        isEnabled = true
-
         val nodeData1ForMoreThan1NodeTest = NodeData(
           node = mockk<FileLikeDatasetNode>(),
           file = mockk<MFVirtualFile>(),
@@ -353,36 +341,20 @@ class ExecuteRexxActionTestSpec : AppInitShouldSpec("explorer/actions/rexx/Execu
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe false
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe false
+          isEnabledNewValue shouldBe false
         }
       }
 
       should("action should not be visible and not be enabled if explorer view is not FileExplorerView") {
-        isVisible = true
-        isEnabled = true
-
-        every { actionEventMock.getExplorerView<FileExplorerView>() } returns null
+        every { actionEventMock.getData(EXPLORER_VIEW) } returns null
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe false
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe false
+          isEnabledNewValue shouldBe false
         }
-      }
-    }
-
-    context("misc") {
-      should("isDumbAware should be true") {
-        val isDumbAware = classUnderTest.isDumbAware
-
-        assertSoftly { isDumbAware shouldBe true }
-      }
-
-      should("getActionUpdateThread should be EDT") {
-        val actionUpdateThread = classUnderTest.actionUpdateThread
-        assertSoftly { actionUpdateThread shouldBe ActionUpdateThread.EDT }
       }
     }
   }

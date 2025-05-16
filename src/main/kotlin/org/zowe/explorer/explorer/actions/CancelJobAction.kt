@@ -10,15 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.jobs.BasicCancelJobParams
 import org.zowe.explorer.dataops.operations.jobs.CancelJobOperation
@@ -26,15 +27,9 @@ import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.kotlinsdk.Job
 
 /** Action to cancel a running job in the Jobs Tool Window */
-class CancelJobAction : AnAction() {
+class CancelJobAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Cancel a job on button click
@@ -61,17 +56,17 @@ class CancelJobAction : AnAction() {
             ),
             progressIndicator = it
           )
-        }.onFailure {
+        }.onFailure { failureResult ->
           view.showNotification(
             "Error cancelling ${jobStatus.jobName}: ${jobStatus.jobId}",
-            "${it.message}",
+            "${failureResult.message}",
             e.project,
             NotificationType.ERROR
           )
-        }.onSuccess {
+        }.onSuccess { successResult ->
           view.showNotification(
             "${jobStatus.jobName}: ${jobStatus.jobId} has been cancelled",
-            "${it}",
+            "$successResult",
             e.project,
             NotificationType.INFORMATION
           )

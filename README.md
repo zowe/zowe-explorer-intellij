@@ -79,8 +79,7 @@ We have two options of tests:
 ### To run UI tests (new):
 
 Before running the tests, make sure you use the configuration after IntelliJ IDEA v2024.3.
-Just run `./gradlew uiTests` task, or use [Kotest](https://plugins.jetbrains.com/plugin/14080-kotest) plug-in for
- IntelliJ IDEA. The plug-in will provide the buttons against the test cases and suites in **src/uiTest** folder
+Just run `./gradlew uiTests` task, or use [Kotest](https://plugins.jetbrains.com/plugin/14080-kotest) plug-in for IntelliJ IDEA. The plug-in will provide the buttons against the test cases and suites in **src/uiTest** folder
 
 ### To run UI tests (old):
 

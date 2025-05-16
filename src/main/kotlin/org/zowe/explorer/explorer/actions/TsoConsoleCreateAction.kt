@@ -10,14 +10,14 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.containers.isEmpty
 import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.showUntilDone
@@ -37,17 +37,14 @@ import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
-import javax.swing.JComponent
 
 /**
  * Class which represents TSO console creation action
  */
-class TsoConsoleCreateAction : AnAction() {
+class TsoConsoleCreateAction : DumbAwareAction() {
   private val presentationText = "TSO Console"
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Method to perform an action which is called when OK button is pressed
@@ -99,13 +96,6 @@ class TsoConsoleCreateAction : AnAction() {
         true
       }
     )
-  }
-
-  /**
-   * Determines if an action is dumb aware or not
-   */
-  override fun isDumbAware(): Boolean {
-    return true
   }
 
   /**

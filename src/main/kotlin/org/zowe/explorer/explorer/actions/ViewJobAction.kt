@@ -10,13 +10,14 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.explorer.ui.ExplorerTreeNode
@@ -27,11 +28,9 @@ import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
 import org.zowe.explorer.utils.sendTopic
 
 /** An action to view a process of running job in the Jobs Tool Window */
-class ViewJobAction : AnAction() {
+class ViewJobAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** View a process of running job on click in the JES Explorer */
   override fun actionPerformed(e: AnActionEvent) {
@@ -53,10 +52,6 @@ class ViewJobAction : AnAction() {
         )
       }
     }
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
   }
 
   /** Able to click only on a Job Node */

@@ -10,15 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.jobs.BasicHoldJobParams
 import org.zowe.explorer.dataops.operations.jobs.HoldJobOperation
@@ -26,25 +27,16 @@ import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.kotlinsdk.Job
 
 /** Action to hold a running job in the Jobs Tool Window */
-class HoldJobAction : AnAction() {
+class HoldJobAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Hold a job on button click
    * After completion shows a notification
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JOBS_LOG_VIEW) ?: let {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
+    val view = e.getData(JOBS_LOG_VIEW) ?: return
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()
     val dataOpsManager = DataOpsManager.getService()
     if (jobStatus != null) {

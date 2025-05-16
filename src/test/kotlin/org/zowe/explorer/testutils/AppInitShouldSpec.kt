@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
 import java.nio.file.Path
+import java.util.UUID
 
 /**
  * [ShouldSpec] wrapper for IntelliJ platform specific test cases.
@@ -202,9 +203,14 @@ abstract class AppInitShouldSpec(testSpecName: String, body: ShouldSpec.() -> Un
     }
   }
 
+  companion object {
+    var currentTestUuid: UUID? = null
+  }
+
   private val platformTestCase: OpenLifecycleTestCase = OpenLifecycleTestCase(testSpecName)
 
   override suspend fun beforeSpec(spec: Spec) {
+    currentTestUuid = UUID.randomUUID()
     platformTestCase.beforeSpec()
     super.beforeSpec(spec)
   }

@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -36,9 +37,7 @@ import org.zowe.explorer.utils.crudable.getAll
  */
 abstract class AddWsActionBase : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Shows add Working Set dialog (for files or for jobs) */
   override fun actionPerformed(e: AnActionEvent) {
@@ -67,9 +66,7 @@ abstract class AddWsActionBase : AnAction() {
    */
   abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 
   /** Updates text regarding the context from which action should be triggered. */
   override fun update(e: AnActionEvent) {
@@ -77,7 +74,6 @@ abstract class AddWsActionBase : AnAction() {
     if (ConfigService.getService().crudable.getAll<ConnectionConfig>().isEmpty()) {
       e.presentation.isEnabled = false
       e.presentation.addTooltip(message("create.connection.tooltip"))
-      return
     }
   }
 }
