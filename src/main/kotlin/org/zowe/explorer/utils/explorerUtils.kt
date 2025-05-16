@@ -11,7 +11,9 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
+
 package org.zowe.explorer.utils
 
 import com.intellij.icons.AllIcons
@@ -52,7 +54,8 @@ fun <T : ExplorerTreeNode<*, *>> List<T>.performUnitsDeletionBasedOnSelection(
       "Jes Working Set(s) and Jes Filter(s)"
     else unitTypes
 
-  if (showYesNoDialog(
+  if (
+    showYesNoDialog(
       title = "Confirm $unitTypes Deletion",
       message = "Do you want to delete selected $unitTypes from config? Note: all data under it(them) will be untouched",
       project = project,

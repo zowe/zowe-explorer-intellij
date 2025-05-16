@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -26,6 +27,7 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributesService
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.utils.KoverIgnore
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
@@ -33,6 +35,12 @@ import org.zowe.kotlinsdk.XIBMDataType
 /**
  * Base class implementation of the change content mode action
  */
+@Deprecated(
+  "Not used, content type is related on the entity type. Will be removed in v3",
+  replaceWith = ReplaceWith("/* appropriate content type */"),
+  level = DeprecationLevel.ERROR
+)
+@KoverIgnore(reason = "To be deleted in the future")
 class ChangeContentModeAction : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -163,7 +171,5 @@ class ChangeContentModeAction : ToggleAction() {
   /**
    * This method is needed for interface implementation
    */
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 }

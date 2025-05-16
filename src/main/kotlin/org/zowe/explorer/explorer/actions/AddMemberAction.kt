@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -37,9 +38,7 @@ import org.zowe.explorer.vfs.MFVirtualFile
 /** Class that represents "Add member" action */
 class AddMemberAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Create a new member in the dataset library
@@ -106,9 +105,7 @@ class AddMemberAction : AnAction() {
     }
   }
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 
   /**
    * Show the action only for those places, where a member creation is possible

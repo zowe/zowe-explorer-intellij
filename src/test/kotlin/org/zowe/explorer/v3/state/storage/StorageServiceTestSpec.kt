@@ -42,10 +42,17 @@ import org.junit.jupiter.api.assertThrows
 import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.explorer.testutils.getPrivateFieldValue
 import org.zowe.explorer.utils.subscribe
+import java.util.UUID
 import kotlin.reflect.KFunction
 
 @OptIn(StableStorage::class)
 class StorageServiceTestSpec : AppInitShouldSpec("v3/state/storage/StorageService", {
+  lateinit var currentTestUuid: UUID
+
+  beforeSpec {
+    currentTestUuid = AppInitShouldSpec.currentTestUuid ?: throw Exception("Test UUID must be defined before the spec run")
+  }
+
   context("all funcitons") {
     val testAppConfigDeclaratorEpName =
       ExtensionPointName<ConfigDeclarator>("org.zowe.explorer.configDeclarator")
@@ -76,43 +83,53 @@ class StorageServiceTestSpec : AppInitShouldSpec("v3/state/storage/StorageServic
       StorageService.STORAGE_CONFIGS_TOPIC,
       object : ConfigEventListener {
         override fun registered(configType: ConfigType) {
-          if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
-            registerConfigsCallCount += 1
-          } else {
-            fail("Wrong config type registered")
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
+              registerConfigsCallCount += 1
+            } else {
+              fail("Wrong config type registered")
+            }
           }
         }
 
         override fun added(config: Config) {
-          if (config.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
-            addConfigCallCount += 1
-          } else {
-            fail("Wrong config added")
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            if (config.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
+              addConfigCallCount += 1
+            } else {
+              fail("Wrong config added")
+            }
           }
         }
 
         override fun updated(oldConfig: Config, newConfig: Config) {
-          if (
-            oldConfig.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1
-            && oldConfig.configType == newConfig.configType
-          ) {
-            updateConfigCallCount += 1
-          } else {
-            fail("Wrong config updated")
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            if (
+              oldConfig.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1
+              && oldConfig.configType == newConfig.configType
+            ) {
+              updateConfigCallCount += 1
+            } else {
+              fail("Wrong config updated")
+            }
           }
         }
 
         override fun deleted(config: Config) {
-          if (config.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
-            deleteConfigCallCount += 1
-          } else {
-            fail("Wrong config deleted")
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            if (config.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
+              deleteConfigCallCount += 1
+            } else {
+              fail("Wrong config deleted")
+            }
           }
         }
 
         override fun reloaded(configType: ConfigType, reloadedConfigs: List<Config>) {
-          if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1 && reloadedConfigs.size == 1) {
-            didReloadAfterLoadStateHappen = true
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1 && reloadedConfigs.size == 1) {
+              didReloadAfterLoadStateHappen = true
+            }
           }
         }
       }
@@ -122,11 +139,15 @@ class StorageServiceTestSpec : AppInitShouldSpec("v3/state/storage/StorageServic
       StorageService.OTHER_SETTINGS_TOPIC,
       object : OtherSettingsEventListener {
         override fun otherSettingsReloaded(newSettings: OtherSettingsHolder) {
-          didOtherSettingsReload = true
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            didOtherSettingsReload = true
+          }
         }
 
         override fun otherSettingsChanged(newSettings: OtherSettingsHolder) {
-          didOtherSettingsChange = true
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            didOtherSettingsChange = true
+          }
         }
       }
     )

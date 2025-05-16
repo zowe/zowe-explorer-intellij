@@ -31,9 +31,16 @@ import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.explorer.testutils.getPrivateFieldValue
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.subscribe
+import java.util.UUID
 
 @OptIn(StableStorage::class)
 class ConfigCacheServiceTestSpec : AppInitShouldSpec("v3/state/settings/ConfigCacheService", {
+  lateinit var currentTestUuid: UUID
+
+  beforeSpec {
+    currentTestUuid = AppInitShouldSpec.currentTestUuid ?: throw Exception("Test UUID must be defined before the spec run")
+  }
+
   context("all functions") {
     var configTypeRegisterCount = 0
     var configsReloadCount = 0
@@ -67,19 +74,29 @@ class ConfigCacheServiceTestSpec : AppInitShouldSpec("v3/state/settings/ConfigCa
       ConfigCacheService.TOPIC,
       object : ConfigEventListener {
         override fun registered(configType: ConfigType) {
-          configTypeRegisterCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            configTypeRegisterCount += 1
+          }
         }
         override fun added(config: Config) {
-          configAddedCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            configAddedCount += 1
+          }
         }
         override fun updated(oldConfig: Config, newConfig: Config) {
-          configUpdatedCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            configUpdatedCount += 1
+          }
         }
         override fun deleted(config: Config) {
-          configDeletedCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            configDeletedCount += 1
+          }
         }
         override fun reloaded(configType: ConfigType, reloadedConfigs: List<Config>) {
-          configsReloadCount += 1
+          if (currentTestUuid == AppInitShouldSpec.currentTestUuid) {
+            configsReloadCount += 1
+          }
         }
       }
     )

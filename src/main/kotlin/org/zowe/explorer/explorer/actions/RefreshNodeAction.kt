@@ -10,13 +10,14 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
@@ -26,11 +27,9 @@ import org.zowe.explorer.explorer.ui.*
 /**
  * Class which represents a refresh node action
  */
-class RefreshNodeAction : AnAction() {
+class RefreshNodeAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Check if the file related with the node or files related with child nodes are currently synchronized
@@ -99,7 +98,6 @@ class RefreshNodeAction : AnAction() {
         }
       }
     }
-
   }
 
   /**
@@ -116,12 +114,5 @@ class RefreshNodeAction : AnAction() {
     e.presentation.isEnabledAndVisible = selected.any {
       it.node is RefreshableNode
     }
-  }
-
-  /**
-   * Determines if an action is dumb aware
-   */
-  override fun isDumbAware(): Boolean {
-    return true
   }
 }

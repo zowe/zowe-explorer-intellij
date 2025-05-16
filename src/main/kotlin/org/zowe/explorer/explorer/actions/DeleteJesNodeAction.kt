@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -28,9 +29,7 @@ import org.zowe.explorer.utils.performUnitsDeletionBasedOnSelection
  */
 class DeleteJesNodeAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Called when delete JES element option is chosen from context menu
@@ -57,9 +56,7 @@ class DeleteJesNodeAction : AnAction() {
   /**
    * This method is needed for interface implementation
    */
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 
   /**
    * Determines which objects are JES nodes and therefore can be deleted
