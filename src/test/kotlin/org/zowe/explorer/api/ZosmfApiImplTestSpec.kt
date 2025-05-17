@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.api
@@ -18,11 +19,11 @@ import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.net.ssl.ConfirmingTrustManager
 import org.zowe.explorer.config.connect.ConnectionConfig
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import okhttp3.*
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
 import org.zowe.kotlinsdk.buildApi
 import org.zowe.kotlinsdk.buildApiWithBytesConverter
 import java.util.concurrent.TimeUnit
@@ -32,12 +33,7 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import kotlin.reflect.KFunction
 
-class ZosmfApiImplTestSpec : ShouldSpec({
-  afterSpec {
-    unmockkAll()
-    clearAllMocks()
-  }
-
+class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
   context("api module: ZosmfApiImpl") {
     var sslFactoryActual: SSLSocketFactory? = null
     var trustManagerActual: TrustManager? = null

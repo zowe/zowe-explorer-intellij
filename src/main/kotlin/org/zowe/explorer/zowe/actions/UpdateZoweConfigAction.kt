@@ -15,7 +15,6 @@
 package org.zowe.explorer.zowe.actions
 
 import com.intellij.icons.AllIcons
-import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -94,7 +93,7 @@ class UpdateZoweConfigAction : DumbAwareAction() {
           zoweConfigService.globalZoweConfig = parseConfigJson(editor.document.text)
           zoweConfigService.globalZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
         }
-      } catch (ex: JsonSyntaxException) {
+      } catch (ex: Exception) {
         e.presentation.isEnabledAndVisible = false
         return
       }

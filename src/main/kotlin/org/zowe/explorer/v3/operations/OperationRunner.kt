@@ -16,14 +16,14 @@ package org.zowe.explorer.v3.operations
 
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.v3.ConnectionConfig
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 
 /**
  * Base abstract class to represent operation runner
  * @property operationDataClass the operation class supported by the operation runner
  * @property resultClass the result class of the operation
  */
-abstract class OperationRunner<R : Any, C : ConnectionConfig, O : OperationData<R, C>> {
+abstract class OperationRunner<R : Any, C : ConnectionConfigOldStruct, O : OperationData<R, C>> {
 
   abstract val operationDataClass: Class<out OperationData<*, *>>
 

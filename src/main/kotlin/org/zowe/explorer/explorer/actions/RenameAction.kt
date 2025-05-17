@@ -30,7 +30,7 @@ import org.zowe.explorer.v3.operations.OperationsService
 import org.zowe.explorer.v3.operations.RenameOperationData
 import org.zowe.explorer.vfs.MFVirtualFile
 
-typealias ConnectionConfigNew = org.zowe.explorer.v3.ConnectionConfig
+typealias ConnectionConfigNew = org.zowe.explorer.v3.ConnectionConfigOldStruct
 typealias UssRequesterNew = org.zowe.explorer.v3.UssRequester<ConnectionConfigNew>
 
 /**

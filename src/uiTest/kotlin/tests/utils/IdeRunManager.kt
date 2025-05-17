@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
@@ -28,7 +30,7 @@ import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.waitForDumbMode
-import java.nio.file.*
+import java.nio.file.Paths
 import kotlin.time.Duration.Companion.minutes
 
 /** IDE run manager. Provides functionalities to control IDE run process */
@@ -47,6 +49,7 @@ class IdeRunManager private constructor() {
   val runningIde: BackgroundRun
 
   companion object {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy_MMM_dd_HH_mm_ss_z")
     private val createdRunManager by lazy { IdeRunManager() }
 
     private var isIDEAlreadyClosed = false
@@ -64,45 +67,53 @@ class IdeRunManager private constructor() {
 
     /** Close the running IDE after tests are completed */
     fun closeIdeAfterTests() {
-      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
       prepareRunManager().closeIde()
-      isIDEAlreadyClosed = true
     }
 
     /** Get the running IDE driver */
     fun getIdeDriver(): Driver {
-      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
       return prepareRunManager().runningIde.driver
     }
 
     /**
      * Take current IDE state screenshot.
      * It makes a fullscreen screenshot and places the screenshot under a reports folder
-     * @param outFolder the folder to place the screenshot initially in IDEA test context folder
-     * @param savePath the new screenshot path after it is stored under the test context path
+     * @param customScreenshotName custom screenshot file name with extension
      */
-    fun takeCurrentIDEStateScreenshot(outFolder: String, savePath: Path) {
+    fun takeCurrentIDEStateDebugScreenshot(customScreenshotName: String = "") {
       assert(!isIDEAlreadyClosed) { "IDE is already closed" }
-      prepareRunManager().runningIde.driver.takeScreenshot(outFolder)
+
+      val testContextFolder = "debug"
+      prepareRunManager().runningIde.driver.takeScreenshot(testContextFolder)
       val screenshotPath = prepareRunManager()
         .testContext
         .paths
         .testHome
         .resolve("log")
         .resolve("screenshots")
-        .resolve(outFolder)
+        .resolve(testContextFolder)
         .resolve("full_screen.png")
-      Files.copy(screenshotPath, savePath, StandardCopyOption.REPLACE_EXISTING)
+
+      val reportsFolderPath = Paths.get(System.getProperty("user.dir"), "build", "reports")
+      val screenshotPlacingPath = if (customScreenshotName.isNotEmpty()) {
+        reportsFolderPath.resolve(customScreenshotName)
+      } else {
+        val timestamp = ZonedDateTime.now().format(formatter)
+        reportsFolderPath.resolve("full_screen_${timestamp}.png")
+      }
+
+      Files.copy(screenshotPath, screenshotPlacingPath, StandardCopyOption.REPLACE_EXISTING)
     }
 
-    /**
-     * Dump IDE XPath tree as an HTML doc
-     * @param folderPath the folder to place the dumped tree
-     * @param fileName the file name to assign to the tree
-     */
-    fun dumpIDEXPathTree(folderPath: Path, fileName: String) {
+    /** Dump IDE XPath tree as an HTML doc */
+    fun dumpIDEXPathTree() {
       assert(!isIDEAlreadyClosed) { "IDE is already closed" }
-      prepareRunManager().runningIde.driver.ui.robotProvider.saveHierarchy(folderPath.toString(), fileName)
+
+      val timestamp = ZonedDateTime.now().format(formatter)
+      val reportsFolderPathStr = Paths.get(System.getProperty("user.dir"), "build", "reports").toString()
+
+      prepareRunManager().runningIde.driver.ui.robotProvider
+        .saveHierarchy(reportsFolderPathStr, "xpath_dump_${timestamp}.html")
     }
   }
 

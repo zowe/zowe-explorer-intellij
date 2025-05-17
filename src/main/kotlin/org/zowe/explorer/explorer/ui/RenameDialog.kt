@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -23,7 +24,6 @@ import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.explorer.actions.DuplicateMemberAction
-import org.zowe.explorer.explorer.actions.RenameAction
 import org.zowe.explorer.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -43,15 +43,6 @@ class RenameDialog(
   override var state: String
 ) : DialogWrapper(project),
   StatefulComponent<String> {
-
-  companion object {
-
-    // TODO: Remove when it becomes possible to mock class constructor with init section.
-    /** Wrapper for init() method. It is necessary only for test purposes for now. */
-    private fun initialize(init: () -> Unit) {
-      init()
-    }
-  }
 
   private val node = selectedNodeData.node
 
@@ -76,7 +67,7 @@ class RenameDialog(
    */
   init {
     title = if (currentAction is DuplicateMemberAction) "Duplicate $type" else "Rename $type"
-    initialize { init() }
+    init()
   }
 
   /**

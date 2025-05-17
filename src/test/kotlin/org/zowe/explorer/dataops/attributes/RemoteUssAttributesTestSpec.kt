@@ -10,36 +10,23 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.dataops.attributes
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
-import org.zowe.explorer.dataops.operations.TsoOperation
-import org.zowe.explorer.dataops.operations.TsoOperationMode
-import org.zowe.explorer.testutils.testAppFixture
-import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.*
 
-class RemoteUssAttributesTestSpec : ShouldSpec({
-
-  afterSpec {
-    unmockkAll()
-    clearAllMocks()
-  }
-
-  context("dataops/attributes/RemoteUssAttributesTestSpec") {
+class RemoteUssAttributesTestSpec : AppInitShouldSpec("dataops/attributes/RemoteUssAttributes", {
+  context("all functions") {
     val testUsername = "TSTUSR"
     val testOwner = "TSTOWNR"
     val testRootPath = "test_root_path"
@@ -48,34 +35,10 @@ class RemoteUssAttributesTestSpec : ShouldSpec({
     lateinit var connectionConfig: ConnectionConfig
     lateinit var ussFile: UssFile
 
-    val credentialServiceMock: CredentialService
-    if (testAppFixture == null) {
-      credentialServiceMock = mockk<CredentialService>()
-      every { credentialServiceMock.getUsernameByKey(any<String>()) } returns testUsername
-
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication() } returns mockk {
-        every { getService(CredentialService::class.java) } returns credentialServiceMock
-      }
-    } else {
-      credentialServiceMock = CredentialService.getService() as TestCredentialsServiceImpl
-      credentialServiceMock.testInstance = object : TestCredentialsServiceImpl() {
-        override fun getUsernameByKey(connectionConfigUuid: String): String {
-          return testUsername
-        }
-      }
-    }
+    val credentialService = CredentialService.getService()
 
     beforeEach {
-      if (testAppFixture == null) {
-        every { credentialServiceMock.getUsernameByKey(any<String>()) } returns testUsername
-      } else {
-        (credentialServiceMock as TestCredentialsServiceImpl).testInstance = object : TestCredentialsServiceImpl() {
-          override fun getUsernameByKey(connectionConfigUuid: String): String {
-            return testUsername
-          }
-        }
-      }
+      every { credentialService.getUsernameByKey(any<String>()) } returns testUsername
 
       ussFile = mockk<UssFile> {
         every { name } returns "test_name"
@@ -165,15 +128,7 @@ class RemoteUssAttributesTestSpec : ShouldSpec({
           every { all } returns FileModeValue.WRITE.mode
         }
         every { connectionConfig.owner } returns ""
-        if (testAppFixture == null) {
-          every { credentialServiceMock.getUsernameByKey(any<String>()) } returns "TSTFAKE"
-        } else {
-          (credentialServiceMock as TestCredentialsServiceImpl).testInstance = object : TestCredentialsServiceImpl() {
-            override fun getUsernameByKey(connectionConfigUuid: String): String {
-              return "TSTFAKE"
-            }
-          }
-        }
+        every { credentialService.getUsernameByKey(any<String>()) } returns "TSTFAKE"
 
         val remoteUssAttributes = RemoteUssAttributes(testRootPath, ussFile, testUrl, connectionConfig)
 

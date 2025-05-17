@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui

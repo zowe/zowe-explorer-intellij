@@ -94,8 +94,6 @@ const val invalidDatasetNameConstant = "Each name segment (qualifier) is 1 to 8 
         "a hyphen (-). Name segments are separated by a period (.)"
 
 const val enterValueInCorrectRangeFromOneMsg = "Please enter a number from 1 to 2,147,483,646"
-const val enterNumberMsg = "Please enter a number"
-const val enterValueInCorrectRangeFromOneNoSeparateMsg = "Please enter a number from 1 to 2147483646"
 const val enterValueInCorrectRangeFromZeroMsg = "Please enter a number from 0 to 2,147,483,646"
 const val MEMBER_ALREADY_EXISTS = "ISRZ002 Member already exists - Directory already contains the specified member name."
 const val RENAME_MEMBER_FAILED = "Rename member failed"
@@ -144,6 +142,20 @@ const val HMIGRATE_MIGRATE_OPTIONS = "hmigrate"
 
 
 //bad alloc params cases
+data class InvalidAllocate(
+  val wsName: String,
+  val datasetName: String,
+  val datasetOrganization: DatasetOrganization,
+  val allocationUnit: String,
+  val primaryAllocation: Int,
+  val secondaryAllocation: Int,
+  val directory: Int,
+  val recordFormat: String,
+  val recordLength: Int,
+  val blockSize: Int,
+  val averageBlockLength: Int,
+  val message: String
+)
 
 val invalidDatasetNameParams = Pair(AllocateDatasetParams(
   name="A23456789.A", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
@@ -355,7 +367,7 @@ const val USS_MASK = "USS"
 
 //masks/mask types combo
 
-const val ZOSMF_WORD = "ZOSMFAD"
+val ZOSMF_WORD = "ZOSMFAD"
 val zosUserDatasetMask = "$ZOS_USERID.*".uppercase()
 val zosUserDatasetMaskDoubleStar = "$ZOS_USERID.**".uppercase()
 val ussMask = "/u/${ZOS_USERID.uppercase()}"

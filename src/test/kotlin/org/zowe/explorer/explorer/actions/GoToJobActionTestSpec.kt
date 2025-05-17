@@ -10,279 +10,596 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.impl.ContentImpl
-import com.intellij.ui.tree.StructureTreeModel
-import com.intellij.ui.treeStructure.Tree
-import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.ConnectionConfigBase
-import org.zowe.explorer.config.ws.JobsFilter
-import org.zowe.explorer.config.ws.ui.AbstractWsDialog
-import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
-import org.zowe.explorer.dataops.log.AbstractMFLoggerBase
-import org.zowe.explorer.dataops.log.JobLogFetcher
-import org.zowe.explorer.dataops.log.JobProcessInfo
-import org.zowe.explorer.explorer.*
-import org.zowe.explorer.explorer.actions.GoToJobAction.Companion.JOB_FILTER_CREATED_TITLE
-import org.zowe.explorer.explorer.actions.GoToJobAction.Companion.JOB_FILTER_NOT_CREATED_TITLE
-import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
-import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
-import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
+import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import org.zowe.kotlinsdk.Job
-import java.util.*
-import java.util.stream.Stream
-import javax.swing.JComponent
+import org.zowe.explorer.config.ConfigService
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobsFilter
+import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
+import org.zowe.explorer.dataops.log.JobLogFetcher
+import org.zowe.explorer.explorer.JesExplorer
+import org.zowe.explorer.explorer.JesExplorerContentProvider
+import org.zowe.explorer.explorer.JesWorkingSet
+import org.zowe.explorer.explorer.UIComponentManager
+import org.zowe.explorer.explorer.ui.AddJobsFilterDialog
+import org.zowe.explorer.explorer.ui.CommonExplorerTreeStructure
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.JesFilterNode
+import org.zowe.explorer.explorer.ui.JesWsNode
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.runInEdtAndWait
+import java.util.Optional
 
-class GoToJobActionTestSpec : WithApplicationShouldSpec({
+class GoToJobActionTestSpec : AppInitShouldSpec("explorer/actions/GoToJobAction", {
+  context("all functions") {
+    var didTriggerJesWsDialogShowAndGet = false
+    var didTriggerAddJobsFilterDialogShowAndGet = false
+    var didTriggerShowNotification = false
+    var didTriggerSetSelectedContent = false
+    var didTriggerAddMask = false
+    var didTriggerSelectTree = false
+    var didTriggerExpandTree = false
+    var addCallCount = 0
+    var isEnabledNewValue: Boolean? = null
+    var isVisibleNewValue: Boolean? = null
 
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("Go-To-Job Action test spec") {
-
-    // defined common mocks
-    val connectionConfigMock = mockk<ConnectionConfig>()
-    val projectMock = ProjectManager.getInstance().defaultProject
-    val actionEventMock = mockk<AnActionEvent>()
-    val explorerContentProviderMock = mockk<JesExplorerContentProvider>()
-    val consoleViewMock = mockk<JobBuildTreeView>()
-    val jesExplorerMock = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
-    val jesExplorerViewMock = mockk<JesExplorerView>()
-    val toolWindowManagerMock = mockk<ToolWindowManager>()
-    val toolWindowMock = mockk<ToolWindow>()
-    val contentManagerMock = mockk<ContentManager>()
-    val contentMock = mockk<ContentImpl>()
-    val myFsTreeStructureMock = mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, JesWorkingSetImpl>>>()
-    val myStructureMock =
-      mockk<StructureTreeModel<CommonExplorerTreeStructure<Explorer<ConnectionConfig, JesWorkingSetImpl>>>>()
-    val myTreeMock = mockk<Tree>()
-    val uiComponentManagerService: TestUIComponentManager = UIComponentManager.getService() as TestUIComponentManager
-    uiComponentManagerService.testInstance = object : TestUIComponentManager() {
-      override fun <E : Explorer<*, *>> getExplorerContentProvider(
-        clazz: Class<out E>
-      ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>? {
-        return explorerContentProviderMock
+    val connectionConfigMock = mockk<ConnectionConfig> {
+      every { uuid } returns "test"
+    }
+    val logFetcherMock = mockk<JobLogFetcher>()
+    val jobsLogViewMock = mockk<JobBuildTreeView> {
+      every { getConnectionConfig() } returns connectionConfigMock
+      every { getJobLogger() } returns mockk {
+        every { logFetcher } returns logFetcherMock
       }
     }
-    mockkObject(ToolWindowManager)
+    val eventMock = mockk<AnActionEvent> {
+      every { presentation } returns mockk {
+        every {
+          isEnabled = any()
+        } answers {
+          isEnabledNewValue = firstArg<Boolean>()
+        }
+        every {
+          isVisible = any()
+        } answers {
+          isVisibleNewValue = firstArg<Boolean>()
+        }
+        every {
+          isEnabledAndVisible = any()
+        } answers {
+          isEnabled = firstArg<Boolean>()
+          isVisible = firstArg<Boolean>()
+        }
+      }
+    }
 
-    // job process info for test
-    val jobProcessInfo = JobProcessInfo("JOB_ID", "TEST_JOB", connectionConfigMock)
+    val goToJobAction = GoToJobAction()
 
-    // defined common mocks behavior
-    every { explorerContentProviderMock.getExplorerView(any()) } returns jesExplorerViewMock
+    mockkObject(ToolWindowManager.Companion)
+    every { ToolWindowManager.getInstance(any()) } returns mockk {
+      every { getToolWindow(any()) } returns mockk {
+        every { contentManager } returns mockk {
+          every { getContent(any<ExplorerTreeView<*, *, *>>()) } returns mockk<ContentImpl>()
+          every {
+            setSelectedContent(any(), any())
+          } answers {
+            didTriggerSetSelectedContent = true
+          }
+        }
+      }
+    }
+
+    mockkConstructor(JesWsDialog::class)
+    every { anyConstructed<JesWsDialog>().state } returns mockk {
+      every { workingSetConfig } returns mockk {
+        every { jobsFilters } returns mutableListOf(JobsFilter("TEST", "TEST", "TEST"))
+      }
+    }
+
+    mockkConstructor(AddJobsFilterDialog::class)
+
+    val fsTreeStructureMock = mockk<CommonExplorerTreeStructure<*>>()
+
+    val jesExplorerContentProviderMock = mockk<JesExplorerContentProvider>()
+
+    var uiComponentManager = UIComponentManager.getService()
     every {
-      jesExplorerMock.showNotification(
-        any() as String,
-        any() as String,
-        any() as NotificationType,
-        any() as Project
+      uiComponentManager.getExplorerContentProvider(JesExplorer::class.java)
+    } returns jesExplorerContentProviderMock
+
+    val configServiceCrudable = mockk<Crudable> {
+      every {
+        add(any())
+      } answers {
+        addCallCount++
+        Optional.ofNullable(null)
+      }
+      every {
+        nextUniqueValue<JesWorkingSetConfig, String>(JesWorkingSetConfig::class.java)
+      } returns "test_uuid"
+      every {
+        getAll(ConnectionConfig::class.java)
+      } answers {
+        listOf<ConnectionConfig>().stream()
+      }
+    }
+    val configService = ConfigService.getService()
+    every { configService.crudable } returns configServiceCrudable
+
+    beforeEach {
+      didTriggerJesWsDialogShowAndGet = false
+      didTriggerAddJobsFilterDialogShowAndGet = false
+      didTriggerShowNotification = false
+      didTriggerSetSelectedContent = false
+      didTriggerAddMask = false
+      didTriggerSelectTree = false
+      didTriggerExpandTree = false
+      addCallCount = 0
+      isEnabledNewValue = null
+      isVisibleNewValue = null
+
+      every { eventMock.project } returns mockk()
+      every { logFetcherMock.getCachedJobStatus() } returns mockk {
+        every { status } returns mockk()
+      }
+      every { jobsLogViewMock.jobLogInfo } returns mockk {
+        every { jobId } returns "TEST"
+      }
+      every { eventMock.getData(JOBS_LOG_VIEW) } returns jobsLogViewMock
+
+      every { fsTreeStructureMock.findByPredicate(any()) } returns listOf(
+        mockk<JesWsNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns mockk {
+              every { uuid } returns "test"
+            }
+          }
+        }
       )
-    } just Runs
-    every { contentManagerMock.getContent(any() as JComponent) } returns contentMock
-    every { contentManagerMock.setSelectedContent(any(), any()) } just Runs
-    every { toolWindowMock.contentManager } returns contentManagerMock
-    every { ToolWindowManager.getInstance(any()) } returns toolWindowManagerMock
-    every { toolWindowManagerMock.getToolWindow(any()) } returns toolWindowMock
-    every { connectionConfigMock.uuid } returns "UUID_TEST"
-    every { jesExplorerViewMock.myFsTreeStructure } returns myFsTreeStructureMock
-    every { consoleViewMock.jobLogInfo } returns jobProcessInfo
-    every { actionEventMock.getData(JOBS_LOG_VIEW) } returns consoleViewMock
-    every { consoleViewMock.getConnectionConfig() } returns connectionConfigMock
-    every { actionEventMock.project } returns projectMock
-    every { jesExplorerViewMock.explorer } returns jesExplorerMock
-    every { jesExplorerViewMock.myStructure } returns myStructureMock
-    every { jesExplorerViewMock.myTree } returns myTreeMock
 
-    // default mocks on tree
-    every { myStructureMock.select(any(), any(), any()) } just Runs
-    every { myStructureMock.expand(any(), any(), any()) } just Runs
-
-    // class under test
-    val classUnderTest = spyk(GoToJobAction(), "Go To Job", recordPrivateCalls = true)
-
-    should("createJesWorkingSetWithDefinedFilter_whenActionPerformed_givenJobIdAndNoJesWSNodesFound") {
-      var isNewConnectionAdded = false
-      val configCrudable = (ConfigService.getService() as TestConfigServiceImpl).crudable
-      val nextUniqueValueMock: (Class<*>) -> Any = configCrudable::nextUniqueValue
-      val getAllMock: (Class<*>) -> Any = configCrudable::getAll
-      every { nextUniqueValueMock(any()) } returns "test"
-      every { getAllMock(any()) } returns Stream.empty<ConnectionConfig>()
-      every { configCrudable.add(any()) } answers {
-        isNewConnectionAdded = true
-        Optional.empty()
-      }
-      val expectedNotificationMessage =
-        "Job Filter(s): JobID=JOB_ID, successfully created on connection: $connectionConfigMock"
-      val jesWsNodesTest = mutableListOf<JesWsNode>()
-      mockkObject(AbstractWsDialog)
-      every { AbstractWsDialog["initialize"](any<() -> Unit>()) } returns Unit
-      mockkConstructor(JesWsDialog::class)
-      every { anyConstructed<JesWsDialog>().showAndGet() } returns true
-      every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
-
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          classUnderTest.actionPerformed(actionEventMock)
+      every { jesExplorerContentProviderMock.getExplorerView(any()) } returns mockk {
+        every { myFsTreeStructure } returns fsTreeStructureMock
+        every { explorer } returns mockk {
+          every {
+            showNotification(any(), any(), any(), any())
+          } answers {
+            didTriggerShowNotification = true
+          }
+        }
+        every { myTree } returns mockk()
+        every { myStructure } returns mockk {
+          every {
+            select(any(), any(), any())
+          } answers {
+            didTriggerSelectTree = true
+          }
+          every {
+            expand(any(), any(), any())
+          } answers {
+            didTriggerExpandTree = true
+          }
         }
       }
 
-      verify {
-        jesExplorerMock.showNotification(
-          title = JOB_FILTER_CREATED_TITLE,
-          content = expectedNotificationMessage,
-          project = projectMock
-        )
+      every {
+        anyConstructed<JesWsDialog>().showAndGet()
+      } answers {
+        didTriggerJesWsDialogShowAndGet = true
+        true
       }
-      verify { contentManagerMock.setSelectedContent(contentMock, true) }
-      assertSoftly {
-        isNewConnectionAdded shouldBe true
+
+      every { anyConstructed<AddJobsFilterDialog>().state } returns mockk {
+        every { toJobsFilter() } returns JobsFilter()
+        every { selectedWS } returns mockk {
+          every {
+            addMask(any())
+          } answers {
+            didTriggerAddMask = true
+          }
+        }
+      }
+      every {
+        anyConstructed<AddJobsFilterDialog>().showAndGet()
+      } answers {
+        didTriggerAddJobsFilterDialogShowAndGet = true
+        true
       }
     }
 
-    should("createJobFilterInExistingJesWorkingSet_whenActionPerformed_givenJobIdAndJesWsDoesNotContainFilter") {
-      clearMocks(jesExplorerMock, answers = false, recordedCalls = true, verificationMarks = true)
-      val jobFilterToSaveExpected = JobsFilter("", "", "JOB_ID")
-      val expectedNotificationMessage =
-        "Job Filter(s): JobID=JOB_ID, successfully created in the working set JES_WS_TEST on connection: $connectionConfigMock"
-      val jobFilter1 = JobsFilter("ARST", "ARST*", "")
-      val jobFilter2 = JobsFilter("", "", "JOB_ID_TEST")
-      val jesFilterNodeForTest1 = mockk<JesFilterNode>()
-      val jesFilterNodeForTest2 = mockk<JesFilterNode>()
-      val jesWsNodeForTest = mockk<JesWsNode>()
-      val jesWorkingSet = mockk<JesWorkingSetImpl>()
+    context("actionPerformed") {
+      should("perform Go To Job action, creating a JES Working set with a defined jobs filter when there is no suitable JES Working sets on the same connection") {
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
 
-      val jesFilterNodes = mutableListOf(jesFilterNodeForTest1, jesFilterNodeForTest2)
-
-      every { jesFilterNodeForTest1.value } returns jobFilter1
-      every { jesFilterNodeForTest2.value } returns jobFilter2
-      every { jesWsNodeForTest.name } returns "JES_WS_TEST"
-      every { jesWsNodeForTest.children } returns jesFilterNodes
-      every { jesWsNodeForTest.unit } returns jesWorkingSet
-      every { jesWorkingSet.connectionConfig } returns connectionConfigMock
-      every { jesWorkingSet.addMask(any()) } just Runs
-
-      val jesWsNodesTest = mutableListOf(jesWsNodeForTest)
-      every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
-
-      mockkObject(AddJobsFilterDialog)
-      every { AddJobsFilterDialog["initialize"](any<() -> Unit>()) } returns Unit
-      mockkConstructor(AddJobsFilterDialog::class)
-      every { anyConstructed<AddJobsFilterDialog>().showAndGet() } returns true
-
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          classUnderTest.actionPerformed(actionEventMock)
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe true
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe true
+          didTriggerSetSelectedContent shouldBe true
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 1
         }
       }
 
-      verify { jesWorkingSet.addMask(jobFilterToSaveExpected) }
-      verify {
-        jesExplorerMock.showNotification(
-          title = JOB_FILTER_CREATED_TITLE,
-          content = expectedNotificationMessage,
-          project = projectMock
-        )
-      }
-      verify { contentManagerMock.setSelectedContent(contentMock, true) }
+      should("perform Go To Job action, not creating a JES Working set with a defined jobs filter when there is no suitable JES Working sets on the same connection, cause a user cancelled the dialog to create the JES Working set") {
+        every {
+          anyConstructed<JesWsDialog>().showAndGet()
+        } answers {
+          didTriggerJesWsDialogShowAndGet = true
+          false
+        }
 
-    }
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
 
-    should("NotCreateJobFilterInExistingJesWorkingSet_whenActionPerformed_givenJobIdAndJesWsAlreadyContainFilter") {
-      clearMocks(jesExplorerMock, answers = false, recordedCalls = true, verificationMarks = true)
-      val jobFilter1 = JobsFilter("ARST", "ARST*", "")
-      val jobFilter2 = JobsFilter("", "", "JOB_ID")
-      val jesFilterNodeForTest1 = mockk<JesFilterNode>()
-      val jesFilterNodeForTest2 = mockk<JesFilterNode>()
-      val jesWsNodeForTest = mockk<JesWsNode>()
-      val jesWorkingSet = mockk<JesWorkingSetImpl>()
-      val jesWsNodesTest = mutableListOf(jesWsNodeForTest)
-      val expectedNotificationMessage =
-        "Cannot create job filter, because all working sets ([JES_WS_TEST]) on connection $connectionConfigMock already contain job filter with jobId = JOB_ID"
-
-      val jesFilterNodes = mutableListOf(jesFilterNodeForTest1, jesFilterNodeForTest2)
-
-      every { jesFilterNodeForTest1.value } returns jobFilter1
-      every { jesFilterNodeForTest2.value } returns jobFilter2
-      every { jesWsNodeForTest.name } returns "JES_WS_TEST"
-      every { jesWsNodeForTest.children } returns jesFilterNodes
-      every { jesWsNodeForTest.unit } returns jesWorkingSet
-      every { jesWorkingSet.connectionConfig } returns connectionConfigMock
-
-      every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
-
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          classUnderTest.actionPerformed(actionEventMock)
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe true
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe false
+          didTriggerSetSelectedContent shouldBe false
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
         }
       }
 
-      verify {
-        jesExplorerMock.showNotification(
-          title = JOB_FILTER_NOT_CREATED_TITLE,
-          content = expectedNotificationMessage,
-          project = projectMock
+      should("perform Go To Job action, creating a jobs filter in the first found suitable JES Working set on the same connection") {
+        val compatibleWS = mockk<JesWorkingSet> {
+          every { name } returns "test1"
+          every { connectionConfig } returns connectionConfigMock
+          every {
+            addMask(any())
+          } answers {
+            didTriggerAddMask = true
+          }
+        }
+
+        every { fsTreeStructureMock.findByPredicate(any()) } returns listOf(
+          mockk<JesWsNode> {
+            every { unit } returns compatibleWS
+            every { name } returns "test1"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "UNIQUE"
+                }
+              }
+            )
+          },
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns null
+          },
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns "test2"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "TEST"
+                }
+              }
+            )
+          }
         )
-      }
-      verify { contentManagerMock.setSelectedContent(contentMock, true) }
 
+        every { anyConstructed<AddJobsFilterDialog>().state } returns mockk {
+          every { toJobsFilter() } returns JobsFilter()
+          every { selectedWS } returns compatibleWS
+        }
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe true
+          didTriggerShowNotification shouldBe true
+          didTriggerSetSelectedContent shouldBe true
+          didTriggerAddMask shouldBe true
+          didTriggerSelectTree shouldBe true
+          didTriggerExpandTree shouldBe true
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("perform Go To Job action, creating a jobs filter in the first found suitable JES Working set on the same connection, without expanding the filter when there is no working set selected") {
+        val compatibleWS = mockk<JesWorkingSet> {
+          every { name } returns "test1"
+          every { connectionConfig } returns connectionConfigMock
+        }
+
+        every { fsTreeStructureMock.findByPredicate(any()) } returns listOf(
+          mockk<JesWsNode> {
+            every { unit } returns compatibleWS
+            every { name } returns "test1"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "UNIQUE"
+                }
+              }
+            )
+          },
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns null
+          },
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns "test2"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "TEST"
+                }
+              }
+            )
+          }
+        )
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe true
+          didTriggerShowNotification shouldBe true
+          didTriggerSetSelectedContent shouldBe true
+          didTriggerAddMask shouldBe true
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("not perform Go To Job action, creating a jobs filter in the first found suitable JES Working set on the same connection, cause a user cancelled the jobs filter creation dialog") {
+        every {
+          anyConstructed<AddJobsFilterDialog>().showAndGet()
+        } answers {
+          didTriggerAddJobsFilterDialogShowAndGet = true
+          false
+        }
+
+        val compatibleWS = mockk<JesWorkingSet> {
+          every { name } returns "test1"
+          every { connectionConfig } returns connectionConfigMock
+        }
+
+        every { fsTreeStructureMock.findByPredicate(any()) } returns listOf(
+          mockk<JesWsNode> {
+            every { unit } returns compatibleWS
+            every { name } returns "test1"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "UNIQUE"
+                }
+              }
+            )
+          },
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns null
+          },
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns "test2"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "TEST"
+                }
+              }
+            )
+          }
+        )
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe true
+          didTriggerShowNotification shouldBe false
+          didTriggerSetSelectedContent shouldBe false
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("perform Go To Job action, not creating a jobs filter cause there is already existing jobs filter with the same job ID exists") {
+        every { fsTreeStructureMock.findByPredicate(any()) } returns listOf(
+          mockk<JesWsNode> {
+            every { unit } returns mockk<JesWorkingSet> {
+              every { connectionConfig } returns connectionConfigMock
+            }
+            every { name } returns "test2"
+            every { children } returns mutableListOf(
+              mockk<JesFilterNode> {
+                every { value } returns mockk<JobsFilter> {
+                  every { jobId } returns "TEST"
+                }
+              }
+            )
+          }
+        )
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe true
+          didTriggerSetSelectedContent shouldBe true
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("not perform Go To Job action cause there is no JES Explorer view") {
+        every { jesExplorerContentProviderMock.getExplorerView(any()) } returns null
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe false
+          didTriggerSetSelectedContent shouldBe false
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("not perform Go To Job action cause there is no project open") {
+        every { eventMock.project } returns null
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe false
+          didTriggerSetSelectedContent shouldBe false
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("not perform Go To Job action cause there is no job ID for the job in the console view") {
+        every { jobsLogViewMock.jobLogInfo } returns mockk {
+          every { jobId } returns null
+        }
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe false
+          didTriggerSetSelectedContent shouldBe false
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
+
+      should("not perform Go To Job action cause there is no job console view") {
+        every { eventMock.getData(JOBS_LOG_VIEW) } returns null
+
+        runInEdtAndWait {
+          goToJobAction.actionPerformed(eventMock)
+        }
+
+        assertSoftly {
+          didTriggerJesWsDialogShowAndGet shouldBe false
+          didTriggerAddJobsFilterDialogShowAndGet shouldBe false
+          didTriggerShowNotification shouldBe false
+          didTriggerSetSelectedContent shouldBe false
+          didTriggerAddMask shouldBe false
+          didTriggerSelectTree shouldBe false
+          didTriggerExpandTree shouldBe false
+          addCallCount shouldBe 0
+        }
+      }
     }
 
-    should("returnThreadEDT_whenGetActionUpdateThread") {
-      val expected = ActionUpdateThread.EDT
-      val actual = classUnderTest.actionUpdateThread
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
+    context("update") {
+      should("show the Go To Job action") {
+        goToJobAction.update(eventMock)
 
-    should("returnTrue_whenIsDumbAware") {
-      val actual = classUnderTest.isDumbAware
-      assertSoftly {
-        actual shouldBe true
+        assertSoftly {
+          isEnabledNewValue shouldBe true
+          isVisibleNewValue shouldBe true
+        }
       }
-    }
 
-    should("updateActionState_whenUpdate") {
-      val jobMock = mockk<Job>()
-      val jobLogFetcherMock = mockk<JobLogFetcher>()
-      val jobLoggerMock = mockk<AbstractMFLoggerBase<JobProcessInfo, JobLogFetcher>>()
-      every { jobMock.status } returns Job.Status.OUTPUT
-      every { jobLoggerMock.logFetcher } returns jobLogFetcherMock
-      every { jobLogFetcherMock.getCachedJobStatus() } returns jobMock
-      every { actionEventMock.presentation } returns Presentation()
-      every { consoleViewMock.getJobLogger() } returns jobLoggerMock
-      classUnderTest.update(actionEventMock)
-      assertSoftly {
-        actionEventMock.presentation.isEnabled shouldBe true
-        actionEventMock.presentation.isVisible shouldBe true
+      should("show the Go To Job action as disabled if there is no job status") {
+        every { logFetcherMock.getCachedJobStatus() } returns mockk {
+          every { status } returns null
+        }
+
+        goToJobAction.update(eventMock)
+
+        assertSoftly {
+          isEnabledNewValue shouldBe false
+          isVisibleNewValue shouldBe true
+        }
+      }
+
+      should("show the Go To Job action as disabled if there is no cached job status holder") {
+        every { logFetcherMock.getCachedJobStatus() } returns null
+
+        goToJobAction.update(eventMock)
+
+        assertSoftly {
+          isEnabledNewValue shouldBe false
+          isVisibleNewValue shouldBe true
+        }
+      }
+
+      should("not show the Go To Job action cause there is no job console view") {
+        every { eventMock.getData(JOBS_LOG_VIEW) } returns null
+
+        goToJobAction.update(eventMock)
+
+        assertSoftly {
+          isEnabledNewValue shouldBe false
+          isVisibleNewValue shouldBe false
+        }
       }
     }
   }
-
 })

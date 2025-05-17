@@ -10,14 +10,13 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.mock.MockFileDocumentManagerImpl
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.UnknownFileType
@@ -30,37 +29,93 @@ import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.spyk
-import io.mockk.unmockkAll
 import io.mockk.verify
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.zowe.explorer.testutils.AppInitShouldSpec
 
-class DocumentedSyncProviderTest : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("DocumentedSyncProvider:") {
+class DocumentedSyncProviderTest : AppInitShouldSpec("dataops/content/synchronizer/DocumentedSyncProvider", {
+  context("DocumentedSyncProvider") {
     var isNewTextWritten = false
     var isUssAttr = false
     var isNullDock = false
-    var isMoreClicked = false
     var getFileDocumentManager = false
     var getEncodingManager = false
     var notified = false
+
+    val mockedDocument: Document = mockk<Document> {
+      every { text } returns "qwerty"
+      every { isWritable } returns false
+      every { setReadOnly(any()) } returns Unit
+      every {
+        setText(any())
+      } answers {
+        isNewTextWritten = true
+      }
+    }
+
+    val mockedVirtualFile = mockk<VirtualFile> {
+      every { fileType } returns UnknownFileType.INSTANCE
+      every { isDirectory } returns false
+      every { getUserData(any<Key<Document>>()) } returns mockedDocument
+      every { charset = any() } just Runs
+      every { detectedLineSeparator = any() } just Runs
+    }
+    every { mockedVirtualFile.hashCode() } returns 13
+
+    val mockedEncodingManager = mockk<EncodingManager> {
+      every { setEncoding(any(), any()) } just Runs
+    }
+    mockkStatic(EncodingManager::getInstance)
+    every {
+      EncodingManager.getInstance()
+    } answers {
+      getEncodingManager = true
+      mockedEncodingManager
+    }
+
+    val notificationsService = NotificationsService.getService()
+    every {
+      notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+    } answers {
+      notified = true
+    }
+
+    val f: (CharSequence) -> Document? = { mockedDocument }
+    val mockedMockFileDocumentManager = spyk(MockFileDocumentManagerImpl(Key.create("MockDocument"), f))
+    mockkStatic(FileDocumentManager::getInstance)
+    every {
+      FileDocumentManager.getInstance()
+    } answers {
+      getFileDocumentManager = true
+      mockedMockFileDocumentManager
+    }
+
+    val mockedFileAttributes = mockk<FileAttributes>()
+    val dataOpsManager = DataOpsManager.getService()
+    every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockedFileAttributes
+
+    val documentedSyncProvider = spyk(DocumentedSyncProvider(file = mockedVirtualFile))
+
+    beforeEach {
+      every {
+        mockedMockFileDocumentManager.getDocument(any())
+      } answers {
+        callOriginal()
+      }
+      every {
+        documentedSyncProvider.loadNewContent(any())
+      } answers {
+        callOriginal()
+      }
+    }
 
     afterEach {
       getFileDocumentManager = false
@@ -69,67 +124,8 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
       notified = false
       isUssAttr = false
       isNullDock = false
-      isMoreClicked = false
     }
 
-    val mockedDocument: Document = mockk<Document>()
-    every { mockedDocument.text } returns "qwerty"
-    every { mockedDocument.isWritable } returns false
-    every { mockedDocument.setReadOnly(any()) } returns Unit
-    every { mockedDocument.setText(any()) } answers {
-      isNewTextWritten = true
-    }
-
-    val mockedVirtualFile = mockk<VirtualFile>()
-    every { mockedVirtualFile.hashCode() } returns 13
-    every { mockedVirtualFile.fileType } returns UnknownFileType.INSTANCE
-    every { mockedVirtualFile.isDirectory } returns false
-    every { mockedVirtualFile.getUserData(any<Key<Document>>()) } returns mockedDocument
-    every { mockedVirtualFile.charset = any() } just Runs
-    every { mockedVirtualFile.detectedLineSeparator = any() } just Runs
-
-    val mockedEncodingManager = mockk<EncodingManager>()
-    every { mockedEncodingManager.setEncoding(any(), any()) } just Runs
-    mockkStatic(EncodingManager::getInstance)
-    every { EncodingManager.getInstance() } answers {
-      getEncodingManager = true
-      mockedEncodingManager
-    }
-
-    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
-    notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-      override fun notifyError(
-        t: Throwable,
-        project: Project?,
-        custTitle: String?,
-        custDetailsShort: String?,
-        custDetailsLong: String?
-      ) {
-        notified = true
-      }
-    }
-
-    val f: (CharSequence) -> Document? = { mockedDocument }
-    val mockedMockFileDocumentManager = spyk(MockFileDocumentManagerImpl(Key.create("MockDocument"), f))
-    mockkStatic(FileDocumentManager::getInstance)
-    every { FileDocumentManager.getInstance() } answers {
-      getFileDocumentManager = true
-      mockedMockFileDocumentManager
-    }
-
-    val mockedFileAttributes = mockk<FileAttributes>()
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-    dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-      override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-        return mockedFileAttributes
-      }
-    }
-
-    lateinit var addMaskActionInst: AnAction
-    val mockedAnActionEvent = mockk<AnActionEvent>()
-    every { mockedAnActionEvent.project } returns mockk()
-
-    val documentedSyncProvider = spyk(DocumentedSyncProvider(file = mockedVirtualFile))
     should("get hash code") {
       documentedSyncProvider.hashCode() shouldBe 13
     }
@@ -155,7 +151,9 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
     }
 
     should("Update content in null document") {
-      every { mockedMockFileDocumentManager.getDocument(any()) } answers {
+      every {
+        mockedMockFileDocumentManager.getDocument(any())
+      } answers {
         isNullDock = true
         null
       }
@@ -163,7 +161,6 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
       isNewTextWritten shouldBe false
       isNullDock shouldBe true
       documentedSyncProvider.isReadOnly shouldBe true
-      clearMocks(mockedMockFileDocumentManager)
     }
 
     should("Update content in file document") {
@@ -179,13 +176,14 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
     }
 
     should("Throw exception in loadNewContent.") {
-      every { documentedSyncProvider.loadNewContent(any()) } answers {
+      every {
+        documentedSyncProvider.loadNewContent(any())
+      } answers {
         throw Exception("test exception")
       }
       documentedSyncProvider.putInitialContent("131313".toByteArray())
       getEncodingManager shouldBe true
       isNewTextWritten shouldBe false
-      clearMocks(documentedSyncProvider)
     }
 
     should("Put initial content in file document.") {
@@ -245,54 +243,17 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
     }
 
     should("not null RemoteUssAttributes.charset") {
-      val mockedRemoteUssAttributes = mockk<RemoteUssAttributes>()
-      every { mockedRemoteUssAttributes.charset } answers {
-        isUssAttr = true
-        DEFAULT_BINARY_CHARSET
-      }
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return mockedRemoteUssAttributes
+      val mockedRemoteUssAttributes = mockk<RemoteUssAttributes> {
+        every {
+          charset
+        } answers {
+          isUssAttr = true
+          DEFAULT_BINARY_CHARSET
         }
       }
+      every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockedRemoteUssAttributes
       documentedSyncProvider.retrieveCurrentContent()
       isUssAttr shouldBe true
     }
-
-    // TODO: test for More button click
-//    should("test notification") {
-//      val notifyRef: (Notification) -> Unit = Notifications.Bus::notify
-//      mockkStatic(notifyRef as KFunction<*>)
-//      mockkStatic(Notification::get)
-//      every { Notifications.Bus.notify(any<Notification>()) } answers {
-//        val notification = firstArg<Notification>()
-//        every { Notification.get(any()) } returns notification
-//        addMaskActionInst = notification.actions.first { it.templateText == "More" }
-//        notified = true
-//      }
-//      val showDialogRef: (Project?, String, String) -> Unit = Messages::showErrorDialog
-//      mockkStatic(showDialogRef as KFunction<*>)
-//      every {
-//        showDialogRef(
-//          any(), any<String>(), any<String>()
-//        )
-//      } answers {
-//        isMoreClicked = true
-//      }
-//      val e = Exception()
-//      documentedSyncProvider.onThrowable(e)
-//      notified shouldBe true
-//      addMaskActionInst.actionPerformed(mockedAnActionEvent)
-//      isMoreClicked shouldBe true
-//    }
-
-//    should("test notification with dot") {
-//      val e = Exception("Call.Exception")
-//      documentedSyncProvider.onThrowable(e)
-//      notified shouldBe true
-//      addMaskActionInst.actionPerformed(mockedAnActionEvent)
-//      isMoreClicked shouldBe true
-//    }
-
   }
 })

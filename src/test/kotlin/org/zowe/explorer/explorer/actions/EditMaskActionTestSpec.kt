@@ -10,101 +10,87 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.EDT
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.*
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.ExplorerContentProvider
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
 import org.zowe.explorer.utils.MaskType
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.assertThrows
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.UIComponentManager
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.runInEdtAndWait
+import java.lang.RuntimeException
 import java.util.*
 
-class EditMaskActionTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("explorer module: actions/EditMaskAction") {
+class EditMaskActionTestSpec : AppInitShouldSpec("explorer/actions/EditMaskAction", {
+  context("all functions") {
     val editMaskAction = EditMaskAction()
 
-    val uuid = "test"
+    val uuidMock = "test"
     val selectedNodeMock = mockk<NodeData<ConnectionConfig>>()
     val fileExplorerViewMock = mockk<FileExplorerView>()
     val anActionEventMock = mockk<AnActionEvent>()
-    val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>>()
-    val filesWorkingSetMock = mockk<FilesWorkingSet>()
+    val filesWorkingSetMock = mockk<FilesWorkingSet> {
+      every { name } returns "test"
+      every { uuid } returns uuidMock
+      every { explorer } returns mockk()
+      every { connectionConfig } returns null
+    }
+    val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>> {
+      every { value } returns filesWorkingSetMock
+    }
     val filesWorkingSetConfigMock = mockk<FilesWorkingSetConfig>()
 
-    val uiComponentManagerService: TestUIComponentManager = UIComponentManager.getService() as TestUIComponentManager
-    val configService = ConfigService.getService() as TestConfigServiceImpl
-    val credentialService = CredentialService.getService() as TestCredentialsServiceImpl
+    val uiComponentManagerService = UIComponentManager.getService()
+    every { uiComponentManagerService.getExplorerContentProvider(any<Class<Explorer<*, *>>>()) } returns mockk()
+
+    val configService = ConfigService.getService()
+    val configServiceCrudable = mockk<Crudable>()
+    every { configService.crudable } returns configServiceCrudable
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
     val explorerTreeStructBaseMock = object : TestExplorerTreeStructureBase(mockk(), mockk()) {
       override fun registerNode(node: ExplorerTreeNode<*, *>) {}
     }
 
+    mockkConstructor(AddOrEditMaskDialog::class)
+
     beforeEach {
-      uiComponentManagerService.testInstance = object : TestUIComponentManager() {
-        override fun <E : Explorer<*, *>> getExplorerContentProvider(
-          clazz: Class<out E>
-        ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>> {
-          return mockk()
-        }
-      }
-
-      every { filesWorkingSetMock.explorer } returns mockk()
-
       // Needed here to initialize other components somewhere (probably bug?)
       UssDirNode(UssPath("test"), mockk(), explorerTreeNodeMock, filesWorkingSetMock, explorerTreeStructBaseMock)
 
       every { selectedNodeMock.node } returns mockk()
       every { fileExplorerViewMock.mySelectedNodesData } returns listOf(selectedNodeMock)
-      every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
+      every { anActionEventMock.getData(EXPLORER_VIEW) } returns fileExplorerViewMock
 
-      every { filesWorkingSetMock.uuid } returns uuid
-      every { filesWorkingSetMock.connectionConfig } returns null
-      every { explorerTreeNodeMock.value } returns filesWorkingSetMock
+      every { filesWorkingSetConfigMock.ussPaths } returns mutableListOf()
+      every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf()
 
       every {
-        configService.crudable.getByUniqueKey(FilesWorkingSetConfig::class.java, uuid)
+        configServiceCrudable.getByUniqueKey(FilesWorkingSetConfig::class.java, uuidMock)
       } returns Optional.of(filesWorkingSetConfigMock)
 
-      credentialService.testInstance = object : TestCredentialsServiceImpl() {
-        override fun getUsernameByKey(connectionConfigUuid: String): String {
-          return "test"
-        }
-      }
       every { anActionEventMock.project } returns mockk()
 
-      mockkObject(AddOrEditMaskDialog)
-      every { AddOrEditMaskDialog["initialize"](any<() -> Unit>()) } returns Unit
-
-      mockkConstructor(AddOrEditMaskDialog::class)
       every { anyConstructed<AddOrEditMaskDialog>().showAndGet() } returns true
-    }
-
-    afterEach {
-      clearAllMocks()
-      unmockkAll()
     }
 
     context("actionPerformed") {
@@ -116,31 +102,29 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         changed = false
 
         every {
-          configService.crudable.update(any())
+          configServiceCrudable.update(any())
         } answers {
           updated = true
           mockk()
         }
       }
+
       context("generic") {
         should("not perform edit action if explorer view is null") {
-          every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+          every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe false }
         }
+
         should("not perform edit action if selected node is not a DS or USS mask") {
           every { selectedNodeMock.node } returns mockk<ExplorerTreeNode<ConnectionConfig, *>>()
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe false }
@@ -158,15 +142,14 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
           every { selectedNodeMock.node } returns ussDirNode
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe false }
         }
       }
+
       context("edit USS mask") {
         lateinit var ussMaskNode: UssDirNode
 
@@ -175,15 +158,22 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
           changed = false
 
           ussMaskNode =
-            UssDirNode(UssPath("test"), mockk(), explorerTreeNodeMock, filesWorkingSetMock, explorerTreeStructBaseMock)
+            UssDirNode(
+              UssPath("test"),
+              mockk(),
+              explorerTreeNodeMock,
+              filesWorkingSetMock,
+              explorerTreeStructBaseMock
+            )
 
           every { selectedNodeMock.node } returns ussMaskNode
           every { filesWorkingSetConfigMock.ussPaths } returns mutableListOf(UssPath("test"))
           every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf()
         }
+
         should("perform edit on USS mask") {
           every {
-            configService.crudable.update(any())
+            configServiceCrudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -200,18 +190,17 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.USS), filesWorkingSetMock)
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
         }
+
         should("perform edit on USS mask changing mask type") {
           every {
-            configService.crudable.update(any())
+            configServiceCrudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -228,82 +217,70 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.ZOS), filesWorkingSetMock)
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
         }
+
         should("not perform edit on USS mask if dialog is closed") {
           every { anyConstructed<AddOrEditMaskDialog>().showAndGet() } returns false
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe false }
         }
+
         should("not perform edit on USS mask if working set is not found") {
           every {
-            configService.crudable.getByUniqueKey(filesWorkingSetConfigMock::class.java, uuid)
+            configServiceCrudable.getByUniqueKey(filesWorkingSetConfigMock::class.java, uuidMock)
           } returns Optional.ofNullable(null)
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe false }
         }
+
         should("not perform edit on USS mask if list of USS masks is empty") {
           every { filesWorkingSetConfigMock.ussPaths } returns mutableListOf()
 
-          var throwable: Throwable? = null
-          runCatching {
-            runBlocking {
-              withContext(Dispatchers.EDT) {
-                editMaskAction.actionPerformed(anActionEventMock)
-              }
+
+          runInEdtAndWait {
+            val throwable = shouldThrow<RuntimeException> {
+              editMaskAction.actionPerformed(anActionEventMock)
             }
-          }.onFailure {
-            throwable = it
-          }
 
-          val expected = IndexOutOfBoundsException("Index 0 out of bounds for length 0")
-
-          assertSoftly {
-            throwable shouldBe expected
-            updated shouldBe false
+            assertSoftly {
+              (throwable is IndexOutOfBoundsException) shouldBe true
+              (throwable.message ?: "") shouldContain "Index 0 out of bounds for length 0"
+              updated shouldBe false
+            }
           }
         }
+
         should("not perform edit on USS mask if selected mask is not found in list of USS masks") {
           every { filesWorkingSetConfigMock.ussPaths } returns mutableListOf(UssPath("other"))
 
-          var throwable: Throwable? = null
-          runCatching {
-            runBlocking {
-              withContext(Dispatchers.EDT) {
-                editMaskAction.actionPerformed(anActionEventMock)
-              }
+          runInEdtAndWait {
+            val throwable = shouldThrow<RuntimeException> {
+              editMaskAction.actionPerformed(anActionEventMock)
             }
-          }.onFailure {
-            throwable = it
-          }
 
-          val expected = IndexOutOfBoundsException("Index 0 out of bounds for length 0")
-
-          assertSoftly {
-            throwable shouldBe expected
-            updated shouldBe false
+            assertSoftly {
+              (throwable is IndexOutOfBoundsException) shouldBe true
+              (throwable.message ?: "") shouldContain "Index 0 out of bounds for length 0"
+              updated shouldBe false
+            }
           }
         }
       }
+
       context("edit DS mask") {
         lateinit var dsMaskNode: DSMaskNode
 
@@ -321,12 +298,12 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             )
 
           every { selectedNodeMock.node } returns dsMaskNode
-          every { filesWorkingSetConfigMock.ussPaths } returns mutableListOf()
           every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf(DSMask("test", mutableListOf()))
         }
+
         should("perform edit on DS mask") {
           every {
-            configService.crudable.update(any())
+            configServiceCrudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -343,18 +320,17 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.ZOS), filesWorkingSetMock)
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
         }
+
         should("perform edit on DS mask changing mask type") {
           every {
-            configService.crudable.update(any())
+            configServiceCrudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -371,10 +347,8 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.USS), filesWorkingSetMock)
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              editMaskAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            editMaskAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { updated shouldBe true }
@@ -394,6 +368,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
           mockk()
         }
       }
+
       should("edit action is enabled and visible for dataset mask node") {
         val dsMaskNode =
           DSMaskNode(
@@ -410,6 +385,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { enabledAndVisible shouldBe true }
       }
+
       should("edit action is enabled and visible for USS mask node") {
         val ussMaskNode =
           UssDirNode(
@@ -426,6 +402,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { enabledAndVisible shouldBe true }
       }
+
       should("edit action is not enabled and visible for USS dir node") {
         val ussDirNode =
           UssDirNode(
@@ -443,6 +420,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { enabledAndVisible shouldBe false }
       }
+
       should("edit action is not enabled and visible for other types of nodes") {
         every { selectedNodeMock.node } returns mockk()
 
@@ -450,6 +428,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { enabledAndVisible shouldBe false }
       }
+
       should("edit action is not enabled and visible if selected more than one node") {
         every { fileExplorerViewMock.mySelectedNodesData } returns listOf(mockk(), mockk())
 
@@ -457,8 +436,9 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { enabledAndVisible shouldBe false }
       }
+
       should("edit action is not enabled and not visible if explorer view is null") {
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
 
         editMaskAction.update(anActionEventMock)
 

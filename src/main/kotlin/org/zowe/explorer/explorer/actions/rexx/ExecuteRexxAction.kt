@@ -10,16 +10,17 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions.rexx
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.Task.WithResult
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.zowe.explorer.api.api
@@ -49,7 +50,7 @@ import javax.swing.JComponent
 /**
  * Class represents an Execute REXX action
  */
-class ExecuteRexxAction : AnAction() {
+class ExecuteRexxAction : DumbAwareAction() {
 
   val logger: Logger = log<ExecuteRexxAction>()
 
@@ -136,13 +137,7 @@ class ExecuteRexxAction : AnAction() {
     }
   }
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Logs any message

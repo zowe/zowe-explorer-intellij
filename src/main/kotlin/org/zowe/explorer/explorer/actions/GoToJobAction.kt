@@ -10,16 +10,18 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.impl.ContentImpl
+import com.intellij.util.applyIf
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobFilterState
@@ -41,20 +43,14 @@ import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 /**
  * Action which allows to create Jes working set + filters from Jobs Logs View
  */
-class GoToJobAction : AnAction() {
+class GoToJobAction : DumbAwareAction() {
 
   companion object {
     const val JOB_FILTER_CREATED_TITLE = "Job Filter(s) successfully created"
     const val JOB_FILTER_NOT_CREATED_TITLE = "Job Filter cannot be created"
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Overrides actionPerformed in super class. When Go-To-Job button is pressed below implementation is used
@@ -72,7 +68,10 @@ class GoToJobAction : AnAction() {
     val view = e.project?.let { jesContentProvider.getExplorerView(it) } ?: return
     val connectionConfig = jobsLogsView.getConnectionConfig()
 
-    val jesWSOnSameConnection = view.let { jesView -> jesView.myFsTreeStructure.findByPredicate { it is JesWsNode } }
+    val jesWSOnSameConnection = view
+      .let { jesView ->
+        jesView.myFsTreeStructure.findByPredicate { it is JesWsNode }
+      }
       .map { it as JesWsNode }
       .mapNotNull { if (it.unit.connectionConfig == connectionConfig) it else null }
 
@@ -135,10 +134,15 @@ class GoToJobAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
-    e.getData(JOBS_LOG_VIEW)?.let {
+    e.getData(JOBS_LOG_VIEW)?.let { jobsLogView ->
       e.presentation.apply {
         isVisible = true
-        isEnabled = it.getJobLogger().logFetcher.getCachedJobStatus()?.status.let { it != null }
+        isEnabled = (
+          jobsLogView.getJobLogger()
+            .logFetcher
+            .getCachedJobStatus()
+            ?.status
+        ) != null
       }
     }
   }
@@ -155,12 +159,19 @@ class GoToJobAction : AnAction() {
     jobFilters: List<JobsFilter>,
     connection: ConnectionConfig
   ): String {
-    val messageBuilder = StringBuilder().append("Job Filter(s): ")
-    jobFilters.forEach { messageBuilder.append(it.toString().plus(", ")) }
-    messageBuilder.append("successfully created ")
-    if (wsNode != null) messageBuilder.append("in the working set ${wsNode.name} ")
-    messageBuilder.append("on connection: $connection")
-    return messageBuilder.toString()
+    return StringBuilder()
+      .append("Job Filter(s): ")
+      .apply {
+        jobFilters.forEach { jobFilter ->
+          append(jobFilter.toString().plus(", "))
+        }
+      }
+      .append("successfully created ")
+      .applyIf(wsNode != null) {
+        append("in the working set ${wsNode?.name} ")
+      }
+      .append("on connection: $connection")
+      .toString()
   }
 
   /**

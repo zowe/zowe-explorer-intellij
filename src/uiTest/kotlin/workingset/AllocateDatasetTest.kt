@@ -55,12 +55,12 @@ class AllocateDatasetTest : IdeaInteractionClass() {
     private lateinit var processManager: ProcessManager
 
     companion object {
-//        @JvmStatic
-//        fun valuesProvider(): Stream<Arguments> {
-//            return invalidAllocateScenarios.entries.stream().map { entry ->
-//                Arguments.of(entry.key, entry.value)
-//            }
-//        }
+        @JvmStatic
+        fun valuesProvider(): Stream<Arguments> {
+            return invalidAllocateScenarios.entries.stream().map { entry ->
+                Arguments.of(entry.key, entry.value)
+            }
+        }
 
         @JvmStatic
         fun organisationValues() = listOf(
@@ -116,27 +116,27 @@ class AllocateDatasetTest : IdeaInteractionClass() {
         doValidTest(input, remoteRobot)
     }
 
-//    /**
-//     * Tests to allocate dataset with invalid dataset params, checks that correct message is returned.
-//     */
-//    @ParameterizedTest
-//    @MethodSource("valuesProvider")
-//    fun testInvalidDatasetName(scenarioName: String, value: InvalidAllocate, remoteRobot: RemoteRobot) =
-//        invalidAllocateDataSet(
-//            wsName,
-//            value.datasetName,
-//            value.datasetOrganization,
-//            value.allocationUnit,
-//            value.primaryAllocation,
-//            value.secondaryAllocation,
-//            value.directory,
-//            value.recordFormat,
-//            value.recordLength,
-//            value.blockSize,
-//            value.averageBlockLength,
-//            remoteRobot,
-//            value.message
-//        )
+    /**
+     * Tests to allocate dataset with invalid dataset params, checks that correct message is returned.
+     */
+    @ParameterizedTest
+    @MethodSource("valuesProvider")
+    fun testInvalidDatasetName(scenarioName: String, value: InvalidAllocate, remoteRobot: RemoteRobot) =
+        invalidAllocateDataSet(
+            wsName,
+            value.datasetName,
+            value.datasetOrganization,
+            value.allocationUnit,
+            value.primaryAllocation,
+            value.secondaryAllocation,
+            value.directory,
+            value.recordFormat,
+            value.recordLength,
+            value.blockSize,
+            value.averageBlockLength,
+            remoteRobot,
+            value.message
+        )
 
     /**
      * Allocates dataset with different record formats.
@@ -171,58 +171,58 @@ class AllocateDatasetTest : IdeaInteractionClass() {
         }
     }
 
-//    /**
-//     * Allocates dataset.
-//     */
-//    private fun invalidAllocateDataSet(
-//        wsName: String,
-//        datasetName: String,
-//        datasetOrganization: DatasetOrganization,
-//        allocationUnit: String,
-//        primaryAllocation: Int,
-//        secondaryAllocation: Int,
-//        directory: Int,
-//        recordFormat: String,
-//        recordLength: Int,
-//        blockSize: Int,
-//        averageBlockLength: Int,
-//        remoteRobot: RemoteRobot,
-//        message: String,
-//    ) = with(remoteRobot) {
-//        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-//            explorer {
-//                fileExplorer.click()
-//                this.find<ComponentFixture>(viewTree).findText(wsName).rightClick()
-//            }
-//            actionMenu(remoteRobot, NEW_POINT_TEXT).click()
-//            actionMenuItem(remoteRobot, DATASET_POINT_TEXT).click()
-//            allocateDatasetDialog(fixtureStack) {
-//                allocateDataset(
-//                    datasetName,
-//                    datasetOrganization,
-//                    allocationUnit,
-//                    primaryAllocation,
-//                    secondaryAllocation,
-//                    directory,
-//                    recordFormat,
-//                    recordLength,
-//                    blockSize,
-//                    averageBlockLength
-//                )
-//                clickButton(OK_TEXT)
-//            }
-//
-//            val msgAll = find<HeavyWeightWindowFixture>(
-//                messageLoc,
-//                Duration.ofSeconds(30)
-//            ).findAllText()
-//            var msg = ""
-//            msgAll.forEach { msg += it.text }
-//            msg.shouldContain(message)
-//            assertFalse(button(OK_TEXT).isEnabled())
-//            clickButton(CANCEL_TEXT)
-//            closableFixtureCollector.closeOnceIfExists(AllocateDatasetDialog.name)
-//
-//        }
-//    }
+    /**
+     * Allocates dataset.
+     */
+    private fun invalidAllocateDataSet(
+        wsName: String,
+        datasetName: String,
+        datasetOrganization: DatasetOrganization,
+        allocationUnit: String,
+        primaryAllocation: Int,
+        secondaryAllocation: Int,
+        directory: Int,
+        recordFormat: String,
+        recordLength: Int,
+        blockSize: Int,
+        averageBlockLength: Int,
+        remoteRobot: RemoteRobot,
+        message: String,
+    ) = with(remoteRobot) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                this.find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+            }
+            actionMenu(remoteRobot, NEW_POINT_TEXT).click()
+            actionMenuItem(remoteRobot, DATASET_POINT_TEXT).click()
+            allocateDatasetDialog(fixtureStack) {
+                allocateDataset(
+                    datasetName,
+                    datasetOrganization,
+                    allocationUnit,
+                    primaryAllocation,
+                    secondaryAllocation,
+                    directory,
+                    recordFormat,
+                    recordLength,
+                    blockSize,
+                    averageBlockLength
+                )
+                clickButton(OK_TEXT)
+            }
+
+            val msgAll = find<HeavyWeightWindowFixture>(
+                messageLoc,
+                Duration.ofSeconds(30)
+            ).findAllText()
+            var msg = ""
+            msgAll.forEach { msg += it.text }
+            msg.shouldContain(message)
+            assertFalse(button(OK_TEXT).isEnabled())
+            clickButton(CANCEL_TEXT)
+            closableFixtureCollector.closeOnceIfExists(AllocateDatasetDialog.name)
+
+        }
+    }
 }

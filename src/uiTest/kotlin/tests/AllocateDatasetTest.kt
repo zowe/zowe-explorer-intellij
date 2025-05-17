@@ -180,6 +180,9 @@ class AllocateDatasetTest {
     @JvmStatic
     @AfterAll
     fun afterAll() {
+      IdeRunManager.prepareRunManager()
+        .runningIde
+        .resetTestEnv()
       filesExplorerPanel.deleteAllMaskElements(1)
       deleteConfigEntities(ideDriver, "Working Sets")
       deleteConfigEntities(ideDriver, "Connections")

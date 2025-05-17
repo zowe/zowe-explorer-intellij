@@ -79,8 +79,7 @@ We have two options of tests:
 ### To run UI tests (new):
 
 Before running the tests, make sure you use the configuration after IntelliJ IDEA v2024.3.
-Just run `./gradlew uiTests` task, or use [Kotest](https://plugins.jetbrains.com/plugin/14080-kotest) plug-in for
- IntelliJ IDEA. The plug-in will provide the buttons against the test cases and suites in **src/uiTest** folder
+Just run `./gradlew uiTests` task, or use [Kotest](https://plugins.jetbrains.com/plugin/14080-kotest) plug-in for IntelliJ IDEA. The plug-in will provide the buttons against the test cases and suites in **src/uiTest** folder
 
 ### To run UI tests (old):
 
@@ -137,10 +136,9 @@ the [contribution guide](CONTRIBUTING.md).
 If you have any questions, related to the project development, further plans or something else, you can reach as out by
 some of the communication chanels:
 
-* [Zowe Explorer IntelliJ team Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
+* [Zowe Explorer IntelliJ team Slack channel in The Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
 * [Zowe Explorer plug-in for IntelliJ IDEA GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
 * Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the Zowe Explorer IntelliJ squad)</a>
-* Email to: <a href="mailto:aburak@ibagroup.eu">Alex Burak (Product Owner)</a>
 
 **Note: GitHub issue is the preferred way of communicating in case of creating some bug/feature/request for enhancement.
 If you need direct consulting or you have any related questions, please, reach us out using Slack channels or E-mail**

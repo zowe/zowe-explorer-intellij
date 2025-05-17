@@ -14,7 +14,6 @@
 
 package org.zowe.explorer.config.connect.ui.zosmf
 
-import com.google.gson.JsonSyntaxException
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -116,7 +115,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
       val zoweConfig = try {
         parseConfigJson(configFile.inputStream)
-      } catch (e: JsonSyntaxException) {
+      } catch (e: Exception) {
         NotificationsService.errorNotification(
           e,
           project = DataManager.getInstance().getDataContext(panel).getData(PlatformDataKeys.PROJECT),

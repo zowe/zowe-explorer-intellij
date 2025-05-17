@@ -23,6 +23,7 @@ import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.utils.crudable.ReloadableEventHandler
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.isTheSameAs
+import org.zowe.explorer.v3.state.config.migration.performOldConfigStorageMigration
 
 /** Stateful class to represent the plugin configs sandbox */
 data class SandboxState(
@@ -148,6 +149,7 @@ class ConfigSandboxImpl : ConfigSandbox {
               }
             } else {
               ConfigService.getService().crudable.replaceGracefully(clazz, list.stream())
+              performOldConfigStorageMigration()
             }
           }
       }
@@ -157,10 +159,6 @@ class ConfigSandboxImpl : ConfigSandbox {
   /** Fetch the config service values to the config sandbox for each config class */
   override fun fetch() {
     synchronized(stateLock) {
-//      rollbackSandbox<ConnectionConfig>()
-//      rollbackSandbox<FilesWorkingSetConfig>()
-//      rollbackSandbox<JesWorkingSetConfig>()
-//      rollbackSandbox<Credentials>()
       ConfigService.getService()
         .getRegisteredConfigClasses()
         .forEach {
@@ -176,7 +174,6 @@ class ConfigSandboxImpl : ConfigSandbox {
    * Triggers the onReload event when the rollback is finished
    * @param clazz the class of configs to rollback in the config sandbox
    */
-  @Suppress("UNCHECKED_CAST")
   override fun <T> rollback(clazz: Class<out T>) {
     synchronized(stateLock) {
       val current = if (clazz.isThe<Credentials>()) {
@@ -196,6 +193,7 @@ class ConfigSandboxImpl : ConfigSandbox {
       listOfNotNull(classToList(clazz, state), classToList(clazz, initialState))
         .forEach { list ->
           list.clear()
+          @Suppress("UNCHECKED_CAST")
           list.addAll(
             current
               .map { it.clone(clazz) }

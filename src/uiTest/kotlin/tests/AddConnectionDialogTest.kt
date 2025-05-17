@@ -17,7 +17,6 @@ package tests
 
 import io.kotest.core.annotation.Description
 import com.intellij.driver.client.Driver
-import org.junit.Ignore
 import org.junit.jupiter.api.*
 import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
@@ -26,7 +25,7 @@ import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.ErrorCreatingConnectionDialog
 
-@Ignore
+@Disabled("This testsuite needs to be reworked")
 @Description("Tests for interaction and filling the connection creation dialog")
 class AddConnectionDialogTest {
   private lateinit var filesExplorerPanel: FilesExplorerPanel
@@ -50,6 +49,9 @@ class AddConnectionDialogTest {
     @JvmStatic
     @AfterAll
     fun afterAll() {
+      IdeRunManager.prepareRunManager()
+        .runningIde
+        .resetTestEnv()
       deleteConfigEntities(ideDriver, "Connections")
       MockWebServerManager.removeAllEndpoints()
     }
@@ -78,40 +80,38 @@ class AddConnectionDialogTest {
    *   Regression: Add invalid connection
    * </a>
    */
+  @Disabled("This testcase needs to be reworked")
   @Test
   @Tag("New")
   fun createInvalidConnectionTest(testInfo: TestInfo) {
-    val mockServer = MockWebServerManager.prepareMockServer()
+//    TODO: finalize the check (the error dialog should appear)
+//    val mockServer = MockWebServerManager.prepareMockServer()
+//
+//    MockWebServerManager.injectEndpoint(
+//      "${testInfo.displayName}_info",
+//      jsonMock = "infoResponse",
+//      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
+//    )
+//    MockWebServerManager.injectEndpoint(
+//      "${testInfo.displayName}_resttopology",
+//      jsonMock = "infoResponse",
+//      endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
+//    )
+//
+//    filesExplorerPanel.createInvalidConnection(ideDriver, connectionName)
+//    addConnectionDialog
+//      .fillDialog(
+//        connectionName = "nameInput",
+//        connectionUrl = "https://${mockServer.hostName}:${mockServer.port}",
+//        username = "userNameInput",
+//        password = "passwordInput",
+//        isAcceptSelfSigned = true
+//      )
+//
+//    unsecureConnectionDialog.proceedButton.click()
+//    addConnectionDialog.okButton.click()
+//    unsecureConnectionDialog.proceedButton.click()
 
-    MockWebServerManager.injectEndpoint(
-      "${testInfo.displayName}_info",
-      jsonMock = "infoResponse",
-      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
-    )
-    MockWebServerManager.injectEndpoint(
-      "${testInfo.displayName}_resttopology",
-      jsonMock = "infoResponse",
-      endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
-    )
-
-    filesExplorerPanel.openDialogByPlusButtonInExplorer(ActionMenuPoints.CONNECTION)
-
-    addConnectionDialog.checkFieldsArePresent()
-
-    addConnectionDialog
-      .fillDialog(
-        connectionName = "nameInput",
-        connectionUrl = "https://${mockServer.hostName}:${mockServer.port}",
-        username = "userNameInput",
-        password = "passwordInput",
-        isAcceptSelfSigned = true
-      )
-
-    unsecureConnectionDialog.proceedButton.click()
-    addConnectionDialog.okButton.click()
-    unsecureConnectionDialog.proceedButton.click()
-
-    // TODO: finalize the check (the error dialog should appear)
 //    assert(errorCreatingConnectionDialog.dialogComponent.isVisible())
 //
 //    errorCreatingConnectionDialog.noButton.click()

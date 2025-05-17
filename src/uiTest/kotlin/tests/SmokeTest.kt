@@ -138,10 +138,12 @@ class SmokeTest {
 
   /**
    * Check Add Working Set dialog of any type (both for Files and JES explorer) to have correct basic functionalities
-   * @param addWorkingSetDialog the dialog to check
+   * @param settingsDialog the settings dialog component to find the add working set dialog by
+   * @param dialogTitle the dialog title to find and to check
    */
-  private fun checkAddWorkingSetDialog(addWorkingSetDialog: UiComponent) {
-    val wsType = if (addWorkingSetDialog.hasText("Add JES Working Set"))
+  private fun checkAddWorkingSetDialog(settingsDialog: UiComponent, dialogTitle: String) {
+    val addWorkingSetDialog = settingsDialog.dialog(title = dialogTitle)
+    val wsType = if (dialogTitle == "Add JES Working Set")
       "JES Working Set"
     else
       "Files Working Set"
@@ -373,22 +375,26 @@ class SmokeTest {
       and(byClass("SimpleColoredComponent"), byVisibleText("Connections"))
     }
     assert(connectionsTab.isVisible())
-    val jesWorkingSetsTab = zoweExplorerSettingsTabs.x {
-      and(byClass("SimpleColoredComponent"), byVisibleText("JES Working Sets"))
-    }
-    assert(jesWorkingSetsTab.isVisible())
-    val filesWorkingSetsTab = zoweExplorerSettingsTabs.x {
-      and(byClass("SimpleColoredComponent"), byVisibleText("Working Sets"))
-    }
-    assert(filesWorkingSetsTab.isVisible())
-    val tsoSessionsTab = zoweExplorerSettingsTabs.x {
-      and(byClass("SimpleColoredComponent"), byVisibleText("TSO Sessions"))
-    }
-    assert(tsoSessionsTab.isVisible())
-    val otherSettingsTab = zoweExplorerSettingsTabs.x {
-      and(byClass("SimpleColoredComponent"), byVisibleText("Settings"))
-    }
-    assert(otherSettingsTab.isVisible())
+    assert(
+      zoweExplorerSettingsTabs
+        .x { and(byClass("SimpleColoredComponent"), byVisibleText("JES Working Sets")) }
+        .isVisible()
+    ) { "JES Working Sets tab is not visible" }
+    assert(
+      zoweExplorerSettingsTabs
+        .x { and(byClass("SimpleColoredComponent"), byVisibleText("Working Sets")) }
+        .isVisible()
+    ) { "Working Sets tab is not visible" }
+    assert(
+      zoweExplorerSettingsTabs
+        .x { and(byClass("SimpleColoredComponent"), byVisibleText("TSO Sessions")) }
+        .isVisible()
+    ) { "TSO Sessions tab is not visible" }
+    assert(
+      zoweExplorerSettingsTabs
+        .x { and(byClass("SimpleColoredComponent"), byVisibleText("Settings")) }
+        .isVisible()
+    )
 
     // Check Connections tab
     val connectionsTabPlusButton = checkSettingsTabElements(zoweExplorerSettingsTabs, "Connections")
@@ -407,6 +413,10 @@ class SmokeTest {
     connectionDialogCancelButton.click()
 
     // Check JES Working Sets tab
+    val jesWorkingSetsTab = zoweExplorerSettingsTabs.x {
+      and(byClass("SimpleColoredComponent"), byVisibleText("JES Working Sets"))
+    }
+    assert(jesWorkingSetsTab.isVisible())
     jesWorkingSetsTab.setFocus()
     jesWorkingSetsTab.click()
 
@@ -416,10 +426,13 @@ class SmokeTest {
     jesWorkingSetsTabPlusButton.setFocus()
     jesWorkingSetsTabPlusButton.click()
 
-    val addJesWorkingSetDialog = settingsDialog.dialog(title = "Add JES Working Set")
-    checkAddWorkingSetDialog(addJesWorkingSetDialog)
+    checkAddWorkingSetDialog(settingsDialog, "Add JES Working Set")
 
     // Check Working Sets tab
+    val filesWorkingSetsTab = zoweExplorerSettingsTabs.x {
+      and(byClass("SimpleColoredComponent"), byVisibleText("Working Sets"))
+    }
+    assert(filesWorkingSetsTab.isVisible())
     filesWorkingSetsTab.setFocus()
     filesWorkingSetsTab.click()
 
@@ -429,10 +442,13 @@ class SmokeTest {
     filesWorkingSetsTabPlusButton.setFocus()
     filesWorkingSetsTabPlusButton.click()
 
-    val addFilesWorkingSetDialog = settingsDialog.dialog(title = "Add Working Set")
-    checkAddWorkingSetDialog(addFilesWorkingSetDialog)
+    checkAddWorkingSetDialog(settingsDialog, "Add Working Set")
 
     // Check TSO Sessions tab
+    val tsoSessionsTab = zoweExplorerSettingsTabs.x {
+      and(byClass("SimpleColoredComponent"), byVisibleText("TSO Sessions"))
+    }
+    assert(tsoSessionsTab.isVisible())
     tsoSessionsTab.setFocus()
     tsoSessionsTab.click()
 
@@ -446,6 +462,10 @@ class SmokeTest {
     checkAddTsoSessionDialog(addTsoSessionDialog)
 
     // Check Settings tab
+    val otherSettingsTab = zoweExplorerSettingsTabs.x {
+      and(byClass("SimpleColoredComponent"), byVisibleText("Settings"))
+    }
+    assert(otherSettingsTab.isVisible())
     otherSettingsTab.setFocus()
     otherSettingsTab.click()
 

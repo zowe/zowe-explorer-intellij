@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.getExplorerView
 
+// TODO: check if this class is used
 /** Action class to represent the action that will show a working set contents on the action is performed */
 class ShowWsInfo : ToggleAction() {
 

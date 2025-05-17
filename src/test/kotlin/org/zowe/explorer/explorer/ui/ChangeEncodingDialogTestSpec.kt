@@ -10,13 +10,14 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -31,31 +32,19 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.reloadIn
-import org.zowe.explorer.utils.saveIn
-import org.zowe.explorer.utils.updateFileTag
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.*
 import java.awt.event.ActionEvent
 import java.nio.charset.Charset
 import javax.swing.Action
 import javax.swing.Icon
 import kotlin.reflect.KFunction
 
-class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("Explorer module: ui/ChangeEncodingDialog") {
-
+class ChangeEncodingDialogTestSpec : AppInitShouldSpec("explorer/ui/ChangeEncodingDialog", {
+  context("all functions") {
     lateinit var changeEncodingDialog: ChangeEncodingDialog
     var expectedExitCode = 0
     var isSynced = false
@@ -78,8 +67,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     var safeToConvert = Magic8.ABSOLUTELY
 
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
-    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
-    val configService = ConfigService.getService() as TestConfigServiceImpl
+    val dataOpsManagerService = DataOpsManager.getService()
+    val configService = ConfigService.getService()
 
     mockkConstructor(DocumentedSyncProvider::class)
     every { anyConstructed<DocumentedSyncProvider>().saveDocument() } returns Unit
@@ -87,15 +76,14 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     val documentMockk = mockk<Document>()
     every { anyConstructed<DocumentedSyncProvider>().getDocument() } returns documentMockk
 
-    mockkObject(ChangeEncodingDialog)
-    every { ChangeEncodingDialog["initialize"](any<() -> Unit>()) } returns Unit
-
     val actionEventMock = mockk<ActionEvent>()
 
     val showDialogRef: (String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
     mockkStatic(showDialogRef as KFunction<*>)
 
-    every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
+    every {
+      contentSynchronizerMock.synchronizeWithRemote(any(), any())
+    } answers {
       isSynced = true
     }
 
@@ -117,28 +105,22 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       isSynced = false
 
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
-          return contentSynchronizerMock
-        }
-      }
+      every { dataOpsManagerService.getContentSynchronizer(any<VirtualFile>()) } returns contentSynchronizerMock
       every { attributesMock.isWritable } returns true
 
       every { projectManagerMock.openProjects } returns arrayOf(mockk())
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
       every {
@@ -146,7 +128,9 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       } returns 1
 
       expectedExitCode = 0
-      every { changeEncodingDialog["close"](any<Int>()) } answers {
+      every {
+        changeEncodingDialog["close"](any<Int>())
+      } answers {
         expectedExitCode = firstArg<Int>()
         this
       }
@@ -166,10 +150,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     // ChangeEncodingDialog.createActions
     should("create actions when conversion is possible") {
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog) as Array<*>
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog) as Array<*>
       }
 
       val expectedTitle = message("encoding.reload.or.convert.dialog.title", fileName, charsetName)
@@ -182,25 +164,21 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("create actions when conversion is not possible") {
       every { attributesMock.isWritable } returns false
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog) as Array<*>
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog) as Array<*>
       }
 
       val expectedTitle = message("encoding.reload.dialog.title", fileName, charsetName)
@@ -213,25 +191,21 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("create actions when conversion is disabled") {
       every { projectManagerMock.openProjects } returns arrayOf(mockk(), mockk())
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val actualConvertAction = actions?.get(1)
 
@@ -247,25 +221,21 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       safeToReload = Magic8.NO_WAY
       safeToConvert = Magic8.NO_WAY
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val icon1 = actions?.get(0)?.getValue(Action.SMALL_ICON)
       val icon2 = actions?.get(1)?.getValue(Action.SMALL_ICON)
@@ -280,10 +250,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       mockkStatic(::reloadIn)
       every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -301,10 +269,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       configService.isAutoSyncEnabled = false
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -326,10 +292,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
         every { ask(any<Project>()) } returns false
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -343,10 +307,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       mockkStatic(::reloadIn)
       every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -357,24 +319,20 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       }
     }
     should("run reload action when content synchronizer is null") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
-          return null
-        }
-      }
+      every { dataOpsManagerService.getContentSynchronizer(any<VirtualFile>()) } returns null
 
       mockkStatic(::reloadIn)
       every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
-      every { changeEncodingDialog["close"](any<Int>()) } answers {
+      every {
+        changeEncodingDialog["close"](any<Int>())
+      } answers {
         expectedExitCode = firstArg<Int>()
         this
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -384,19 +342,17 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("run reload action when encoding is incompatible but user reloads anyway") {
       safeToReload = Magic8.NO_WAY
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
       every {
@@ -411,10 +367,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
         this
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -424,30 +378,28 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("not run reload action when encoding is incompatible") {
       safeToReload = Magic8.NO_WAY
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
-      every { changeEncodingDialog["close"](any<Int>()) } answers {
+      every {
+        changeEncodingDialog["close"](any<Int>())
+      } answers {
         expectedExitCode = firstArg<Int>()
         this
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
@@ -459,10 +411,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       mockkStatic(::saveIn)
       every { saveIn(any(), virtualFileMock, charsetMock) } returns Unit
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
@@ -472,19 +422,17 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("run convert action when encoding is incompatible but user converts anyway") {
       safeToConvert = Magic8.NO_WAY
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
       every {
@@ -494,15 +442,15 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       mockkStatic(::saveIn)
       every { saveIn(any(), virtualFileMock, charsetMock) } returns Unit
 
-      every { changeEncodingDialog["close"](any<Int>()) } answers {
+      every {
+        changeEncodingDialog["close"](any<Int>())
+      } answers {
         expectedExitCode = firstArg<Int>()
         this
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
@@ -512,37 +460,33 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("not run convert action when encoding is incompatible") {
       safeToConvert = Magic8.NO_WAY
 
-      changeEncodingDialog = runBlocking {
-        withContext(Dispatchers.EDT) {
-          spyk(
-            ChangeEncodingDialog(
-              projectMock,
-              virtualFileMock,
-              attributesMock,
-              charsetMock,
-              safeToReload,
-              safeToConvert
-            )
+      changeEncodingDialog = runWriteActionInEdtAndWait {
+        spyk(
+          ChangeEncodingDialog(
+            projectMock,
+            virtualFileMock,
+            attributesMock,
+            charsetMock,
+            safeToReload,
+            safeToConvert
           )
-        }
+        )
       }
 
-      every { changeEncodingDialog["close"](any<Int>()) } answers {
+      every {
+        changeEncodingDialog["close"](any<Int>())
+      } answers {
         expectedExitCode = firstArg<Int>()
         this
       }
 
-      val actions = runBlocking {
-        withContext(Dispatchers.EDT) {
-          createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-        }
+      val actions = runWriteActionInEdtAndWait {
+        createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe DialogWrapper.CANCEL_EXIT_CODE }
     }
-
-    unmockkAll()
   }
 })

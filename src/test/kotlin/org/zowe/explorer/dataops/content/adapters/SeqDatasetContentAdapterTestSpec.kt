@@ -10,31 +10,24 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.content.adapters
 
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
 import io.mockk.spyk
-import io.mockk.unmockkAll
+import org.zowe.explorer.testutils.AppInitShouldSpec
 
-class SeqDatasetContentAdapterTestSpec: WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("content/adapters: SeqDatasetContentAdapter") {
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+class SeqDatasetContentAdapterTestSpec : AppInitShouldSpec("dataops/content/adapters/SeqDatasetContentAdapter", {
+  context("adaptWhitespaces") {
+    val dataOpsManager = DataOpsManager.getService()
     val classUnderTest = spyk(SeqDatasetContentAdapter(dataOpsManager), "SeqDatasetContentAdapter")
 
-    should("shouldReturnAdaptedContent_whenAdaptWhitespaces_givenContentToAdapt") {
+    should("return adapted content when with the correct whitespaces distribution") {
       val contentToAdapt = "This is a test string.\n   Content should be replaced by   \n" +
           "this content without trailing               \n" +
           "\n" +
@@ -43,11 +36,10 @@ class SeqDatasetContentAdapterTestSpec: WithApplicationShouldSpec({
           "this content without trailing\n" +
           "\n" +
           "   whitespaces..."
+
       val adaptedContent = classUnderTest.adaptWhitespaces(contentToAdapt)
 
-      assertSoftly {
-        adaptedContent shouldBe expected
-      }
+      assertSoftly { adaptedContent shouldBe expected }
     }
   }
 })

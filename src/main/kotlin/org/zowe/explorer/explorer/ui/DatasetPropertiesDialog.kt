@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -32,6 +33,7 @@ import javax.swing.JComponent
 
 class DatasetPropertiesDialog(val project: Project?, override var state: DatasetState) : DialogWrapper(project),
   StatefulComponent<DatasetState> {
+
   init {
     title = "Dataset Properties"
     init()

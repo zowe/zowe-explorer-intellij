@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -18,12 +19,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
+import org.zowe.explorer.dataops.operations.RemoteUnitOperation
 import org.zowe.explorer.dataops.operations.migration.MigrateOperation
 import org.zowe.explorer.dataops.operations.migration.MigrateOperationParams
 import org.zowe.explorer.dataops.operations.migration.RecallOperation
@@ -32,6 +33,7 @@ import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.vfs.MFVirtualFile
+import kotlin.collections.map
 
 /**
  * Get data for explorer node
@@ -41,30 +43,10 @@ fun getRequestDataForNode(node: ExplorerTreeNode<*, *>): Pair<VirtualFile, Conne
   return if (node is ExplorerUnitTreeNodeBase<*, *, *> && node.unit is FilesWorkingSet) {
     val file = node.virtualFile
     val config = node.unit.connectionConfig
-    if (file != null && config != null) {
-      return Pair(file, config)
-    }
-    null
+    if (file != null && config != null) file to config
+    else null
   } else {
     null
-  }
-}
-
-/**
- * Clean cache for explorer nodes
- * @see ExplorerTreeNode
- */
-private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*, *>>) {
-  val uniqueParentNodes = nodes.map { it.parent }.distinct()
-  uniqueParentNodes.forEach { it?.cleanCacheIfPossible(cleanBatchedQuery = true) }
-}
-
-/**
- * Filter out nodes data that cannot be migrated due to synchronization
- */
-private fun filterNodesData(project: Project?, nodesData: List<NodeData<*>>): List<NodeData<*>> {
-  return nodesData.filter {
-    it.file != null && !checkFileForSync(project, it.file, checkDependentFiles = true)
   }
 }
 
@@ -72,47 +54,18 @@ private fun filterNodesData(project: Project?, nodesData: List<NodeData<*>>): Li
  * Action class for recall a migrated dataset
  * @see MigrateAction
  */
-class RecallAction : DumbAwareAction() {
+class RecallAction : AbstractRecallOrMigrateAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+  override val modalTaskTitle = "Recalling Datasets"
+
+  override fun prepareOperationForNode(
+    vFileToConnectionConfig: Pair<VirtualFile, ConnectionConfig>
+  ): RemoteUnitOperation<*> {
+    val (vFile, connectionConfig) = vFileToConnectionConfig
+    return RecallOperation(request = RecallOperationParams(vFile), connectionConfig = connectionConfig)
   }
 
-  /**
-   * Runs recall operation
-   */
-  override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getExplorerView<FileExplorerView>()
-    val project = e.project
-    if (view != null) {
-      val filteredNodesData = filterNodesData(e.project, view.mySelectedNodesData)
-      val pairs = filteredNodesData.mapNotNull { getRequestDataForNode(it.node) }
-      val operations: List<RecallOperation> = pairs.map {
-        RecallOperation(
-          request = RecallOperationParams(it.first),
-          connectionConfig = it.second
-        )
-      }
-      runModalTask("Recalling Datasets") { progressIndicator ->
-        runCatching {
-          operations.forEach { operation ->
-
-            DataOpsManager.getService().performOperation(
-              operation, progressIndicator
-            )
-          }
-        }.onFailure {
-          NotificationsService.errorNotification(it, project)
-        }
-      }
-      makeUniqueCacheClean(filteredNodesData.map { it.node })
-    }
-
-  }
-
-  /**
-   * Determines if recall operation is possible for chosen object
-   */
+  /** Determines if recall operation is possible for chosen object */
   override fun update(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -132,43 +85,18 @@ class RecallAction : DumbAwareAction() {
 /**
  * Action class for dataset migration
  */
-class MigrateAction : DumbAwareAction() {
+class MigrateAction : AbstractRecallOrMigrateAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+  override val modalTaskTitle = "Migrating Datasets"
+
+  override fun prepareOperationForNode(
+    vFileToConnectionConfig: Pair<VirtualFile, ConnectionConfig>
+  ): RemoteUnitOperation<*> {
+    val (vFile, connectionConfig) = vFileToConnectionConfig
+    return MigrateOperation(request = MigrateOperationParams(vFile), connectionConfig = connectionConfig)
   }
 
-  /**
-   * Runs migrate operation
-   */
-  override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getExplorerView<FileExplorerView>()
-    val project = e.project
-    if (view != null) {
-      val filteredNodesData = filterNodesData(e.project, view.mySelectedNodesData)
-      val pairs = filteredNodesData.mapNotNull { getRequestDataForNode(it.node) }
-      val operations: List<MigrateOperation> = pairs.map {
-        MigrateOperation(
-          request = MigrateOperationParams(it.first),
-          connectionConfig = it.second
-        )
-      }
-      runModalTask("Migrating Datasets") { progressIndicator ->
-        runCatching {
-          operations.forEach { operation ->
-            DataOpsManager.getService().performOperation(operation, progressIndicator)
-          }
-        }.onFailure {
-          NotificationsService.errorNotification(it, project)
-        }
-      }
-      makeUniqueCacheClean(filteredNodesData.map { it.node })
-    }
-  }
-
-  /**
-   * Determines if migrate operation is possible for chosen object
-   */
+  /** Determines if migrate operation is possible for chosen object */
   override fun update(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -180,6 +108,49 @@ class MigrateAction : DumbAwareAction() {
       attributes !is RemoteDatasetAttributes || !attributes.hasDsOrg
     }
     e.presentation.isEnabledAndVisible = hasWrongNode == null
+  }
+
+}
+
+/** Abstract class for Recall and Migrate actions */
+abstract class AbstractRecallOrMigrateAction : DumbAwareAction() {
+
+  abstract val modalTaskTitle: String
+
+  /** Prepare the operation object for the selected node */
+  abstract fun prepareOperationForNode(
+    vFileToConnectionConfig: Pair<VirtualFile, ConnectionConfig>
+  ): RemoteUnitOperation<*>
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  /** Run dataset Recall or Migrate operation */
+  override fun actionPerformed(e: AnActionEvent) {
+    val view = e.getExplorerView<FileExplorerView>() ?: return
+    val project = e.project
+    val filteredNodesData = view.mySelectedNodesData.filter {
+      it.file != null && !checkFileForSync(project, it.file, checkDependentFiles = true)
+    }
+    val pairs = filteredNodesData.mapNotNull { getRequestDataForNode(it.node) }
+    val operations: List<RemoteUnitOperation<*>> = pairs.map(::prepareOperationForNode)
+
+    runModalTask(modalTaskTitle) { progressIndicator ->
+      runCatching {
+        operations.forEach { operation ->
+          DataOpsManager.getService()
+            .performOperation(operation, progressIndicator)
+        }
+      }.onFailure {
+        NotificationsService.errorNotification(it, project)
+      }
+    }
+
+    filteredNodesData
+      .map { it.node.parent }
+      .distinct()
+      .forEach {
+        it?.cleanCacheIfPossible(cleanBatchedQuery = true)
+      }
   }
 
 }

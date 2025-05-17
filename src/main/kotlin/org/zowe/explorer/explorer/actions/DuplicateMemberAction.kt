@@ -10,14 +10,15 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -30,11 +31,9 @@ import org.zowe.explorer.telemetry.NotificationsService
 /**
  * Class which represents a duplicate member action
  */
-class DuplicateMemberAction : AnAction() {
+class DuplicateMemberAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * The method of AnAction abstract class. Tells what to do if an action was submitted
@@ -93,13 +92,6 @@ class DuplicateMemberAction : AnAction() {
         NotificationsService.errorNotification(it, project)
       }
     }
-  }
-
-  /**
-   * Determines if an action is dumb aware
-   */
-  override fun isDumbAware(): Boolean {
-    return true
   }
 
   /**

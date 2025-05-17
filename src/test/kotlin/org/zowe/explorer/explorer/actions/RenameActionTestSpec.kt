@@ -10,13 +10,14 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,16 +26,12 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.v3.operations.OperationsService
 import org.zowe.explorer.v3.operations.RenameOperationData
@@ -42,117 +39,109 @@ import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.zowe.explorer.dataops.content.service.SyncProcessService
+import org.zowe.explorer.dataops.operations.RenameOperation
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
 
-class RenameActionTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("explorer module: actions/RenameAction") {
+class RenameActionTestSpec : AppInitShouldSpec("explorer/actions/RenameAction", {
+  context("all functions") {
+    var didChangeIsEnabledAndVisible = false
+    var updated = false
+    var renamed = false
+
     val renameAction = RenameAction()
 
     val fileExplorerViewMock = mockk<FileExplorerView>()
     val selectedNodeDataMock = mockk<NodeData<ConnectionConfig>>()
-
-    var isEnabledAndVisible = false
-
-    val anActionEventMock = mockk<AnActionEvent>()
-    every { anActionEventMock.presentation.isEnabledAndVisible = any<Boolean>() } answers {
-      isEnabledAndVisible = firstArg<Boolean>()
-      every { anActionEventMock.presentation.isEnabledAndVisible } returns isEnabledAndVisible
-    }
-    every { anActionEventMock.project } returns mockk()
-
-    val virtualFileMock = mockk<MFVirtualFile>()
-    every { virtualFileMock.name } returns "fileName"
-
-    val explorerMock = mockk<Explorer<ConnectionConfig, *>>()
-    every { explorerMock.componentManager } returns ApplicationManager.getApplication()
-
-    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
-
-    notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-      override fun notifyError(
-        t: Throwable,
-        project: Project?,
-        custTitle: String?,
-        custDetailsShort: String?,
-        custDetailsLong: String?
-      ) {
-        return
+    val presenationMock = mockk<Presentation> {
+      every {
+        isEnabledAndVisible = any<Boolean>()
+      } answers {
+        didChangeIsEnabledAndVisible = firstArg<Boolean>()
+        every { isEnabledAndVisible } returns didChangeIsEnabledAndVisible
       }
     }
+    val anActionEventMock = mockk<AnActionEvent> {
+      every { presentation } returns presenationMock
+      every { project } returns mockk()
+    }
+    val virtualFileMock = mockk<MFVirtualFile> {
+      every { name } returns "fileName"
+    }
+    val explorerMock = mockk<Explorer<ConnectionConfig, *>> {
+      every { componentManager } returns ApplicationManager.getApplication()
+    }
 
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+    val notificationsService = NotificationsService.getService()
+    every {
+      notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+    } returns Unit
 
-    var updated = false
-    var renamed = false
+    val dataOpsManager = DataOpsManager.getService()
+
+    val configServiceCrudable = mockk<Crudable>()
+    val configService = ConfigService.getService()
+    every { configService.crudable } returns configServiceCrudable
+
+    val syncProcessService = SyncProcessService.getService()
+    every { syncProcessService.isFileSyncingNow(any<MFVirtualFile>()) } returns false
+    every { syncProcessService.areDependentFilesSyncingNow(any<MFVirtualFile>()) } returns false
+
+    mockkConstructor(RenameDialog::class)
+
+    mockkObject(OperationsService)
+
+    mockkStatic(ExplorerTreeNode<ConnectionConfig, *>::cleanCacheIfPossible)
+    mockkStatic(::checkFileForSync)
 
     beforeEach {
-      isEnabledAndVisible = false
+      didChangeIsEnabledAndVisible = false
+      updated = false
+      renamed = false
 
       every { fileExplorerViewMock.mySelectedNodesData } returns listOf(selectedNodeDataMock)
       every {
         fileExplorerViewMock.myFsTreeStructure
       } returns mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, FilesWorkingSet>>>()
 
-      mockkStatic("org.zowe.explorer.explorer.ui.ExplorerTreeViewKt")
-      every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
+      every { anActionEventMock.getData(EXPLORER_VIEW) } returns fileExplorerViewMock
 
       every { selectedNodeDataMock.node } returns mockk()
       every { selectedNodeDataMock.file } returns virtualFileMock
       every { selectedNodeDataMock.attributes } returns mockk()
 
-      renamed = false
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return mockk()
-        }
+      every { checkFileForSync(any(), any(), any()) } returns false
 
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          renamed = true
-          @Suppress("UNCHECKED_CAST")
-          return Unit as R
-        }
+      every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockk()
+      every {
+        dataOpsManager.performOperation(any<RenameOperation>(), any<ProgressIndicator>())
+      } answers {
+        renamed = true
       }
 
       val operationsServiceMock = mockk<OperationsService> {
         every {
-          performOperation(
-            any<RenameOperationData<org.zowe.explorer.v3.ConnectionConfig>>(),
-            any()
-          )
+          performOperation(any<RenameOperationData<ConnectionConfigOldStruct>>(), any())
         } answers {
           renamed = true
-          Unit
+          Result.success(Unit)
         }
       }
-      mockkObject(OperationsService.Companion)
+
       every { OperationsService.getService() } returns operationsServiceMock
 
-      mockkObject(RenameDialog)
-      every { RenameDialog["initialize"](any<() -> Unit>()) } returns Unit
-
-      mockkConstructor(RenameDialog::class)
       every { anyConstructed<RenameDialog>().showAndGet() } returns true
 
-      updated = false
       every {
-        ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        configServiceCrudable.update(any<FilesWorkingSetConfig>())
       } answers {
         updated = true
         mockk()
       }
-
-      mockkStatic(ExplorerTreeNode<ConnectionConfig, *>::cleanCacheIfPossible)
-      mockkStatic(::checkFileForSync)
-    }
-    afterEach {
-      unmockkAll()
     }
 
     context("actionPerformed") {
@@ -196,45 +185,38 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("perform rename on dataset") {
-          every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
-
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe true }
         }
+
         should("not perform rename on dataset if dialog is closed") {
           every { anyConstructed<RenameDialog>().showAndGet() } returns false
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe false }
         }
+
         should("not perform rename on dataset if virtual file is null") {
           every { (libraryNodeMock as ExplorerTreeNode<ConnectionConfig, *>).virtualFile } returns null
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe false }
         }
+
         should("not perform rename on dataset if virtual file is syncing now") {
           every { checkFileForSync(any(), any(), any()) } returns true
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe false }
@@ -255,6 +237,7 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
 
         val fileLikeDSNodeMock = mockk<FileLikeDatasetNode> {
+          every { name } returns "TEST"
           every { explorer } returns explorerMock
           every { unit } returns filesWorkingSetUnitMock
           every { virtualFile } returns virtualFileMock
@@ -279,21 +262,18 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("perform rename on dataset member") {
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe true }
         }
+
         should("not perform rename on dataset member if attributes is null") {
           every { selectedNodeDataMock.attributes } returns null
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe false }
@@ -339,64 +319,57 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("perform rename on USS file") {
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe true }
         }
+
         should("perform rename on USS file but don't clean cache if parent node is null") {
           every { ussFileNodeMock.parent } returns null
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe true }
         }
+
         should("not perform rename on USS file if dialog is closed") {
           every { anyConstructed<RenameDialog>().showAndGet() } returns false
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe false }
         }
+
         should("not perform rename on USS file if virtual file is null") {
           every { selectedNodeDataMock.file } returns null
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              renameAction.actionPerformed(anActionEventMock)
-            }
+          runInEdtAndWait {
+            renameAction.actionPerformed(anActionEventMock)
           }
 
           assertSoftly { renamed shouldBe false }
         }
       }
-      should("not perform rename action if explorer view is null") {
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
 
-        runBlocking {
-          withContext(Dispatchers.EDT) {
-            renameAction.actionPerformed(anActionEventMock)
-          }
+      should("not perform rename action if explorer view is null") {
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
+
+        runInEdtAndWait {
+          renameAction.actionPerformed(anActionEventMock)
         }
 
         assertSoftly { updated shouldBe false }
       }
+
       should("not perform rename action if selected node is not a DS mask, dataset, dataset member, USS mask, USS directory or USS file") {
-        runBlocking {
-          withContext(Dispatchers.EDT) {
-            renameAction.actionPerformed(anActionEventMock)
-          }
+        runInEdtAndWait {
+          renameAction.actionPerformed(anActionEventMock)
         }
 
         assertSoftly { updated shouldBe false }
@@ -407,27 +380,26 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       should("rename action is enabled and visible") {
         renameAction.update(anActionEventMock)
       }
+
       should("rename action is enabled and visible if selected node file is null") {
         every { selectedNodeDataMock.node } returns mockk<FileLikeDatasetNode>()
         every { selectedNodeDataMock.file } returns null
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe true }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe true }
       }
+
       should("rename action is enabled and visible if file attributes are not dataset attributes") {
         every { selectedNodeDataMock.node } returns mockk<FileLikeDatasetNode>()
         every { selectedNodeDataMock.file } returns mockk()
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-            return null
-          }
-        }
+        every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns null
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe true }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe true }
       }
+
       should("rename action is enabled and visible if selected node is USS directory") {
         val ussDirNodeMock = mockk<UssDirNode>()
         every { ussDirNodeMock.isUssMask } returns false
@@ -436,57 +408,61 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly {
-          isEnabledAndVisible shouldBe true
-        }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe true }
       }
+
       should("rename action is not enabled and not visible if explorer view is null") {
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe false }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe false }
       }
+
       should("rename action is not enabled and not visible if selected nodes size grater than one") {
         every { fileExplorerViewMock.mySelectedNodesData } returns listOf(selectedNodeDataMock, selectedNodeDataMock)
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe false }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe false }
       }
+
       should("rename action is not enabled and not visible if selected node is 'files working set' node") {
         every { selectedNodeDataMock.node } returns mockk<FilesWorkingSetNode>()
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe false }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe false }
       }
+
       should("rename action is not enabled and not visible if selected node is 'loading' node") {
         every { selectedNodeDataMock.node } returns mockk<LoadingNode<ConnectionConfig>>()
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe false }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe false }
       }
+
       should("rename action is not enabled and not visible if selected node is 'load more' mode") {
         every { selectedNodeDataMock.node } returns mockk<LoadMoreNode<ConnectionConfig>>()
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe false }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe false }
       }
+
       should("rename action is not enabled and not visible if dataset is migrated") {
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-            val attributesMock = mockk<RemoteDatasetAttributes>()
-            every { attributesMock.isMigrated } returns true
-            return attributesMock
-          }
+        every {
+          dataOpsManager.tryToGetAttributes(any<VirtualFile>())
+        } answers {
+          val attributesMock = mockk<RemoteDatasetAttributes>()
+          every { attributesMock.isMigrated } returns true
+          attributesMock
         }
 
         renameAction.update(anActionEventMock)
 
-        assertSoftly { isEnabledAndVisible shouldBe false }
+        assertSoftly { didChangeIsEnabledAndVisible shouldBe false }
       }
     }
 

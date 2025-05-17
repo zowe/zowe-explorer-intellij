@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -35,22 +36,13 @@ class AddJobsFilterDialog(
   override var state: JobFilterStateWithMultipleWS
 ) : DialogWrapper(project), StatefulComponent<JobFilterStateWithMultipleWS> {
 
-  companion object {
-
-    // TODO: Remove when it becomes possible to mock class constructor with init section.
-    /** Wrapper for init() method. It is necessary only for test purposes for now. */
-    private fun initialize(init: () -> Unit) {
-      init()
-    }
-  }
-
   private val wsSize = state.wsList.size
   private val wsComboBoxModel by lazy { CollectionComboBoxModel(state.wsList) }
   private lateinit var jesWSComboBox: ComboBox<JesWorkingSet>
 
   init {
     title = "Create Jobs Filter"
-    initialize { init() }
+    init()
   }
 
   override fun createCenterPanel(): JComponent {

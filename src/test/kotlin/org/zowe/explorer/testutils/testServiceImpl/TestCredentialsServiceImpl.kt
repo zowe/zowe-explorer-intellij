@@ -10,43 +10,12 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.testutils.testServiceImpl
 
+import io.mockk.mockk
 import org.zowe.explorer.config.connect.CredentialService
 
-open class TestCredentialsServiceImpl : CredentialService {
-  var testInstance = object : CredentialService {
-    override fun getUsernameByKey(connectionConfigUuid: String): String {
-      return "testUser"
-    }
-
-    override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
-      return "testPassword".toCharArray()
-    }
-
-    override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
-    }
-
-    override fun clearCredentials(connectionConfigUuid: String) {
-    }
-
-  }
-
-  override fun getUsernameByKey(connectionConfigUuid: String): String? {
-    return this.testInstance.getUsernameByKey(connectionConfigUuid)
-  }
-
-  override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
-    return this.testInstance.getPasswordByKey(connectionConfigUuid)
-  }
-
-  override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
-    this.testInstance.setCredentials(connectionConfigUuid, username, password)
-  }
-
-  override fun clearCredentials(connectionConfigUuid: String) {
-    this.testInstance.clearCredentials(connectionConfigUuid)
-  }
-}
+open class TestCredentialsServiceImpl : CredentialService by mockk()

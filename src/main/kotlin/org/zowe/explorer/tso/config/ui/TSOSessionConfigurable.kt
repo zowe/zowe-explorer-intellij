@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.tso.config.ui
@@ -41,9 +42,7 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
   private lateinit var table: ValidatingTableView<TSOSessionDialogState>
   private lateinit var panel: DialogPanel
 
-  /**
-   * Create TSO Sessions panel in settings
-   */
+  /** Create TSO Sessions panel in settings */
   override fun createPanel(): DialogPanel {
     tableModel = TSOSessionTableModel(ConfigSandbox.getService().crudable)
     table = ValidatingTableView(tableModel, disposable!!)
@@ -76,9 +75,7 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
     }
   }
 
-  /**
-   * Apply the TSO Sessions table changes. Updates UI when the changes were introduced
-   */
+  /** Apply the TSO Sessions table changes. Updates UI when the changes were introduced */
   override fun apply() {
     val wasModified = isModified
     ConfigSandbox.getService().apply(TSOSessionConfig::class.java)
@@ -87,9 +84,7 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
     }
   }
 
-  /**
-   * Reset the TSO Sessions table changes. Updates UI when the changes were introduced
-   */
+  /** Reset the TSO Sessions table changes. Updates UI when the changes were introduced */
   override fun reset() {
     val wasModified = isModified
     ConfigSandbox.getService().rollback(TSOSessionConfig::class.java)
@@ -98,16 +93,12 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
     }
   }
 
-  /**
-   * Cancel the TSO Sessions table changes. Calls reset
-   */
+  /** Cancel the TSO Sessions table changes. Calls reset */
   override fun cancel() {
     reset()
   }
 
-  /**
-   * Check is the TSO Sessions sandbox modified
-   */
+  /** Check is the TSO Sessions sandbox modified */
   override fun isModified(): Boolean {
     return ConfigSandbox.getService().isModified(TSOSessionConfig::class.java)
   }
@@ -124,9 +115,7 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
     }
   }
 
-  /**
-   * Add sandbox listener for update and reload events
-   */
+  /** Add sandbox listener for update and reload events */
   private fun addSandboxListener() {
     subscribe(
       topic = SandboxListener.TOPIC,
@@ -145,9 +134,7 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
     )
   }
 
-  /**
-   * Create and show dialog to add TSO session. Also add the new row to the TSO Sessions table model
-   */
+  /** Create and show dialog to add TSO session. Also add the new row to the TSO Sessions table model */
   private fun addSession() {
     val state = TSOSessionDialogState().initEmptyUuids(ConfigSandbox.getService().crudable)
     val dialog = TSOSessionDialog(ConfigSandbox.getService().crudable, state)
@@ -156,9 +143,7 @@ class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "main
     }
   }
 
-  /**
-   * Create and show dialog to edit TSO session. Also update the row in the TSO Sessions table model
-   */
+  /** Create and show dialog to edit TSO session. Also update the row in the TSO Sessions table model */
   private fun editSession() {
     table.selectedObject?.clone()?.let { state ->
       state.mode = DialogMode.UPDATE

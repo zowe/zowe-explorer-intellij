@@ -10,70 +10,69 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions.rexx
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Key
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.content.service.SyncProcessService
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.*
 import org.zowe.explorer.tso.SESSION_EXECUTE_REXX_TOPIC
 import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getAll
-import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.dataops.operations.TsoOperation
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.optional
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.TsoResponse
 import retrofit2.Response
+import java.util.*
 import java.util.stream.Stream
 
-class ExecuteRexxActionTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("explorer module: actions/rexx/ExecuteRexxAction") {
+class ExecuteRexxActionTestSpec : AppInitShouldSpec("explorer/actions/rexx/ExecuteRexxAction", {
+  context("all functions") {
     val classUnderTest = spyk(ExecuteRexxAction())
-    val project = ProjectManager.getInstance().defaultProject
-    val presentationMock = mockk<Presentation>()
-    val actionEventMock = mockk<AnActionEvent>()
-    val explorerViewMock = mockk<FileExplorerView>()
-    val connectionConfigMock = mockk<ConnectionConfig>()
 
-    val configService = ConfigService.getService() as TestConfigServiceImpl
-    every { actionEventMock.project } returns project
-    every { actionEventMock.presentation } returns presentationMock
-    every { presentationMock.putClientProperty(any() as Key<String>, any() as String) } just Runs
-    every { actionEventMock.getExplorerView<FileExplorerView>() } returns explorerViewMock
-    every { configService.crudable.getByUniqueKey<ConnectionConfig>(any()) } returns connectionConfigMock
-    every { connectionConfigMock.authToken } returns "AUTH_TOKEN"
-    every { connectionConfigMock.url } returns "TEST_URL"
+    val connectionConfigMock = mockk<ConnectionConfig> {
+      every { uuid } returns "test_uuid"
+      every { url } returns "TEST_URL"
+    }
+    val presentationMock = mockk<Presentation>(relaxUnitFun = true)
+    val explorerViewMock = mockk<FileExplorerView>()
+    val actionEventMock = mockk<AnActionEvent> {
+      every { project } returns ProjectManager.getInstance().defaultProject
+      every { presentation } returns presentationMock
+      every { getData(EXPLORER_VIEW) } returns explorerViewMock
+    }
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
+
+    val configService = ConfigService.getService()
+    every { configService.crudable } returns mockk {
+      every {
+        getByUniqueKey(ConnectionConfig::class.java, any<ConnectionConfig>())
+      } returns connectionConfigMock.optional
+    }
 
     context("actionPerformed") {
       var notificationShowedForTsoSessionError = false
@@ -81,296 +80,280 @@ class ExecuteRexxActionTestSpec : WithApplicationShouldSpec({
       var notificationShowedForMemberIsNotRexx = false
       var notificationShowedForMemberContentFetchError = false
 
-
-      val node = mockk<FileLikeDatasetNode>()
-      val virtualFile = mockk<MFVirtualFile>()
-      val attributes = mockk<RemoteMemberAttributes>()
-      val nodeDataForTest = NodeData(node = node, file = virtualFile, attributes = attributes)
+      val node = mockk<FileLikeDatasetNode> {
+        every { unit } returns mockk {
+          every { connectionConfig } returns connectionConfigMock
+        }
+        every { parent } returns mockk {
+          every { virtualFile } returns mockk {
+            every { filenameInternal } returns "ARST.REXX"
+          }
+        }
+        every { virtualFile } returns mockk {
+          every { name } returns "SAMPLE"
+        }
+      }
+      val nodeDataForTest = NodeData(
+        node = node,
+        file = mockk<MFVirtualFile>(),
+        attributes = mockk<RemoteMemberAttributes>()
+      )
 
       every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForTest)
 
-      // node mockk behavior
-      every { node.unit } returns mockk()
-      every { node.unit.connectionConfig } returns connectionConfigMock
-      every { node.parent } returns mockk()
-      every { node.parent?.virtualFile } returns mockk()
-      every { node.parent?.virtualFile?.filenameInternal } returns "ARST.REXX"
-      every { node.virtualFile } returns mockk()
-      every { node.virtualFile.name } returns "SAMPLE"
-
       // data api mockk behavior
-      val dataApi = mockk<DataAPI>()
-      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
-      zosmfApi.testInstance = object : TestZosmfApiImpl() {
-        override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-          @Suppress("UNCHECKED_CAST")
-          return dataApi as Api
-        }
+      val responseBody = "/* SOME CONTENT WITH REXX COMMENT FIRST */\n" + "TEST PGM\n" + "END"
+      val dataApiResponse = mockk<Response<String>> {
+        every { isSuccessful } returns true
+        every { body() } returns responseBody
       }
+      val mockedCall = mockk<retrofit2.Call<String>> {
+        every { execute() } returns dataApiResponse
+      }
+      val dataApi = mockk<DataAPI> {
+        every {
+          retrieveMemberContent(any<String>(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns mockedCall
+      }
+
+      val zosmfApi = ZosmfApi.getService()
+      every { zosmfApi.getApi(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
 
       // notificationService mockk behavior
-      val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
-      notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-        override fun notifyError(
-          t: Throwable,
-          project: Project?,
-          custTitle: String?,
-          custDetailsShort: String?,
-          custDetailsLong: String?
-        ) {
-          if (t.message == "FAILED TO ESTABLISH RUNTIME SESSION" ) {
-            notificationShowedForTsoSessionError = true
-          } else if (custDetailsShort == "Connection config was not found") {
-            notificationShowedForConnConfigNotFound = true
-          } else if (custDetailsShort == "Member is not REXX") {
-            notificationShowedForMemberIsNotRexx = true
-          } else {
-            notificationShowedForMemberContentFetchError = true
-          }
+      val notificationsService = NotificationsService.getService()
+      every {
+        notificationsService
+          .notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+      } answers {
+        val throwable = firstArg<Throwable>()
+        val custDetailsShort = args[3] as String?
+        if (throwable.message == "FAILED TO ESTABLISH RUNTIME SESSION" ) {
+          notificationShowedForTsoSessionError = true
+        } else if (custDetailsShort == "Connection config was not found") {
+          notificationShowedForConnConfigNotFound = true
+        } else if (custDetailsShort == "Member is not REXX") {
+          notificationShowedForMemberIsNotRexx = true
+        } else {
+          notificationShowedForMemberContentFetchError = true
         }
       }
-
-      // dataOps manager config mockk behavior
-      val tsoStartResponse = TsoResponse(servletKey = "TEST KEY")
-      val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          @Suppress("UNCHECKED_CAST")
-          return tsoStartResponse as R
-        }
-      }
-
-      // response from data api mockk behavior
-      val responseBody = "/* SOME CONTENT WITH REXX COMMENT FIRST */\n" + "TEST PGM\n" + "END"
-      val mockedCall = mockk<retrofit2.Call<String>>()
-      val dataApiResponse = mockk<Response<String>>()
-      every { mockedCall.execute() } returns dataApiResponse
-      every { dataApiResponse.isSuccessful } returns true
-      every { dataApiResponse.body() } returns responseBody
-      every { dataApi.retrieveMemberContent(any<String>(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())} returns mockedCall
 
       // dialog mockk behavior
-      val tsoSessionConfig = mockk<TSOSessionConfig>()
+      val tsoSessionConfig = mockk<TSOSessionConfig> {
+        every { connectionConfigUuid } returns "conn_uuid"
+        every { name } returns "TSO_Config_Name"
+      }
       val dialogState = ExecuteRexxDialogState(tsoSessionConfig)
       val dialogMock = mockk<ExecuteRexxDialog>()
+
       mockkStatic(ExecuteRexxDialog::class)
       mockkObject(ExecuteRexxDialog)
-      every { dialogMock.showAndGet() } returns true
-      every { ExecuteRexxDialog.create(any() as Project, any() as Crudable, any() as ConnectionConfig,any() as ExecuteRexxDialogState ) } returns dialogMock
-      every { dialogMock.state } returns dialogState
-      every { tsoSessionConfig.connectionConfigUuid } returns "conn_uuid"
-      every { tsoSessionConfig.name } returns "TSO_Config_Name"
+      every {
+        ExecuteRexxDialog
+          .create(any<Project>(), any<Crudable>(), any<ConnectionConfig>(), any<ExecuteRexxDialogState>())
+      } returns dialogMock
 
       // checkFileForSync mockk behavior
       mockkStatic(::checkFileForSync)
       every { checkFileForSync(any(), any(), any()) } returns false
 
+      val dataOpsManager = DataOpsManager.getService()
+
+      beforeEach {
+        clearMocks(dialogMock, verificationMarks = true, recordedCalls = true)
+
+        every { dialogMock.showAndGet() } returns true
+        every { dialogMock.state } returns dialogState
+
+        every {
+          dataOpsManager.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+        } returns TsoResponse(servletKey = "TEST KEY")
+      }
+
       should("execute actionPerformed and send execution topic to sync publisher") {
         classUnderTest.actionPerformed(actionEventMock)
+
         verify { dialogMock.showAndGet() }
         verify { classUnderTest.logMessage("About to send $SESSION_EXECUTE_REXX_TOPIC topic to sync publisher") }
       }
 
       should("execute actionPerformed and call notifyError if start TSO session throws exception") {
-        clearMocks(dialogMock, verificationMarks = true, recordedCalls = true)
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw IllegalArgumentException("FAILED TO ESTABLISH RUNTIME SESSION")
-          }
-        }
+        every {
+          dataOpsManager.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+        } throws IllegalArgumentException("FAILED TO ESTABLISH RUNTIME SESSION")
         every { dialogMock.showAndGet() } returns true
         every { dialogMock.state } returns dialogState
 
         classUnderTest.actionPerformed(actionEventMock)
+
         verify { dialogMock.showAndGet() }
-        assertSoftly {
-          notificationShowedForTsoSessionError shouldBe true
-        }
+        assertSoftly { notificationShowedForTsoSessionError shouldBe true }
       }
 
       should("execute actionPerformed and call notifyError if connection config was not found for TSO session") {
-        clearMocks(dialogMock, verificationMarks = true, recordedCalls = true)
-        every { configService.crudable.getByUniqueKey<ConnectionConfig>(any()) } returns null
+        every {
+          configService.crudable.getByUniqueKey(ConnectionConfig::class.java, any<ConnectionConfig>())
+        } returns Optional.ofNullable(null)
         every { dialogMock.showAndGet() } returns true
         every { dialogMock.state } returns dialogState
 
         classUnderTest.actionPerformed(actionEventMock)
+
         verify { dialogMock.showAndGet() }
-        assertSoftly {
-          notificationShowedForConnConfigNotFound shouldBe true
-        }
+        assertSoftly { notificationShowedForConnConfigNotFound shouldBe true }
       }
 
       should("execute actionPerformed and call notifyError if member is not REXX") {
-        clearMocks(dialogMock, verificationMarks = true, recordedCalls = true)
-        val responseBodyBad = "/* SOME CONTENT WITH NO PGM COMMENT FIRST */\n" + "TEST PGM\n" + "END"
-        val mockedCallBad = mockk<retrofit2.Call<String>>()
-        val dataApiResponseBad = mockk<Response<String>>()
-        every { mockedCallBad.execute() } returns dataApiResponseBad
-        every { dataApiResponseBad.isSuccessful } returns true
-        every { dataApiResponseBad.body() } returns responseBodyBad
-        every { dataApi.retrieveMemberContent(any<String>(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())} returns mockedCallBad
+        every {
+          dataApi
+            .retrieveMemberContent(any<String>(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns mockk {
+          every { execute() } returns mockk {
+            every { isSuccessful } returns true
+            every { body() } returns "/* SOME CONTENT WITH NO PGM COMMENT FIRST */\n" + "TEST PGM\n" + "END"
+          }
+        }
 
         classUnderTest.actionPerformed(actionEventMock)
+
         verify { dialogMock wasNot Called }
-        assertSoftly {
-          notificationShowedForMemberIsNotRexx shouldBe true
-        }
+        assertSoftly { notificationShowedForMemberIsNotRexx shouldBe true }
       }
 
       should("execute actionPerformed and call notifyError if API call failed for member content fetching") {
-        clearMocks(dialogMock, verificationMarks = true, recordedCalls = true)
         every { dataApiResponse.isSuccessful } returns false
-        every { dataApi.retrieveMemberContent(any<String>(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())} returns mockedCall
+        every {
+          dataApi
+            .retrieveMemberContent(any<String>(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns mockedCall
 
         classUnderTest.actionPerformed(actionEventMock)
+
         verify { dialogMock wasNot Called }
-        assertSoftly {
-          notificationShowedForMemberContentFetchError shouldBe true
-        }
+        assertSoftly { notificationShowedForMemberContentFetchError shouldBe true }
       }
 
       should("execute actionPerformed and do nothing if vFile is currently under synchronization") {
         var isFileUnderSync = false
-        clearMocks(dialogMock, verificationMarks = true, recordedCalls = true)
-        every { checkFileForSync(any(), any(), any()) } answers {
+
+        every {
+          checkFileForSync(any(), any(), any())
+        } answers {
           isFileUnderSync = true
           true
         }
 
         classUnderTest.actionPerformed(actionEventMock)
+
         verify { dialogMock wasNot Called }
-        assertSoftly {
-          isFileUnderSync shouldBe true
-        }
+        assertSoftly { isFileUnderSync shouldBe true }
       }
     }
 
     context("update") {
-      var isVisible: Boolean
-      var isEnabled: Boolean
+      var isVisibleNewValue: Boolean? = null
+      var isEnabledNewValue: Boolean? = null
       val tsoSessionConfig = mockk<TSOSessionConfig>()
-      val node = mockk<FileLikeDatasetNode>()
-      val virtualFile = mockk<MFVirtualFile>()
-      val attributes = mockk<RemoteMemberAttributes>()
-      val nodeDataForPositiveTest = NodeData(node = node, file = virtualFile, attributes = attributes)
+      val nodeDataForPositiveTest = NodeData(
+        node = mockk<FileLikeDatasetNode>(),
+        file = mockk<MFVirtualFile>(),
+        attributes = mockk<RemoteMemberAttributes>()
+      )
 
-      every { presentationMock.setVisible(true) } answers { isVisible = true }
-      every { presentationMock.setEnabled(true) } answers { isEnabled = true }
-      every { presentationMock.setVisible(false) } answers { isVisible = false }
-      every { presentationMock.setEnabled(false) } answers { isEnabled = false }
-      every { presentationMock.setEnabledAndVisible(false) } answers {
-        isVisible = false
-        isEnabled = false
+      every {
+        presentationMock.isVisible = any()
+      } answers {
+        isVisibleNewValue = firstArg<Boolean>()
       }
-      every { presentationMock.setEnabledAndVisible(true) } answers {
-        isVisible = true
-        isEnabled = true
+      every {
+        presentationMock.isEnabled = any()
+      } answers {
+        isEnabledNewValue = firstArg<Boolean>()
+      }
+      every {
+        presentationMock.isEnabledAndVisible = any()
+      } answers {
+        presentationMock.isVisible = firstArg<Boolean>()
+        presentationMock.isEnabled = firstArg<Boolean>()
+      }
+
+      beforeEach {
+        isVisibleNewValue = null
+        isEnabledNewValue = null
       }
 
       should("action should be enabled and visible if all conditions met") {
-        isVisible = false
-        isEnabled = false
-
-        every { presentationMock.isEnabled } returns true
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForPositiveTest)
         every { configService.crudable.getAll<TSOSessionConfig>() } returns Stream.of(tsoSessionConfig)
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe true
-          isEnabled shouldBe true
+          isVisibleNewValue shouldBe true
+          isEnabledNewValue shouldBe true
         }
       }
 
       should("action should be visible, but not enabled if no TSO sessions defined") {
-        isVisible = false
-        isEnabled = true
-
-        every { presentationMock.isEnabled } returns false
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForPositiveTest)
-        every { configService.crudable.getAll<TSOSessionConfig>() } returns Stream.of()
+        every { configService.crudable.getAll(TSOSessionConfig::class.java) } returns Stream.of()
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe true
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe true
+          isEnabledNewValue shouldBe false
         }
       }
 
       should("action should not be visible if attributes of selected node is not RemoteMemberAttributes") {
-        isVisible = true
-        isEnabled = true
+        val nodeDataForBadAttributesTest = NodeData(
+          node = mockk<FileLikeDatasetNode>(),
+          file = mockk<MFVirtualFile>(),
+          attributes = mockk<RemoteUssAttributes>()
+        )
 
-        val nodeBad = mockk<FileLikeDatasetNode>()
-        val virtualFileBad = mockk<MFVirtualFile>()
-        val attributesBad = mockk<RemoteUssAttributes>()
-        val nodeDataForBadAttributesTest = NodeData(node = nodeBad, file = virtualFileBad, attributes = attributesBad)
-
-        every { presentationMock.isEnabled } returns false
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeDataForBadAttributesTest)
         every { configService.crudable.getAll<TSOSessionConfig>() } returns Stream.of()
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe false
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe false
+          isEnabledNewValue shouldBe false
         }
       }
 
       should("action should not be visible and not be enabled if selectedNodesData contains 2 nodes") {
-        isVisible = true
-        isEnabled = true
-
-        val node1 = mockk<FileLikeDatasetNode>()
-        val node2 = mockk<FileLikeDatasetNode>()
-        val virtualFile1 = mockk<MFVirtualFile>()
-        val virtualFile2 = mockk<MFVirtualFile>()
-        val attributes1 = mockk<RemoteMemberAttributes>()
-        val attributes2 = mockk<RemoteMemberAttributes>()
-        val nodeData1ForMoreThan1NodeTest = NodeData(node = node1, file = virtualFile1, attributes = attributes1)
-        val nodeData2ForMoreThan1NodeTest = NodeData(node = node2, file = virtualFile2, attributes = attributes2)
+        val nodeData1ForMoreThan1NodeTest = NodeData(
+          node = mockk<FileLikeDatasetNode>(),
+          file = mockk<MFVirtualFile>(),
+          attributes = mockk<RemoteMemberAttributes>()
+        )
+        val nodeData2ForMoreThan1NodeTest = NodeData(
+          node = mockk<FileLikeDatasetNode>(),
+          file = mockk<MFVirtualFile>(),
+          attributes = mockk<RemoteMemberAttributes>()
+        )
 
         every { explorerViewMock.mySelectedNodesData } returns mutableListOf(nodeData1ForMoreThan1NodeTest, nodeData2ForMoreThan1NodeTest)
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe false
-          isEnabled shouldBe false
+          isVisibleNewValue shouldBe false
+          isEnabledNewValue shouldBe false
         }
       }
 
       should("action should not be visible and not be enabled if explorer view is not FileExplorerView") {
-        isVisible = true
-        isEnabled = true
-
-        every { actionEventMock.getExplorerView<FileExplorerView>() } returns null
+        every { actionEventMock.getData(EXPLORER_VIEW) } returns null
 
         classUnderTest.update(actionEventMock)
 
         assertSoftly {
-          isVisible shouldBe false
-          isEnabled shouldBe false
-        }
-      }
-    }
-
-    context("misc") {
-      should("isDumbAware should be true") {
-        val isDumbAware = classUnderTest.isDumbAware
-        assertSoftly {
-          isDumbAware shouldBe true
-        }
-      }
-
-      should("getActionUpdateThread should be EDT") {
-        val actionUpdateThread = classUnderTest.actionUpdateThread
-        assertSoftly {
-          actionUpdateThread shouldBe ActionUpdateThread.EDT
+          isVisibleNewValue shouldBe false
+          isEnabledNewValue shouldBe false
         }
       }
     }

@@ -137,7 +137,6 @@ dependencies {
 //    TO TEST EAP:
     intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
     jetbrainsRuntime()
-    instrumentationTools()
     pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
     zipSigner()
@@ -207,6 +206,8 @@ kover {
       excludes {
         classes(providers.provider { "org.zowe.explorer.vfs.MFVFileCreateEvent" })
         classes(providers.provider { "org.zowe.explorer.vfs.MFVFilePropertyChangeEvent" })
+        classes(providers.provider { "org.zowe.explorer.utils.KoverIgnore" })
+        annotatedBy("org.zowe.explorer.utils.KoverIgnore")
       }
     }
   }
@@ -257,6 +258,7 @@ tasks {
 
     testLogging {
       events("passed", "skipped", "failed")
+      // showStandardStreams = true
     }
 
     //  ignoreFailures = true

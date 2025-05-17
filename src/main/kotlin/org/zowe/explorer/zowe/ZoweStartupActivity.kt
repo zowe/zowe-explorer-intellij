@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -82,7 +83,7 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType
       "$type Zowe config file has been deleted.\n" +
           "Would you like to delete the corresponding connection?\n" +
           "If you decide to leave the connection, it will be converted to a regular connection (username will be visible).",
-      "Deleting Zowe Config connection",
+      "Deleting Zowe Config Connection",
       arrayOf(
         "Delete Connection(s)", "Keep Connection(s)"
       ),
@@ -108,9 +109,8 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType
  * @version 0.5
  * @since 2021-02-12
  */
-class ZoweStartupActivity : StartupActivity {
-
-  override fun runActivity(project: Project) {
+class ZoweStartupActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
     for (type in ZoweConfigType.entries)
       showNotificationForAddUpdateZoweConfigIfNeeded(project, type)
   }

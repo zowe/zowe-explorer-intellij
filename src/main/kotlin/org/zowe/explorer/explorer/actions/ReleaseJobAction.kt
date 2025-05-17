@@ -10,15 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.jobs.BasicReleaseJobParams
 import org.zowe.explorer.dataops.operations.jobs.ReleaseJobOperation
@@ -26,25 +27,16 @@ import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.kotlinsdk.Job
 
 /** Action to release a holding job in the Jobs Tool Window */
-class ReleaseJobAction : AnAction() {
+class ReleaseJobAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Release a job on button click
    * After completion shows a notification
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JOBS_LOG_VIEW) ?: let {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
+    val view = e.getData(JOBS_LOG_VIEW) ?: return
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()
     val dataOpsManager = DataOpsManager.getService()
     if (jobStatus != null) {
@@ -61,17 +53,17 @@ class ReleaseJobAction : AnAction() {
             ),
             progressIndicator = it
           )
-        }.onFailure {
+        }.onFailure { failureResult ->
           view.showNotification(
             "Error releasing ${jobStatus.jobName}: ${jobStatus.jobId}",
-            "${it.message}",
+            "${failureResult.message}",
             e.project,
             NotificationType.ERROR
           )
-        }.onSuccess {
+        }.onSuccess { successResult ->
           view.showNotification(
             "${jobStatus.jobName}: ${jobStatus.jobId} has been released",
-            "${it}",
+            "$successResult",
             e.project,
             NotificationType.INFORMATION
           )

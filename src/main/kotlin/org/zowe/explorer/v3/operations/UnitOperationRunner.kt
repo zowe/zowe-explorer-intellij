@@ -15,13 +15,14 @@
 package org.zowe.explorer.v3.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.v3.ConnectionConfig
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 
 /**
  * Abstract class to represent unit operation runner
  * @property resultClass the result class of the operation, that is [Unit]
  */
-abstract class UnitOperationRunner<C : ConnectionConfig, O : UnitOperationData<C>> : OperationRunner<Unit, C, O>() {
+abstract class UnitOperationRunner<C : ConnectionConfigOldStruct, O : UnitOperationData<C>> :
+  OperationRunner<Unit, C, O>() {
 
   override val resultClass = Unit::class.java
 

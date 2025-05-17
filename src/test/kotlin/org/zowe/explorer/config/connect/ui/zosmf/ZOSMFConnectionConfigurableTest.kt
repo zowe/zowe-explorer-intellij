@@ -10,13 +10,12 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config.connect.ui.zosmf
 
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -24,6 +23,7 @@ import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.*
@@ -31,35 +31,35 @@ import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.config.ConfigStateV2
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.makeCrudableWithoutListeners
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.testutils.*
+import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.config.DefaultKeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
-import java.lang.reflect.Modifier
 import java.nio.file.Path
 import java.util.stream.Stream
 import javax.swing.Icon
 import kotlin.reflect.KFunction
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.jvm.isAccessible
 
-class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
-
+class ZOSMFConnectionConfigurableTest : AppInitShouldSpec("config/connect/ui/zomsf/ZOSMFConnectionConfigurable", {
   val zOSMFConnectionConfigurableMock = spyk(ZOSMFConnectionConfigurable(), recordPrivateCalls = true)
   var isShowOkCancelDialogCalled = false
   var isFindFileByNioPathCalled = false
   var isInputStreamCalled = false
   var notified = false
 
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
+  val updateZoweConfigIfNeededMethod =
+    ZOSMFConnectionConfigurable::class.java.getDeclaredMethod("updateZoweConfigIfNeeded", ConnectionDialogState::class.java)
+  updateZoweConfigIfNeededMethod.isAccessible = true
+  val editConnectionMethod = ZOSMFConnectionConfigurable::class.java.getDeclaredMethod("editConnection")
+  editConnectionMethod.isAccessible = true
+  val removeSelectedConnectionsMethod =
+    ZOSMFConnectionConfigurable::class.java.getDeclaredMethod("removeSelectedConnections")
+  removeSelectedConnectionsMethod.isAccessible = true
 
   beforeEach {
     isShowOkCancelDialogCalled = false
@@ -68,155 +68,163 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
     notified = false
   }
 
-  context("ZOSMFConnectionConfigurable:") {
-
-    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
-    notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-      override fun notifyError(
-        t: Throwable,
-        project: Project?,
-        custTitle: String?,
-        custDetailsShort: String?,
-        custDetailsLong: String?
-      ) {
-        if (custTitle == "Error with Zowe config file") {
-          notified = true
-        }
+  context("updateZoweConfigIfNeeded") {
+    val notificationsService = NotificationsService.getService()
+    every {
+      notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+    } answers {
+      val custTitle = thirdArg<String>()
+      if (custTitle == "Error with Zowe config file") {
+        notified = true
       }
     }
 
-    val state = ConnectionDialogState(
-      connectionUuid = "0000",
-      connectionUrl = "https://111.111.111.111:111",
-      connectionName = "zowe-local-zosmf/testProj",
-      zoweConfigPath = "/zowe/conf/path"
-    )
-
-    val ret = mutableListOf<Int>(Messages.OK)
     val showOkCancelDialogMock: (String, String, String, String, Icon?, DialogWrapper.DoNotAskOption?, Project?) -> Int =
       ::showOkCancelDialog
     mockkStatic(showOkCancelDialogMock as KFunction<*>)
-    every {
-      showOkCancelDialogMock(any<String>(), any<String>(), any<String>(), any<String>(), null, null, null)
-    } answers {
-      isShowOkCancelDialogCalled = true
-      ret[0]
-    }
 
     mockkConstructor(DefaultKeytarWrapper::class)
     every { anyConstructed<DefaultKeytarWrapper>().setPassword(any(), any(), any()) } just Runs
     every { anyConstructed<DefaultKeytarWrapper>().deletePassword(any(), any()) } returns true
 
-    should("updateZoweConfigIfNeeded null state and Ok") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          try {
-            it.call(zOSMFConnectionConfigurableMock, null)
-          } catch (t: Throwable) {
-            t.cause.toString().shouldContain("Zowe config file not found")
-          }
-        }
-      isShowOkCancelDialogCalled shouldBe true
-      isFindFileByNioPathCalled shouldBe false
-    }
-
-    should("updateZoweConfigIfNeeded null zoweConfigPath and Ok") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          try {
-            state.zoweConfigPath = null
-            it.call(zOSMFConnectionConfigurableMock, state)
-          } catch (t: Throwable) {
-            t.cause.toString().shouldContain("Zowe config file not found")
-          }
-        }
-      isShowOkCancelDialogCalled shouldBe true
-      isFindFileByNioPathCalled shouldBe false
-    }
-
-    ret[0] = Messages.CANCEL
-
-    should("updateZoweConfigIfNeeded null state and Cancel") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          try {
-            state.zoweConfigPath = null
-            it.call(zOSMFConnectionConfigurableMock, null)
-          } catch (t: Throwable) {
-            t.cause.toString().shouldContain("Zowe config file not found")
-          }
-        }
-      isShowOkCancelDialogCalled shouldBe true
-      isFindFileByNioPathCalled shouldBe false
-    }
-
-    state.zoweConfigPath = "/zowe/conf/path"
-    ret[0] = Messages.OK
-
-    should("updateZoweConfigIfNeeded throw Zowe config file not found") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          try {
-            it.call(zOSMFConnectionConfigurableMock, state)
-          } catch (t: Throwable) {
-            t.cause.toString().shouldContain("Zowe config file not found")
-          }
-        }
-      isShowOkCancelDialogCalled shouldBe true
-      isFindFileByNioPathCalled shouldBe false
-    }
-
-    val vfMock = mockk<VirtualFile>()
-    val vfmMock: VirtualFileManager = mockk<VirtualFileManager>()
-    mockkStatic(VirtualFileManager::class)
-    every { VirtualFileManager.getInstance() } returns vfmMock
-    every { vfmMock.findFileByNioPath(any<Path>()) } answers {
-      isFindFileByNioPathCalled = true
-      vfMock
-    }
-    every { vfMock.inputStream } answers {
-      isInputStreamCalled = true
-      val fileCont = "{\n" +
+    val vfMock = mockk<VirtualFile> {
+      every { inputStream } answers {
+        isInputStreamCalled = true
+        val fileCont = "{\n" +
           "    \"\$schema\": \"./zowe.schema.json\",\n" +
           "    \"profiles\": {\n" +
           "        \"zosmf\": {\n" +
           "}"
-      fileCont.toByteArray().inputStream()
+        fileCont.toByteArray().inputStream()
+      }
+      every { path } returns "/zowe/file/path/zowe.config.json"
+      every { charset } returns Charsets.UTF_8
+      every { setBinaryContent(any()) } just Runs
     }
-    every { vfMock.path } returns "/zowe/file/path/zowe.config.json"
-    every { vfMock.charset } returns Charsets.UTF_8
-    every { vfMock.setBinaryContent(any()) } just Runs
+    val vfmMock: VirtualFileManager = mockk<VirtualFileManager> {
+      every { findFileByNioPath(any<Path>()) } answers {
+        isFindFileByNioPathCalled = true
+        vfMock
+      }
+    }
+
+    mockkStatic(VirtualFileManager::class)
+    every { VirtualFileManager.getInstance() } returns vfmMock
+
+    val configCredentialsMap = mutableMapOf(
+      "profiles.base.properties.user" to "testUser",
+      "profiles.base.properties.password" to "testPass"
+    )
+    val confMap = mutableMapOf("/zowe/file/path/zowe.config.json" to configCredentialsMap)
 
     mockkObject(ZoweConfig)
-    val confMap = mutableMapOf<String, MutableMap<String, String>>()
-    val configCredentialsMap = mutableMapOf<String, String>()
-    configCredentialsMap["profiles.base.properties.user"] = "testUser"
-    configCredentialsMap["profiles.base.properties.password"] = "testPass"
-    confMap.clear()
-    confMap["/zowe/file/path/zowe.config.json"] = configCredentialsMap
     every { ZoweConfig.Companion["readZoweCredentialsFromStorage"](any<KeytarWrapper>()) } returns confMap
 
-    should("updateZoweConfigIfNeeded throw JsonSyntaxException") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          try {
-            it.call(zOSMFConnectionConfigurableMock, state)
-          } catch (t: Throwable) {
-            println("ghjkk")
-            t.cause.toString().shouldContain("Zowe config file not found")
-          }
-        }
-      notified  shouldBe true
+    lateinit var state: ConnectionDialogState
+    var dialogMessageType: Int
+
+    beforeEach {
+      state = ConnectionDialogState(
+        connectionUuid = "0000",
+        connectionUrl = "https://111.111.111.111:111",
+        connectionName = "zowe-local-zosmf/testProj",
+        zoweConfigPath = "/zowe/conf/path"
+      )
+
+      dialogMessageType = Messages.OK
+
+      every {
+        showOkCancelDialogMock(any<String>(), any<String>(), any<String>(), any<String>(), null, null, null)
+      } answers {
+        isShowOkCancelDialogCalled = true
+        dialogMessageType
+      }
     }
 
-    every { vfMock.inputStream } answers {
-      isInputStreamCalled = true
-      val fileCont = "{\n" +
+    should("updateZoweConfigIfNeeded null state and Ok") {
+      try {
+        updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, null)
+      } catch (t: Throwable) {
+        t.cause.toString().shouldContain("Zowe config file not found")
+      }
+
+      assertSoftly {
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe false
+      }
+    }
+
+    should("updateZoweConfigIfNeeded null zoweConfigPath and Ok") {
+      try {
+        state.zoweConfigPath = null
+        updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+      } catch (t: Throwable) {
+        t.cause.toString().shouldContain("Zowe config file not found")
+      }
+
+      assertSoftly {
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe false
+      }
+    }
+
+
+    should("updateZoweConfigIfNeeded null state and Cancel") {
+      dialogMessageType = Messages.CANCEL
+
+      try {
+        state.zoweConfigPath = null
+        updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, null)
+      } catch (t: Throwable) {
+        t.cause.toString().shouldContain("Zowe config file not found")
+      }
+
+      assertSoftly {
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe false
+      }
+    }
+
+    should("updateZoweConfigIfNeeded throw Zowe config file not found") {
+      try {
+        state.zoweConfigPath = null
+        updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+      } catch (t: Throwable) {
+        t.cause.toString().shouldContain("Zowe config file not found")
+      }
+
+      assertSoftly {
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe false
+      }
+    }
+
+    should("updateZoweConfigIfNeeded throw JsonSyntaxException") {
+      updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+
+      assertSoftly { notified shouldBe true }
+    }
+
+    should("updateZoweConfigIfNeeded empty zowe config file") {
+      every { vfMock.inputStream } answers {
+        isInputStreamCalled = true
+        "".toByteArray().inputStream()
+      }
+
+      updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+
+      assertSoftly {
+        notified shouldBe true
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe true
+        isInputStreamCalled shouldBe true
+      }
+    }
+
+    should("updateZoweConfigIfNeeded  success") {
+      every { vfMock.inputStream } answers {
+        isInputStreamCalled = true
+        val fileCont = "{\n" +
           "    \"\$schema\": \"./zowe.schema.json\",\n" +
           "    \"profiles\": {\n" +
           "        \"zosmf\": {\n" +
@@ -261,55 +269,47 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
           "        \"base\": \"base\"\n" +
           "    }\n" +
           "}"
-      fileCont.toByteArray().inputStream()
-    }
+        fileCont.toByteArray().inputStream()
+      }
 
-    should("updateZoweConfigIfNeeded  success") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          state.connectionUrl = "https://testhost.com:10443"
-          it.call(zOSMFConnectionConfigurableMock, state)
-        }
-      isShowOkCancelDialogCalled shouldBe true
-      isFindFileByNioPathCalled shouldBe true
-      isInputStreamCalled shouldBe true
+      state.connectionUrl = "https://testhost.com:10443"
+      updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+
+      assertSoftly {
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe true
+        isInputStreamCalled shouldBe true
+      }
     }
 
     should("updateZoweConfigIfNeeded empty port") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          state.isAllowSsl = true
-          state.connectionUrl = "https://testhost.com"
-          it.call(zOSMFConnectionConfigurableMock, state)
-        }
-      isShowOkCancelDialogCalled shouldBe true
-      isFindFileByNioPathCalled shouldBe true
-      isInputStreamCalled shouldBe true
+      state.isAllowSsl = true
+      state.connectionUrl = "https://testhost.com"
+
+      updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+
+      assertSoftly {
+        isShowOkCancelDialogCalled shouldBe true
+        isFindFileByNioPathCalled shouldBe true
+        isInputStreamCalled shouldBe true
+      }
     }
 
     should("updateZoweConfigIfNeeded  failed") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
-        ?.let {
-          it.isAccessible = true
-          state.connectionUrl = "https://111@@@:8080"
-          try {
-            it.call(zOSMFConnectionConfigurableMock, state)
-          } catch (t: Throwable) {
-            t.cause.toString().shouldContain("Unable to save invalid URL")
-          }
-        }
-    }
+      state.connectionUrl = "https://111@@@:8080"
 
-    fun Any.mockPrivateFields(name: String, mocks: Any?): Any? {
-      javaClass.declaredFields
-        .filter { it.modifiers.and(Modifier.PRIVATE) > 0 || it.modifiers.and(Modifier.PROTECTED) > 0 }
-        .firstOrNull { it.name == name }
-        ?.also { it.isAccessible = true }
-        ?.set(this, mocks)
-      return this
+      try {
+        updateZoweConfigIfNeededMethod.invoke(zOSMFConnectionConfigurableMock, state)
+      } catch (t: Throwable) {
+        t.cause.toString().shouldContain("Unable to save invalid URL")
+      }
     }
+  }
+
+  context("other functions") {
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
     val connectionConfig = ConnectionConfig(
       uuid = "0000",
@@ -320,97 +320,93 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
       zoweConfigPath = "zowe/config/path",
       owner = "owner"
     )
-    state.connectionUrl = "https://testhost.com"
-    state.username = "testuser"
-    state.password = "testpass".toCharArray()
-    state.owner = "owner"
-    state.zoweConfigPath = "zowe/config/path"
-    state.mode = DialogMode.UPDATE
-    var crud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
-    every { crud.getAll(ConnectionConfig::class.java) } returns Stream.of(connectionConfig)
-    every { crud.find(ConnectionConfig::class.java, any()) } returns Stream.of(connectionConfig)
-    var connTModel = ConnectionsTableModel(crud)
-    zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTableModel", connTModel)
-    var valTView = spyk(ValidatingTableView<ConnectionDialogState>(connTModel, Disposer.newDisposable()))
-    every { valTView.selectedRow } returns 0
-    every { valTView.selectedRows } returns intArrayOf(0)
-    zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTable", valTView)
-    every { zOSMFConnectionConfigurableMock["showAndTestConnection"](any<ConnectionDialogState>()) } returns state
 
-    should("editConnection/removeSelectedConnections") {
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "editConnection" }
-        ?.let {
-          it.isAccessible = true
-          it.call(zOSMFConnectionConfigurableMock)
-        }
-      zOSMFConnectionConfigurableMock::class.declaredMemberProperties.find { it.name == "zoweConfigStates" }
-        ?.let {
-          it.isAccessible = true
-          (it.getter.call(zOSMFConnectionConfigurableMock) as HashMap<*, *>).size shouldBe 1
-        }
-      crud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
-      every { crud.getAll(ConnectionConfig::class.java) } returns Stream.of(connectionConfig)
-      every { crud.find(ConnectionConfig::class.java, any()) } returns Stream.of(connectionConfig)
+    val state = ConnectionDialogState(
+      connectionUuid = connectionConfig.uuid,
+      connectionUrl = "https://testhost.com",
+      connectionName = connectionConfig.name,
+      zoweConfigPath = connectionConfig.zoweConfigPath,
+      username = "testuser",
+      password = "testpass".toCharArray(),
+      owner = connectionConfig.owner,
+      mode = DialogMode.UPDATE
+    )
+
+    lateinit var crud: Crudable
+    lateinit var connTModel: ConnectionsTableModel
+    lateinit var valTView: ValidatingTableView<ConnectionDialogState>
+
+    beforeEach {
+      crud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() }) {
+        every { getAll(ConnectionConfig::class.java) } answers { Stream.of(connectionConfig) }
+        every { find(ConnectionConfig::class.java, any()) } answers { Stream.of(connectionConfig) }
+      }
       connTModel = ConnectionsTableModel(crud)
-      zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTableModel", connTModel)
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "removeSelectedConnections" }
-        ?.let {
-          it.isAccessible = true
-          it.call(zOSMFConnectionConfigurableMock)
-        }
-      zOSMFConnectionConfigurableMock::class.declaredMemberProperties.find { it.name == "zoweConfigStates" }
-        ?.let {
-          it.isAccessible = true
-          (it.getter.call(zOSMFConnectionConfigurableMock) as HashMap<*, *>).size shouldBe 0
-        }
+      valTView = spyk(ValidatingTableView(connTModel, Disposer.newDisposable())) {
+        every { selectedRow } returns 0
+        every { selectedRows } returns intArrayOf(0)
+      }
+
+      setPrivateFieldValue(zOSMFConnectionConfigurableMock, "connectionsTableModel", connTModel)
+      setPrivateFieldValue(zOSMFConnectionConfigurableMock, "connectionsTable", valTView)
+
+      every { zOSMFConnectionConfigurableMock["showAndTestConnection"](any<ConnectionDialogState>()) } returns state
+    }
+
+    should("editConnection") {
+      editConnectionMethod.invoke(zOSMFConnectionConfigurableMock)
+
+      val zoweConfigStatesStart = getPrivateFieldValue(
+        zOSMFConnectionConfigurableMock,
+        "zoweConfigStates"
+      ) as HashMap<*, *>
+      zoweConfigStatesStart.size shouldBe 1
+    }
+
+    should("removeSelectedConnections") {
+      removeSelectedConnectionsMethod.invoke(zOSMFConnectionConfigurableMock)
+
+      val zoweConfigStatesEnd = getPrivateFieldValue(
+        zOSMFConnectionConfigurableMock,
+        "zoweConfigStates"
+      ) as HashMap<*, *>
+      zoweConfigStatesEnd.size shouldBe 0
     }
 
     should("removeSelectedConnections null selectedRows") {
       every { valTView.selectedRows } returns null
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "removeSelectedConnections" }
-        ?.let {
-          it.isAccessible = true
-          it.call(zOSMFConnectionConfigurableMock)
-        }
-      zOSMFConnectionConfigurableMock::class.declaredMemberProperties.find { it.name == "zoweConfigStates" }
-        ?.let {
-          it.isAccessible = true
-          (it.getter.call(zOSMFConnectionConfigurableMock) as HashMap<*, *>).size shouldBe 0
-        }
+
+      removeSelectedConnectionsMethod.invoke(zOSMFConnectionConfigurableMock)
+
+      val zoweConfigStatesEnd = getPrivateFieldValue(
+        zOSMFConnectionConfigurableMock,
+        "zoweConfigStates"
+      ) as HashMap<*, *>
+      zoweConfigStatesEnd.size shouldBe 0
     }
 
     should("removeSelectedConnections null connectionsTable") {
-      every { valTView.selectedRows } returns intArrayOf(0)
-      zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTable", null)
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "removeSelectedConnections" }
-        ?.let {
-          it.isAccessible = true
-          it.call(zOSMFConnectionConfigurableMock)
-        }
-      zOSMFConnectionConfigurableMock::class.declaredMemberProperties.find { it.name == "zoweConfigStates" }
-        ?.let {
-          it.isAccessible = true
-          (it.getter.call(zOSMFConnectionConfigurableMock) as HashMap<*, *>).size shouldBe 0
-        }
-      zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTable", valTView)
+      setPrivateFieldValue(zOSMFConnectionConfigurableMock, "connectionsTable", null)
+
+      removeSelectedConnectionsMethod.invoke(zOSMFConnectionConfigurableMock)
+
+      val zoweConfigStatesEnd = getPrivateFieldValue(
+        zOSMFConnectionConfigurableMock,
+        "zoweConfigStates"
+      ) as HashMap<*, *>
+      zoweConfigStatesEnd.size shouldBe 0
     }
 
     should("removeSelectedConnections null connectionsTableModel") {
-      every { valTView.selectedRows } returns intArrayOf(0)
-      zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTableModel", null)
-      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "removeSelectedConnections" }
-        ?.let {
-          it.isAccessible = true
-          it.call(zOSMFConnectionConfigurableMock)
-        }
-      zOSMFConnectionConfigurableMock::class.declaredMemberProperties.find { it.name == "zoweConfigStates" }
-        ?.let {
-          it.isAccessible = true
-          (it.getter.call(zOSMFConnectionConfigurableMock) as HashMap<*, *>).size shouldBe 0
-        }
-      zOSMFConnectionConfigurableMock.mockPrivateFields("connectionsTableModel", connTModel)
-    }
+      setPrivateFieldValue(zOSMFConnectionConfigurableMock, "connectionsTableModel", null)
 
+      removeSelectedConnectionsMethod.invoke(zOSMFConnectionConfigurableMock)
+
+      val zoweConfigStatesEnd = getPrivateFieldValue(
+        zOSMFConnectionConfigurableMock,
+        "zoweConfigStates"
+      ) as HashMap<*, *>
+      zoweConfigStatesEnd.size shouldBe 0
+    }
   }
-}
-)
+})

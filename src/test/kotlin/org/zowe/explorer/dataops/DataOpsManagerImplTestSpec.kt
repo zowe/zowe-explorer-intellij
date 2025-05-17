@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops
@@ -17,22 +19,17 @@ package org.zowe.explorer.dataops
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
 import org.zowe.explorer.dataops.content.synchronizer.checkForSync
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
 
-class DataOpsManagerImplTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-  }
-
-  context("DataOpsMangerImpl test spec") {
-    val dataOpsManager = DataOpsManagerImpl()
-
+class DataOpsManagerImplTestSpec : AppInitShouldSpec("dataops/DataOpsManagerImpl", {
+  context("clearFileCache") {
     var fileClosed = false
+
+    val dataOpsManager = DataOpsManagerImpl()
 
     val projectManagerMock = mockk<ProjectManager>()
     every { projectManagerMock.openProjects } returns arrayOf(mockk())
@@ -40,12 +37,15 @@ class DataOpsManagerImplTestSpec : WithApplicationShouldSpec({
     val fileEditorManagerMock = mockk<FileEditorManager>()
 
     beforeEach {
+      fileClosed = false
+
       mockkStatic(ProjectManager::getInstance)
       every { ProjectManager.getInstance() } returns projectManagerMock
 
       every { fileEditorManagerMock.openFiles } returns arrayOf(mockk<MFVirtualFile>())
-      fileClosed = false
-      every { fileEditorManagerMock.closeFile(any()) } answers {
+      every {
+        fileEditorManagerMock.closeFile(any())
+      } answers {
         fileClosed = true
       }
 
@@ -56,11 +56,6 @@ class DataOpsManagerImplTestSpec : WithApplicationShouldSpec({
       every { checkForSync(any()) } returns false
     }
 
-    afterEach {
-      unmockkAll()
-    }
-
-    // DataOpsMangerImpl.clearFileCache
     should("clear the file cache with closing the files in the editor") {
       val result = dataOpsManager.clearFileCache()
 
@@ -69,6 +64,7 @@ class DataOpsManagerImplTestSpec : WithApplicationShouldSpec({
         fileClosed shouldBe true
       }
     }
+
     should("clear the file cache without closing the files in the editor") {
       every { fileEditorManagerMock.openFiles } returns arrayOf(mockk())
 
@@ -79,6 +75,7 @@ class DataOpsManagerImplTestSpec : WithApplicationShouldSpec({
         fileClosed shouldBe false
       }
     }
+
     should("do not clear the file cache because the files are synchronized") {
       every { checkForSync(any()) } returns true
 

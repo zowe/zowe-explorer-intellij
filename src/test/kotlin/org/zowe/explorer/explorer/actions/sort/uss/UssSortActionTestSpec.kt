@@ -10,12 +10,12 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions.sort.uss
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
@@ -25,7 +25,6 @@ import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.actions.sort.SortAction
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrowExactly
@@ -33,16 +32,10 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
 
-class UssSortActionTestSpec : WithApplicationShouldSpec ({
-
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
+class UssSortActionTestSpec : MockkAwareShouldSpec({
   context("USS sort action") {
-
     mockkObject(SortAction.Companion)
     every { SortAction.runRefreshAction(any()) } just Runs
 
@@ -51,31 +44,45 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
 
     val mockedActionEvent = mockk<AnActionEvent>()
 
-    context("common spec") {
+    mockkStatic(AnActionEvent::createFromDataContext)
+    every { AnActionEvent.createFromDataContext(any(), null, any()) } returns mockk()
 
+    beforeEach {
+      clearMocks(
+        classUnderTest,
+        mockedActionEvent,
+        answers = false,
+        recordedCalls = true,
+        childMocks = false,
+        verificationMarks = true,
+        exclusionRules = false
+      )
+    }
+
+    context("common spec") {
       val mockedFileExplorerView = mockk<FileExplorerView>()
 
       // Target UssDirNode + Query for test
       val mockedMFVirtualFile = mockk<MFVirtualFile>()
-      val mockedUssDirNode = mockk<UssDirNode>()
+      val mockedUssQuery = mockk<UnitRemoteQueryImpl<ConnectionConfig, UssQuery>> {
+        every { sortKeys } returns mutableListOf()
+      }
+      val mockedUssDirNode = mockk<UssDirNode> {
+        every { virtualFile } returns mockedMFVirtualFile
+        every { query } returns mockedUssQuery
+      }
       val mockedUssRemoteAttributes = mockk<RemoteUssAttributes>()
-      val mockedUssQuery = mockk<UnitRemoteQueryImpl<ConnectionConfig, UssQuery>>()
-      every { mockedUssDirNode.virtualFile } returns mockedMFVirtualFile
-      every { mockedUssDirNode.query } returns mockedUssQuery
-      every { mockedUssQuery.sortKeys } returns mutableListOf()
 
       // NodeData for test
       val mockedNodeDataForTest = NodeData(mockedUssDirNode, mockedMFVirtualFile, mockedUssRemoteAttributes)
-      mockkObject(mockedNodeDataForTest)
 
-      // Common config for test
-      every { mockedActionEvent.getExplorerView<FileExplorerView>() } returns mockedFileExplorerView
+      beforeEach {
+        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedNodeDataForTest)
+        every { mockedActionEvent.getData(EXPLORER_VIEW) } returns mockedFileExplorerView
+      }
 
       context("misc") {
-
         should("returnSourceView_whenGetSourceView_givenActionEvent") {
-          every { mockedActionEvent.getData(any() as DataKey<FileExplorerView>) } returns mockedFileExplorerView
-
           val actualExplorerView = classUnderTest.getSourceView(mockedActionEvent)
 
           assertSoftly {
@@ -85,43 +92,35 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
         }
 
         should("returnNull_whenGetSourceView_givenActionEvent") {
-          every { mockedActionEvent.getData(any() as DataKey<FileExplorerView>) } returns null
+          every { mockedActionEvent.getData(EXPLORER_VIEW) } returns null
 
           val actualExplorerView = classUnderTest.getSourceView(mockedActionEvent)
 
-          assertSoftly {
-            actualExplorerView shouldBe null
-          }
+          assertSoftly { actualExplorerView shouldBe null }
         }
 
-        should("returnSourceNode_whenGetSourceNode_givenView") {
+        should("return the first selected node when it is a USS dir node") {
           val nodeMock = mockk<UssDirNode>()
           val fileMock = mockk<MFVirtualFile>()
           val attributesMock = mockk<RemoteUssAttributes>()
           val myNodesData = mutableListOf(NodeData(nodeMock, fileMock, attributesMock))
-          mockkObject(myNodesData)
           every { mockedFileExplorerView.mySelectedNodesData } returns myNodesData
 
           val actualNode = classUnderTest.getSourceNode(mockedFileExplorerView)
 
-          assertSoftly {
-            actualNode shouldBe nodeMock
-          }
+          assertSoftly { actualNode shouldBe nodeMock }
         }
 
-        should("returnNull_whenGetSourceNode_givenView") {
+        should("return null when the selected node is not a USS dir node") {
           val nodeMock = mockk<DSMaskNode>()
           val fileMock = mockk<MFVirtualFile>()
           val attributesMock = mockk<RemoteDatasetAttributes>()
           val myNodesData = mutableListOf(NodeData(nodeMock, fileMock, attributesMock))
-          mockkObject(myNodesData)
           every { mockedFileExplorerView.mySelectedNodesData } returns myNodesData
 
           val actualNode = classUnderTest.getSourceNode(mockedFileExplorerView)
 
-          assertSoftly {
-            actualNode shouldBe null
-          }
+          assertSoftly { actualNode shouldBe null }
         }
 
         should("returnTrue_whenShouldEnableSortKeyForNode_givenSelectedNodeAndSortKey") {
@@ -131,9 +130,7 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
 
           val shouldEnableSortKey = classUnderTest.shouldEnableSortKeyForNode(nodeMock, sortKey)
 
-          assertSoftly {
-            shouldEnableSortKey shouldBe true
-          }
+          assertSoftly { shouldEnableSortKey shouldBe true }
         }
 
         should("returnFalse_whenShouldEnableSortKeyForNode_givenSelectedNodeAndSortKey") {
@@ -143,88 +140,89 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
 
           val shouldEnableSortKey = classUnderTest.shouldEnableSortKeyForNode(nodeMock, sortKey)
 
-          assertSoftly {
-            shouldEnableSortKey shouldBe false
-          }
+          assertSoftly { shouldEnableSortKey shouldBe false }
         }
 
         should("updateQuery_whenPerformQueryUpdateForNode_givenSelectedNodeAndSortKey") {
           val ussQueryMock = mockk<UnitRemoteQueryImpl<ConnectionConfig, UssQuery>>()
-          val nodeMock = mockk<UssDirNode>()
+          val nodeMock = mockk<UssDirNode> {
+            every { query } returns ussQueryMock
+            every {
+              currentSortQueryKeysList
+            } returns mutableListOf(SortQueryKeys.ASCENDING, SortQueryKeys.FILE_MODIFICATION_DATE)
+          }
           val sortKey = SortQueryKeys.FILE_NAME
-          val expectedSortKeys = listOf(SortQueryKeys.ASCENDING, SortQueryKeys.FILE_NAME)
-          every { nodeMock.query } returns ussQueryMock
-          every { ussQueryMock.sortKeys } returns mutableListOf(SortQueryKeys.ASCENDING, SortQueryKeys.FILE_MODIFICATION_DATE)
-          every { nodeMock.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.ASCENDING, SortQueryKeys.FILE_MODIFICATION_DATE)
+          val expectedSortKeys = listOf(SortQueryKeys.ASCENDING, sortKey)
+          every {
+            ussQueryMock.sortKeys
+          } returns mutableListOf(SortQueryKeys.ASCENDING, SortQueryKeys.FILE_MODIFICATION_DATE)
 
           classUnderTest.performQueryUpdateForNode(nodeMock, sortKey)
 
-          assertSoftly {
-            ussQueryMock.sortKeys shouldContainExactly expectedSortKeys
-          }
+          assertSoftly { ussQueryMock.sortKeys shouldContainExactly expectedSortKeys }
         }
       }
 
       context("isSelected") {
-
         should("returnFalse_whenIsSelected_givenExplorerNull") {
-          every { mockedActionEvent.getData(any() as DataKey<FileExplorerView>) } returns null
+          every { mockedActionEvent.getData(EXPLORER_VIEW) } returns null
+
           val isSelected = classUnderTest.isSelected(mockedActionEvent)
-          assertSoftly {
-            isSelected shouldBe false
-          }
+
+          assertSoftly { isSelected shouldBe false }
         }
 
-        should("returnFalse_whenIsSelected_givenNullTemplateText") {
-          every { mockedActionEvent.getData(any() as DataKey<FileExplorerView>) } returns mockedFileExplorerView
+        should("return false cause there is no action template text for some reason") {
           every { classUnderTest.templateText } returns null
+
           val isSelected = classUnderTest.isSelected(mockedActionEvent)
-          assertSoftly {
-            isSelected shouldBe false
-          }
+
+          assertSoftly { isSelected shouldBe false }
         }
 
         should("returnFalse_whenIsSelected_givenNotUssDirNode") {
           every { classUnderTest.templateText } returns "File Name"
           val mockedNodeDataNotUssForTest =
             NodeData(mockk<LibraryNode>(), mockk(), mockk<RemoteDatasetAttributes>())
-          every { mockedFileExplorerView.mySelectedNodesData } answers {
+          every {
+            mockedFileExplorerView.mySelectedNodesData
+          } answers {
             listOf(mockedNodeDataNotUssForTest)
           }
+
           val isSelected = classUnderTest.isSelected(mockedActionEvent)
-          assertSoftly {
-            isSelected shouldBe false
-          }
+
+          assertSoftly { isSelected shouldBe false }
         }
 
         should("returnFalse_whenIsSelected_givenNodeWithNoKeysSpecified") {
-          every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedNodeDataForTest)
           every { mockedUssDirNode.currentSortQueryKeysList } answers {
             mutableListOf()
           }
+
           val isSelected = classUnderTest.isSelected(mockedActionEvent)
-          assertSoftly {
-            isSelected shouldBe false
-          }
+
+          assertSoftly { isSelected shouldBe false }
         }
 
         should("returnTrue_whenIsSelected_givenValidDataAndSortKey") {
           every { mockedUssDirNode.currentSortQueryKeysList } answers {
             mutableListOf(SortQueryKeys.FILE_NAME, SortQueryKeys.ASCENDING)
           }
+
           val isSelected = classUnderTest.isSelected(mockedActionEvent)
-          assertSoftly {
-            isSelected shouldBe true
-          }
+
+          assertSoftly { isSelected shouldBe true }
         }
       }
 
       context("setSelected") {
-
         should("return_whenSetSelected_givenExplorerNull") {
           // given
           var setSelected = true
-          every { mockedActionEvent.getData(any() as DataKey<FileExplorerView>) } answers {
+          every {
+            mockedActionEvent.getData(EXPLORER_VIEW)
+          } answers {
             setSelected = false
             null
           }
@@ -238,7 +236,6 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
 
         should("throwException_whenSetSelected_givenNullTemplateText") {
           // given
-          every { mockedActionEvent.getData(any() as DataKey<FileExplorerView>) } returns mockedFileExplorerView
           every { classUnderTest.templateText } returns null
 
           // when
@@ -266,9 +263,7 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
           classUnderTest.setSelected(mockedActionEvent, true)
 
           // then
-          assertSoftly {
-            setSelected shouldBe false
-          }
+          assertSoftly { setSelected shouldBe false }
         }
 
         should("shouldSetSelected_whenSetSelected_givenValidSortKey") {
@@ -277,7 +272,6 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
           val expectedSortKeys = listOf(SortQueryKeys.ASCENDING, SortQueryKeys.FILE_TYPE)
           every { classUnderTest.templateText } returns "File Type"
           every { classUnderTest.isSelected(any()) } returns false
-          every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedNodeDataForTest)
           every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.FILE_NAME, SortQueryKeys.ASCENDING)
           every { mockedActionEvent.place } returns "Place"
           every { mockedActionEvent.dataContext } returns dataContext
@@ -286,18 +280,15 @@ class UssSortActionTestSpec : WithApplicationShouldSpec ({
           classUnderTest.setSelected(mockedActionEvent, true)
 
           // then
-          assertSoftly {
-            mockedUssQuery.sortKeys shouldContainExactly expectedSortKeys
-          }
+          assertSoftly { mockedUssQuery.sortKeys shouldContainExactly expectedSortKeys }
         }
 
         should("return_whenSetSelected_givenAlreadySelectedSortKey") {
-          //
-          clearMocks(classUnderTest, mockedActionEvent,
-            answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)
           var setSelected = true
           every { classUnderTest.templateText } returns "File Name"
-          every { classUnderTest.isSelected(any()) } answers {
+          every {
+            classUnderTest.isSelected(any())
+          } answers {
             setSelected = false
             true
           }

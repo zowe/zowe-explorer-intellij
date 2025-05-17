@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -34,9 +35,7 @@ import org.zowe.explorer.utils.getSelectedNodesWorkingSets
 /** Action to edit job filter in JES working set tree view */
 class EditJobsFilterAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Save changes when the dialog is fulfilled */
   override fun actionPerformed(e: AnActionEvent) {
@@ -59,16 +58,16 @@ class EditJobsFilterAction : AnAction() {
           val wsToUpdate = ConfigService.getService().crudable
             .getByUniqueKey<JesWorkingSetConfig>(ws.uuid)
             ?.clone()
-          if (wsToUpdate != null) {
-            val changedJobFilter: JobsFilter? =
-              wsToUpdate.jobsFilters
-                .filter { it.prefix == prefix && it.owner == owner && it.jobId == jobId }
-                .getOrNull(0)
-            changedJobFilter?.prefix = newJobsFilter.prefix
-            changedJobFilter?.owner = newJobsFilter.owner
-            changedJobFilter?.jobId = newJobsFilter.jobId
-            ConfigService.getService().crudable.update(wsToUpdate)
-          }
+            ?: return
+          val changedJobFilter: JobsFilter =
+            wsToUpdate.jobsFilters
+              .filter { it.prefix == prefix && it.owner == owner && it.jobId == jobId }
+              .getOrNull(0)
+              ?: return
+          changedJobFilter.prefix = newJobsFilter.prefix
+          changedJobFilter.owner = newJobsFilter.owner
+          changedJobFilter.jobId = newJobsFilter.jobId
+          ConfigService.getService().crudable.update(wsToUpdate)
         }
       }
     }

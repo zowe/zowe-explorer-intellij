@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.dataops
@@ -21,25 +23,20 @@ import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.dataops.fetch.DatasetFileFetchProvider
 import org.zowe.explorer.dataops.fetch.FileCacheListener
 import org.zowe.explorer.dataops.fetch.FileFetchProvider
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.sendTopic
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.junit.platform.commons.util.ReflectionUtils
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import java.time.LocalDateTime
 import kotlin.reflect.KFunction
 
-class RemoteFileFetchProviderBaseTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-  }
-
+class RemoteFileFetchProviderBaseTestSpec : AppInitShouldSpec("dataops/RemoteFileFetchProviderBase", {
   context("refresh cache test spec") {
-    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+    val dataOpsManagerService = DataOpsManager.getService()
+    every { dataOpsManagerService.componentManager } returns mockk()
     val classUnderTest = DatasetFileFetchProvider(dataOpsManagerService)
 
     val queryMock = mockk<RemoteQuery<ConnectionConfig, DSMask, Unit>>()
@@ -138,11 +135,16 @@ class RemoteFileFetchProviderBaseTestSpec : WithApplicationShouldSpec({
         val actualRefreshCacheMap = mutableMapOf(Pair(queryMock, lastRefreshDate))
         val expectedRefreshCacheMap = mutableMapOf<RemoteQuery<ConnectionConfig, DSMask, Unit>, LocalDateTime>()
         refreshCacheStateField.set(classUnderTest, actualRefreshCacheMap)
+
         val mockSendTopic : (Topic<FileCacheListener>, ComponentManager) -> FileCacheListener = ::sendTopic
         mockkStatic(mockSendTopic as KFunction<*>)
-        every { sendTopic(FileFetchProvider.CACHE_CHANGES, any<ComponentManager>()) } answers {
+        every {
+          sendTopic(FileFetchProvider.CACHE_CHANGES, any<ComponentManager>())
+        } answers {
           val fileCacheListenerMock = mockk<FileCacheListener>()
-          every { fileCacheListenerMock.onCacheCleaned(queryMock) } answers {
+          every {
+            fileCacheListenerMock.onCacheCleaned(queryMock)
+          } answers {
             topicSent = true
           }
           fileCacheListenerMock
@@ -156,6 +158,5 @@ class RemoteFileFetchProviderBaseTestSpec : WithApplicationShouldSpec({
         }
       }
     }
-    unmockkAll()
   }
 })
