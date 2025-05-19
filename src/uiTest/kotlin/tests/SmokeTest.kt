@@ -16,7 +16,6 @@ package tests
 
 import com.intellij.driver.sdk.ui.components.*
 import io.kotest.core.annotation.Description
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
