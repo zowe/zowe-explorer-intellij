@@ -16,9 +16,8 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.containers.isEmpty
 import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.showUntilDone

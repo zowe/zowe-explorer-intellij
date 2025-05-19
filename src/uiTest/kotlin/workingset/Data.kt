@@ -92,6 +92,8 @@ const val SUBMIT_JOB_POINT = "Submit Job"
 const val invalidDatasetNameConstant = "Each name segment (qualifier) is 1 to 8 characters, the first of which must be alphabetic (A to Z) or " +
         "national (# @ $). The remaining seven characters are either alphabetic, numeric (0 - 9), national, " +
         "a hyphen (-). Name segments are separated by a period (.)"
+const val enterNumberMsg = "Please enter a number"
+const val enterValueInCorrectRangeFromOneNoSeparateMsg = "Please enter a number from 1 to 2147483646"
 
 const val enterValueInCorrectRangeFromOneMsg = "Please enter a number from 1 to 2,147,483,646"
 const val enterValueInCorrectRangeFromZeroMsg = "Please enter a number from 0 to 2,147,483,646"

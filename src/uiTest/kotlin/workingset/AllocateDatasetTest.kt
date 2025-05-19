@@ -57,8 +57,8 @@ class AllocateDatasetTest : IdeaInteractionClass() {
     companion object {
         @JvmStatic
         fun valuesProvider(): Stream<Arguments> {
-            return invalidAllocateScenarios.entries.stream().map { entry ->
-                Arguments.of(entry.key, entry.value)
+            return invalidAllocateScenarios.stream().map { scenario ->
+                Arguments.of(scenario)
             }
         }
 
