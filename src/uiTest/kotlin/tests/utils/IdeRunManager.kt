@@ -69,11 +69,14 @@ class IdeRunManager private constructor() {
 
     /** Close the running IDE after tests are completed */
     fun closeIdeAfterTests() {
+      assert(!isIDEAlreadyClosed){"IDE is already closed"}
       prepareRunManager().closeIde()
+      isIDEAlreadyClosed = true
     }
 
     /** Get the running IDE driver */
     fun getIdeDriver(): Driver {
+      assert(!isIDEAlreadyClosed){"IDE is already closed"}
       return prepareRunManager().runningIde.driver
     }
 
