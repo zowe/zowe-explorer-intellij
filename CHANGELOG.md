@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be documented in this file.
 
-## [Unreleased]
+## [1.2.6-221] (2025-05-05)
 
 ### Bugfixes
 
@@ -545,6 +545,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.6-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.5-221...1.2.6-221
 [1.2.5-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.4-221...1.2.5-221
 [1.2.4-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.3-221...1.2.4-221
 [1.2.3-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.2-221...1.2.3-221
