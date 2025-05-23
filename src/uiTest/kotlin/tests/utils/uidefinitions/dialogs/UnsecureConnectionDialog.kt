@@ -24,7 +24,7 @@ class UnsecureConnectionDialog(val driver: Driver) {
 
   init {
     driver.ideFrame {
-      dialog = dialog(xpath = "//div[@accessiblename='Attempt to create an unsecured connection']")
+      dialog = dialog("//div[@class='JEditorPane' and @visible_text='Attempt to create an unsecured connection']/ancestor::div[@class='MyDialog'][1]")
     }
   }
 }

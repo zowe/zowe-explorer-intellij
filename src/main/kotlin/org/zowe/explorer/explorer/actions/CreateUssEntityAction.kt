@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -37,6 +38,7 @@ import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
+import org.zowe.kotlinsdk.FileModeValue
 import org.zowe.kotlinsdk.FileType
 
 /**
@@ -66,11 +68,10 @@ abstract class CreateUssEntityAction : AnAction() {
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
     val project = e.project
-    val node = if (selectedNode is UssFileNode) {
-      selectedNode.parent as? UssDirNode
-    } else {
-      selectedNode as? UssDirNode
-    } ?: return
+    val node: UssDirNode = (
+      if (selectedNode is UssFileNode) selectedNode.parent.castOrNull<UssDirNode>()
+      else selectedNode.castOrNull<UssDirNode>()
+    ) ?: return
     val file = node.virtualFile
     val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
     try {
@@ -86,53 +87,55 @@ abstract class CreateUssEntityAction : AnAction() {
       return
     }
     val dataOpsManager = DataOpsManager.getService()
-    val filePath = if (file != null) {
+    val attributes = file?.let {
       dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
-        .getAttributes(file)
-        ?.path
-    } else {
-      node.value.path
+        .getAttributes(it)
     }
-    if (filePath != null) {
-      showUntilDone(
-        initialState = fileType.apply { path = filePath },
-        { initState -> CreateFileDialog(project, state = initState, filePath = filePath) }
-      ) {
-        var res = false
-        val allocationParams = it.toAllocationParams()
-        val fileType = if (allocationParams.parameters.type == FileType.FILE) {
-          "File"
-        } else {
-          "Directory"
-        }
-        runModalTask(
-          title = "Creating $fileType ${allocationParams.fileName}",
-          project = project,
-          cancellable = true
-        ) { indicator ->
-          val ussDirNode = node.castOrNull<UssDirNode>()
-          runCatching {
-            dataOpsManager.performOperation(
-              operation = UssAllocationOperation(
-                request = allocationParams,
-                connectionConfig = connectionConfig
-              ),
-              progressIndicator = indicator
-            )
-
-            changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
-          }.onSuccess {
-            ussDirNode?.let {
-              view.myFsTreeStructure.findByPredicate { node -> node is FetchNode && node.query == it.query }
-                .forEach { node -> node.cleanCacheIfPossible(false) }
-            }
-            res = true
-          }.onFailure { t ->
-            NotificationsService.errorNotification(t, project)
-          }
-        }
-        res
+    val filePath = attributes?.path ?: node.value.path
+    showUntilDone(
+      initialState = fileType.apply { path = filePath },
+      { initState -> CreateFileDialog(project, state = initState, filePath = filePath) }
+    ) {
+      var res = false
+      val allocationParams = it.toAllocationParams()
+      val fileType = if (allocationParams.parameters.type == FileType.FILE) {
+        "File"
+      } else {
+        "Directory"
       }
+      runModalTask(
+        title = "Creating $fileType ${allocationParams.fileName}",
+        project = project,
+        cancellable = true
+      ) { indicator ->
+        val ussDirNode = node.castOrNull<UssDirNode>()
+        runCatching {
+          dataOpsManager.performOperation(
+            operation = UssAllocationOperation(
+              request = allocationParams,
+              connectionConfig = connectionConfig
+            ),
+            progressIndicator = indicator
+          )
+
+          changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
+        }.onSuccess {
+          ussDirNode?.let { dirNode ->
+            view.myFsTreeStructure.findByPredicate { node -> node is FetchNode && node.query == dirNode.query }
+              .forEach { node ->
+                attributes?.fileMode?.let { ussFileMode ->
+                  if (checkReadPermissionsBeforeReload(ussFileMode.owner)) {
+                    node.cleanCacheIfPossible(false)
+                  }
+                }
+              }
+          }
+          res = true
+        }.onFailure { t ->
+          NotificationsService.errorNotification(t, project)
+        }
+      }
+      res
     }
   }
 
@@ -154,7 +157,7 @@ abstract class CreateUssEntityAction : AnAction() {
     val fileMode = params.parameters.mode
     val filePath = params.path + "/" + params.fileName
     attributes?.let { attr ->
-      if (attr.fileMode != fileMode) {
+      if (attr.fileMode.toString() != fileMode.toString()) {
         dataOpsManager.performOperation(
           operation = UssChangeModeOperation(
             request = UssChangeModeParams(
@@ -169,9 +172,7 @@ abstract class CreateUssEntityAction : AnAction() {
     }
   }
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 
   /**
    * Makes action visible only if one node (uss file or uss directory) is selected.
@@ -188,5 +189,12 @@ abstract class CreateUssEntityAction : AnAction() {
     if (node.castOrNull<ExplorerUnitTreeNodeBase<*, *, *>>()?.unit?.connectionConfig == null) {
       e.presentation.isEnabled = false
     }
+  }
+
+  private fun checkReadPermissionsBeforeReload(permission: Int): Boolean {
+    return permission == FileModeValue.READ.mode ||
+      permission == FileModeValue.READ_EXECUTE.mode ||
+      permission == FileModeValue.READ_WRITE.mode ||
+      permission == FileModeValue.READ_WRITE_EXECUTE.mode
   }
 }

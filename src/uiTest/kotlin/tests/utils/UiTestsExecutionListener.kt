@@ -18,9 +18,6 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
-import java.nio.file.Paths
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 /** Controls the environment preparation and correct reset before and after the regression tests are started */
 class UiTestsExecutionListener : TestExecutionListener {
@@ -36,12 +33,8 @@ class UiTestsExecutionListener : TestExecutionListener {
    */
   override fun executionFinished(testIdentifier: TestIdentifier?, testExecutionResult: TestExecutionResult?) {
     if (testExecutionResult?.status == TestExecutionResult.Status.FAILED) {
-      val formatter = DateTimeFormatter.ofPattern("yyyy_MMM_dd_HH_mm_ss_z")
-      val timestamp = ZonedDateTime.now().format(formatter)
-      val reportsFolderPath = Paths.get(System.getProperty("user.dir"), "build", "reports")
-      val screenshotPlacingPath = reportsFolderPath.resolve("full_screen_${timestamp}.png")
-      IdeRunManager.takeCurrentIDEStateScreenshot("failure_screenshots", screenshotPlacingPath)
-      IdeRunManager.dumpIDEXPathTree(folderPath = reportsFolderPath, fileName = "xpath_dump_${timestamp}.html")
+      IdeRunManager.takeCurrentIDEStateDebugScreenshot()
+      IdeRunManager.dumpIDEXPathTree()
     }
     super.executionFinished(testIdentifier, testExecutionResult)
   }

@@ -99,7 +99,7 @@ fun deleteConfigEntities(driver: Driver, entityNameInSettings: String, entityRow
       and(byClass("JBEditorTabs"), byAttribute("nextaction", "Select Next Tab (Activate next tab)"))
     }
 
-    val tabElements = zoweExplorerSettingsTabs.table { byClass("ValidatingTableView") }
+    var tabElements = zoweExplorerSettingsTabs.table { byClass("ValidatingTableView") }
     tabElements.isVisible()
     val didTabHasElements = tabElements.rowCount() != 0
 
@@ -107,6 +107,7 @@ fun deleteConfigEntities(driver: Driver, entityNameInSettings: String, entityRow
       while (tabElements.rowCount() != 0) {
         tabElements.clickCell(0, 0)
         keyboard { key(KeyEvent.VK_DELETE) }
+        tabElements = zoweExplorerSettingsTabs.table { byClass("ValidatingTableView") }
       }
     } else {
       tabElements.clickCell(entityRowInSettings, 0)
