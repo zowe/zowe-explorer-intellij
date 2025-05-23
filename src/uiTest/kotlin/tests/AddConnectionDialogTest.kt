@@ -22,7 +22,6 @@ import org.junit.jupiter.api.*
 import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
 import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
-import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.ErrorCreatingConnectionDialog
 
