@@ -4,6 +4,25 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+## [2.2.0] (2025-05-05)
+
+### Features
+
+* Feature: Configs rework ([24dba6f2](https://github.com/zowe/zowe-explorer-intellij/commit/24dba6f2))
+* Feature: Automated regression #1: Allocate data sets ([f88c9159](https://github.com/zowe/zowe-explorer-intellij/commit/f88c9159))
+* Feature: Regression tests run with GitHub actions ([f88c9159](https://github.com/zowe/zowe-explorer-intellij/commit/f88c9159))
+* Feature: Connection check for zowe.config.json in parallel ([12ade016](https://github.com/zowe/zowe-explorer-intellij/commit/12ade016))
+
+### Bugfixes
+
+* Bugfix: Fixed an IDE error when zowe.config.json is empty ([add19c67](https://github.com/zowe/zowe-explorer-intellij/commit/add19c67))
+* Bugfix: "Rewrite or Skip" for copying to PDS / PDS/E ([23cf1d85](https://github.com/zowe/zowe-explorer-intellij/commit/23cf1d85))
+* Bugfix: Fixed an issue with "load more..." appearing after refresh of 2 identical masks ([bc20d8a2](https://github.com/zowe/zowe-explorer-intellij/commit/bc20d8a2))
+* Bugfix: Fixed sync issue for similar dataset lists ([bc20d8a2](https://github.com/zowe/zowe-explorer-intellij/commit/bc20d8a2))
+* Bugfix: Fixed an issue when copy or move did not trigger automatic refresh for intersecting masks ([2c760208](https://github.com/zowe/zowe-explorer-intellij/commit/2c760208))
+* Bugfix: Fixed a bug with a long name of a USS item ([b648f835](https://github.com/zowe/zowe-explorer-intellij/commit/b648f835))
+* Bugfix: Fixed an issue with a USS file creation in a directory that has no read permissions ([302a5ab1](https://github.com/zowe/zowe-explorer-intellij/commit/302a5ab1))
+
 ## [2.1.1] (2024-03-17)
 
 ### Bugfixes
@@ -633,6 +652,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[2.2.0]: https://github.com/zowe/zowe-explorer-intellij/compare/2.1.1...2.2.0
 [2.1.1]: https://github.com/zowe/zowe-explorer-intellij/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/zowe/zowe-explorer-intellij/compare/2.0.1...2.1.0
 [2.0.1]: https://github.com/zowe/zowe-explorer-intellij/compare/2.0.0...2.0.1
