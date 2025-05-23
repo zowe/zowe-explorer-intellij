@@ -2,6 +2,8 @@
 
 All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be documented in this file.
 
+## [Unreleased]
+
 ## [1.2.6-221] (2025-05-05)
 
 ### Bugfixes
