@@ -235,10 +235,12 @@ class AllocateDatasetTest {
           val allocRequestParams = it.body.clone().readUtf8()
           val blksz = allocRequestParams.substringAfter("blksize\":")
             .substringBefore(",")
+//            TODO: change matching
             .substringBefore("}")
           val dsorg = allocRequestParams.substringAfter("dsorg\":\"").substringBefore("\"")
           val lrecl = allocRequestParams.substringAfter("lrecl\":")
             .substringBefore(",")
+//            TODO: change matching
             .substringBefore("}")
           val recfm = allocRequestParams.substringAfter("recfm\":\"").substringBefore("\"")
           val alcunit = allocRequestParams.substringAfter("alcunit\":\"").substringBefore("\"")
