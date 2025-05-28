@@ -205,7 +205,7 @@ class AllocateDatasetTest {
 
   /**
    * @see
-   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#allocate-data-sets">
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocate-data-sets">
    *   Regression: Allocate data sets
    * </a>
    */
@@ -273,14 +273,14 @@ class AllocateDatasetTest {
   }
   /**
   * @see
-  * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#Allocating-data-sets-with-invalid-parameters">
+  * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocating-data-sets-with-invalid-parameters">
   *   Regression: Allocate data sets
   * </a>
   */
   @Tag("New")
   @ParameterizedTest
   @MethodSource("getInvalidDatasetConfigs")
-  fun invalidAllocateDatasetsTest(allocationParams: AllocateDatasetParams, expectedMsg: String){
+  fun allocateDatasetsWithInvalidParamsTest(allocationParams: AllocateDatasetParams, expectedMsg: String){
     filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
     allocateDatasetDialog.fillDialog(allocationParams)
     allocateDatasetDialog.okButton.click()
@@ -290,14 +290,14 @@ class AllocateDatasetTest {
 
   /**
    * @see
-   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#Allocating-data-sets-with-invalid-parameters">
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocating-data-sets-with-invalid-parameters">
    *   Regression: Allocate data sets
    * </a>
    */
   @Tag("New")
   @ParameterizedTest
   @MethodSource("getInvalidDatasetConfigsForServerValidation")
-  fun testServerDatasetConfigValidation(allocationParams: AllocateDatasetParams, expectedMsg: String, testInfo: TestInfo) {
+  fun serverDatasetConfigValidationTest(allocationParams: AllocateDatasetParams, expectedMsg: String, testInfo: TestInfo) {
     MockWebServerManager.injectEndpoint(
       "${testInfo.displayName}_dslevel",
       endpointResolver = { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${allocationParams.name}") ?: false },
