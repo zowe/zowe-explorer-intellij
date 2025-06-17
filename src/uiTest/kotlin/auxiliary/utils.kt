@@ -918,7 +918,7 @@ fun isErrorNotificationValid(
         try {
             find<ComponentFixture>(linkLoc).click()
         } catch (e: WaitForConditionTimeoutException) {
-            e.message.shouldContain(ABSENT_ERROR_MSG)
+            e.message.shouldContain(errorComponentFixtureNotFounded)
         }
         find<JLabelFixture>(errorDetailHeaderLoc).findText(errorHeader)
         find<ContainerFixture>(errorDetailBodyLocAlt).findAllText().forEach {

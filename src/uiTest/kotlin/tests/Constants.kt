@@ -13,7 +13,7 @@
  *   Uladzislau Kalesnikau
  */
 
-package workingset
+package tests
 
 import auxiliary.*
 import tests.utils.AllocUnit

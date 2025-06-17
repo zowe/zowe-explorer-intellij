@@ -873,7 +873,7 @@ open class IdeaInteractionClass {
     }
 
     fun removeAllJwsWorkingSets(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot, maxDatasets:Int = 20) = with(remoteRobot){
-        if (!find<ComponentFixture>(viewTree).hasText(NOTHING_TO_SHOW_MSG)){
+        if (!find<ComponentFixture>(viewTree).hasText(errorNothingToShow)){
 
             find<ComponentFixture>(viewTree).click()
             doSelectAll(fixtureStack, remoteRobot)

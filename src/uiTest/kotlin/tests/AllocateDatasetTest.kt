@@ -30,8 +30,6 @@ import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
 import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
-import workingset.invalidAllocateScenarios
-import workingset.invalidAllocateScenariosOnServer
 import java.util.stream.Stream
 
 private const val dsTemplate =
@@ -276,7 +274,7 @@ class AllocateDatasetTest {
   /**
   * @see
   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocating-data-sets-with-invalid-parameters">
-  *   Regression: Allocate data sets
+  *   Regression: Allocate data sets with invalid parameters
   * </a>
   */
   @Tag("New")
@@ -293,7 +291,7 @@ class AllocateDatasetTest {
   /**
    * @see
    * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocating-data-sets-with-invalid-parameters">
-   *   Regression: Allocate data sets
+   *   Regression: Allocate data sets with invalid parameters
    * </a>
    */
   @Tag("New")

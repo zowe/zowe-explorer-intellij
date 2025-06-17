@@ -109,7 +109,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
         addWorkingSetDialog.fillAddWorkingSet(connectionName, wsNameA, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
-        find<HeavyWeightWindowFixture>(messageLoc).findText(EMPTY_DATASET_MESSAGE)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
 
@@ -212,7 +212,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_5, singleMask, fixtureStack, remoteRobot)
         addWorkingSetDialog.okButton.click()
         Thread.sleep(2000)
-        find<HeavyWeightWindowFixture>(messageLoc).findText(IDENTICAL_MASKS_MESSAGE)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorIdenticalMasks)
         assertFalse(isButtonEnableByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot))
         addWorkingSetDialog.cancelButton.click()
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
@@ -272,7 +272,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         okButton.click()
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
             editWorkingSetDialog(fixtureStack) {
-                find<HeavyWeightWindowFixture>(messageLoc).findText(EMPTY_DATASET_MESSAGE)
+                find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
                 okButton.click()
                 Thread.sleep(5000)
             }
@@ -302,7 +302,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
 
         openMaskInExplorer(
-            zosUserDatasetMask, INVALID_URL_PORT.format(PORT_104431_AND_1), fixtureStack, remoteRobot
+            zosUserDatasetMask, errorInvalidUrlPort.format(PORT_104431_AND_1), fixtureStack, remoteRobot
         )
         return deleteWSFromContextMenu(WS_NAME_9, fixtureStack, remoteRobot)
     }
@@ -326,7 +326,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         okButton.click()
 
         openOrCloseWorkingSetInExplorer(WS_NAME_10, fixtureStack, remoteRobot)
-        checkItemWasDeletedWSRefreshed(INVALID_URL_PORT.format(PORT_104431_AND_1), fixtureStack, remoteRobot)
+        checkItemWasDeletedWSRefreshed(errorInvalidUrlPort.format(PORT_104431_AND_1), fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
         return deleteWSFromContextMenu(WS_NAME_10, fixtureStack, remoteRobot)
     }
@@ -347,7 +347,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
 
         val message = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_WORKING_SET_NAME.format(alreadyExistsWorkingSetName))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueWorkingSetName.format(alreadyExistsWorkingSetName))
 
         editWorkingSetSubDialog.renameWorkingSet(newWorkingSetName)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
@@ -431,7 +431,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
         assertFalse(okButton.isEnabled())
 
         val message = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_MASK.format(wsWithAlreadyExistsMask, zosUserDatasetMask))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueMask.format(wsWithAlreadyExistsMask, zosUserDatasetMask))
         cancelButton.click()
         closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
         deleteWSFromContextMenu(wsWithAlreadyExistsMask, fixtureStack, remoteRobot)
@@ -496,7 +496,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
 
         assertFalse(okButton.isEnabled())
         val message = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_MASK.format(alreadyExistsWorkingSetNameRename, zosUserDatasetMask))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueMask.format(alreadyExistsWorkingSetNameRename, zosUserDatasetMask))
         cancelButton.click()
 
         callEditWSFromContextMenu(ussMask, fixtureStack, remoteRobot)
@@ -505,7 +505,7 @@ class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
 
         assertFalse(okButton.isEnabled())
         val messageUss = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (messageUss[0].text + messageUss[1].text).shouldContain(UNIQUE_MASK.format(alreadyExistsWorkingSetNameRename, defaultNewUssMask))
+        (messageUss[0].text + messageUss[1].text).shouldContain(errorNotUniqueMask.format(alreadyExistsWorkingSetNameRename, defaultNewUssMask))
         cancelButton.click()
 
         deleteWSFromContextMenu(alreadyExistsWorkingSetNameRename, fixtureStack, remoteRobot)
@@ -619,7 +619,7 @@ class WorkingSetViaContextMenuNoConnectionTest : IdeaInteractionClass(){
                     clickButton("OK")
                     Thread.sleep(3000)
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                        EMPTY_DATASET_MESSAGE
+                        errorEmptyDataset
                     )
                     clickButton("OK")
                     Thread.sleep(3000)
