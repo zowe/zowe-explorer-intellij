@@ -36,6 +36,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.TestInfo
+import tests.errorComponentFixtureNotFound
 import testutils.MockResponseDispatcher
 import workingset.*
 //import workingset.testutils.InjectDispatcher
@@ -918,7 +919,7 @@ fun isErrorNotificationValid(
         try {
             find<ComponentFixture>(linkLoc).click()
         } catch (e: WaitForConditionTimeoutException) {
-            e.message.shouldContain(errorComponentFixtureNotFounded)
+            e.message.shouldContain(errorComponentFixtureNotFound)
         }
         find<JLabelFixture>(errorDetailHeaderLoc).findText(errorHeader)
         find<ContainerFixture>(errorDetailBodyLocAlt).findAllText().forEach {
