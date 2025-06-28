@@ -36,7 +36,6 @@ import workingset.auxiliary.components.dialogs.EditJesWorkingSetSubDialog
 import workingset.auxiliary.components.dialogs.SettingsDialogUtil
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.testutils.*
-import workingset.*
 import java.time.Duration
 
 /**
@@ -165,7 +164,7 @@ class JesWorkingSetViaSettingsTest {
         createJwsInSettings(testInfo, jwsNameV2, remoteRobot)
         createJwsInSettings(testInfo, jwsNameV2, remoteRobot)
         val message = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_WORKING_SET_NAME.format(jwsNameV2))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueWorkingSetName.format(jwsNameV2))
         assertFalse(okButtonSub.isEnabled())
         canselButtonSub.click()
         closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
@@ -384,7 +383,7 @@ class JesWorkingSetViaSettingsTest {
         editJesWorkingSetSubDialog.setWsName(jwsNameV13, fixtureStack, remoteRobot)
         okButtonSub.click()
         val message = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_WORKING_SET_NAME.format(jwsNameV13))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueWorkingSetName.format(jwsNameV13))
         editJesWorkingSetSubDialog.setWsName(newUniqueName2, fixtureStack, remoteRobot)
         okButtonSub.click()
         closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
@@ -430,7 +429,7 @@ class JesWorkingSetViaSettingsTest {
         settingsDialog.removeButton.click()
         settingsDialog.okButton.click()
         closableFixtureCollector.closeOnceIfExists(settingsDialog.dialogTitle)
-        assertTrue(find<ComponentFixture>(viewTree).hasText(NOTHING_TO_SHOW_MSG))
+        assertTrue(find<ComponentFixture>(viewTree).hasText(errorNothingToShow))
 
     }
 

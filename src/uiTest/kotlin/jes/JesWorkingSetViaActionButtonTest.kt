@@ -32,7 +32,6 @@ import workingset.*
 import workingset.auxiliary.components.dialogs.AddJesWorkingSetSubDialog
 import workingset.testutils.injectEmptyJobList
 import workingset.testutils.injectInvalidUrlPortInfo
-import workingset.*
 
 import java.time.Duration
 
@@ -99,7 +98,7 @@ class JesWorkingSetViaActionButtonTest {
                 addJesWorkingSet(B_200, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(messageLoc).findText(EMPTY_DATASET_MESSAGE)
+                find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
                 clickButton("OK")
                 Thread.sleep(3000)
             }

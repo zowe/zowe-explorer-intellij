@@ -30,7 +30,6 @@ import workingset.auxiliary.components.dialogs.EditConnectionDialogUtil
 import workingset.auxiliary.components.dialogs.SettingsDialogUtil
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.testutils.*
-import workingset.*
 import java.time.Duration
 
 /**
@@ -132,7 +131,7 @@ class ConnectionManager : IdeaInteractionClass()  {
     closableFixtureCollector.add(EditConnectionDialog.xPath(), fixtureStack)
     closableFixtureCollector.add(ErrorCreatingConnectionDialog.xPath(), fixtureStack)
 
-    assertTrue(find<HeavyWeightWindowFixture>(errorConnectionNotification, Duration.ofSeconds(5)).hasText(hostUnknowableError.format(aHost)))
+    assertTrue(find<HeavyWeightWindowFixture>(errorConnectionNotification, Duration.ofSeconds(5)).hasText(errorHostUnknowable.format(aHost)))
   }
 
   /**
@@ -267,7 +266,7 @@ class ConnectionManager : IdeaInteractionClass()  {
    */
   @Test
   fun testAddInvalidConnectionWithUrlByMask(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
-    injectInvalidInfo(testInfo, INVALID_URL_ERROR)
+    injectInvalidInfo(testInfo, errorInvalidUrl)
 
     callSettingsByAction(fixtureStack,remoteRobot)
     closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
@@ -363,7 +362,7 @@ class ConnectionManager : IdeaInteractionClass()  {
 
     val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
     val msgInUi = combinedText[0].text+combinedText[1].text
-    assertTrue(msgInUi == UNABLE_FIND_VALID_CERTIFICATE)
+    assertTrue(msgInUi == errorUnableFindValidCertificate)
     noButton.click()
     closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
 
@@ -420,7 +419,7 @@ class ConnectionManager : IdeaInteractionClass()  {
 
     val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
     val msgInUi = combinedText[0].text+combinedText[2].text
-    assertTrue(msgInUi == EXIST_DEPENDED_WS_ERROR.format(WS_NAME_1))
+    assertTrue(msgInUi == errorExistDependedWsError.format(WS_NAME_1))
 
     yesButton.click()
     closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
@@ -482,8 +481,8 @@ class ConnectionManager : IdeaInteractionClass()  {
     val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
     val msgInUiWs = combinedText[0].text+combinedText[2].text
     val msgInUiJws = combinedText[4].text+combinedText[6].text
-    assertTrue(msgInUiWs == EXIST_DEPENDED_WS_ERROR.format(WS_NAME_3))
-    assertTrue(msgInUiJws == EXIST_DEPENDED_JWS_ERROR.format(WS_NAME_3))
+    assertTrue(msgInUiWs == errorExistDependedWsError.format(WS_NAME_3))
+    assertTrue(msgInUiJws == errorExistDependedJwsError.format(WS_NAME_3))
 
     yesButton.click()
     closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
