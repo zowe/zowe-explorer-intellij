@@ -15,7 +15,7 @@
     <id>org.zowe.explorer</id>
     <resource-bundle>messages.FMBundle</resource-bundle>
     <name>Zowe® Explorer</name>
-    <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
+    <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">zowe-binary-project-a-series-of-lf-projects-llc</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
 Zowe® Explorer for IntelliJ IDEA™ is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a>, which gives access to mainframes from a modern IDE.
