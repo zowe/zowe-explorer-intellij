@@ -131,7 +131,7 @@ class ConnectionManager : IdeaInteractionClass()  {
     closableFixtureCollector.add(EditConnectionDialog.xPath(), fixtureStack)
     closableFixtureCollector.add(ErrorCreatingConnectionDialog.xPath(), fixtureStack)
 
-    assertTrue(find<HeavyWeightWindowFixture>(errorConnectionNotification, Duration.ofSeconds(5)).hasText(errorHostUnknowable.format(aHost)))
+    assertTrue(find<HeavyWeightWindowFixture>(errorConnectionNotification, Duration.ofSeconds(5)).hasText(errorUnknownHost.format(aHost)))
   }
 
   /**
@@ -212,7 +212,7 @@ class ConnectionManager : IdeaInteractionClass()  {
     addConnectionDialog.addConnection(invalidCredConnection, "https://${mockServer.hostName}:${mockServer.port}", cLogin, cPassword, true)
     addConnectionDialog.okButton.click()
     find<HeavyWeightWindowFixture>(errorConnectionNotification,Duration.ofSeconds(30))
-    find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findText(errorInvalidCreeds)
+    find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findText(errorInvalidCreds)
 
     addConnectionDialog.cancelButton.click()
     closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
