@@ -127,7 +127,7 @@ class WorkingSetViaSettingsTest : IdeaInteractionClass() {
             addWorkingSetDialog.setWsName(WS_NAME_1, fixtureStack, remoteRobot)
             okButtonSub.click()
 
-            find<HeavyWeightWindowFixture>(messageLoc).findText(MUST_PROVIDE_CONNECTION_MESSAGE)
+            find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
         }
         step("post action"){
             cancelButtonSub.click()
@@ -150,7 +150,7 @@ class WorkingSetViaSettingsTest : IdeaInteractionClass() {
             settingsDialog.callAddWs(fixtureStack, remoteRobot, closableFixtureCollector)
             addWorkingSetDialog.setWsName(longWsName, fixtureStack, remoteRobot)
             okButtonSub.click()
-            find<HeavyWeightWindowFixture>(messageLoc).findText(MUST_PROVIDE_CONNECTION_MESSAGE)
+            find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
             ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 settingsDialog(fixtureStack) {
                     closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
@@ -275,7 +275,7 @@ class WorkingSetViaSettingsTest : IdeaInteractionClass() {
         addWorkingSetDialog.setMaskPair(singleMask, fixtureStack, remoteRobot)
         okButtonSub.click()
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        find<HeavyWeightWindowFixture>(messageLoc).findText(IDENTICAL_MASKS_MESSAGE)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorIdenticalMasks)
         cancelButtonSub.click()
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         cancelButton.click()
@@ -344,7 +344,7 @@ class WorkingSetViaSettingsTest : IdeaInteractionClass() {
         settingsDialog.editWsButton.click()
         editWorkingSetSubDialog.deleteMasks(validZOSMasks, fixtureStack, remoteRobot)
         okButtonSub.click()
-        find<HeavyWeightWindowFixture>(messageLoc).findText(EMPTY_DATASET_MESSAGE)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
         okButtonSub.click()
 
         validZOSMasks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), fixtureStack, remoteRobot) }
@@ -427,7 +427,7 @@ class WorkingSetViaSettingsTest : IdeaInteractionClass() {
         editWorkingSetSubDialog.renameWorkingSet(alreadyExistsWorkingSetName)
         okButtonSub.click()
         val message = find<HeavyWeightWindowFixture>(messageLoc, Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_WORKING_SET_NAME.format(alreadyExistsWorkingSetName))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueWorkingSetName.format(alreadyExistsWorkingSetName))
         editWorkingSetSubDialog.renameWorkingSet(wsNameAfterRename)
 
         okButtonSub.click()
@@ -468,7 +468,7 @@ class WorkingSetViaSettingsTest : IdeaInteractionClass() {
         settingsDialog.deleteAllMask(fixtureStack,remoteRobot)
         okButton.click()
         closableFixtureCollector.closeOnceIfExists(settingsDialog.dialogTitle)
-        assertTrue(find<ComponentFixture>(viewTree).findText(NOTHING_TO_SHOW_MSG).text==NOTHING_TO_SHOW_MSG)
+        assertTrue(find<ComponentFixture>(viewTree).findText(errorNothingToShow).text==errorNothingToShow)
     }
 
 }

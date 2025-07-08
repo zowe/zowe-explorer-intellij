@@ -87,7 +87,7 @@ class WorkingSetViaActionButtonTest : IdeaInteractionClass() {
         callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
         addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
-        find<HeavyWeightWindowFixture>(messageLoc).findText(EMPTY_DATASET_MESSAGE)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorEmptyDataset)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
     }
@@ -193,7 +193,7 @@ class WorkingSetViaActionButtonTest : IdeaInteractionClass() {
         addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName5, Pair("$ZOS_USERID.*", "z/OS"), fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack,remoteRobot)
         Thread.sleep(2000)
-        find<HeavyWeightWindowFixture>(messageLoc).findText(IDENTICAL_MASKS_MESSAGE)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorIdenticalMasks)
         assertFalse(isButtonEnableByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot))
         clickByText(CANCEL_TEXT, fixtureStack,remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)

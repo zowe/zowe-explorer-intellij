@@ -43,7 +43,6 @@ import workingset.testutils.injectEmptyJobList
 import workingset.testutils.injectInvalidUrlPortInfo
 import workingset.testutils.injectTestInfo
 import workingset.testutils.injectTestInfoRestTopology
-import workingset.*
 import java.time.Duration
 
 /**
@@ -150,7 +149,7 @@ class JesWorkingSetViaContextMenuTest {
                     clickButton("OK")
                     Thread.sleep(3000)
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                        EMPTY_DATASET_MESSAGE
+                        errorEmptyDataset
                     )
                     clickButton("OK")
                     Thread.sleep(3000)
@@ -199,7 +198,7 @@ class JesWorkingSetViaContextMenuTest {
         addJesWorkingSetSubDialog.okButton.click()
 
         val message = find<ContainerFixture>(messageLoc,Duration.ofSeconds(30)).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_WORKING_SET_NAME.format(jwsNameV3))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueWorkingSetName.format(jwsNameV3))
         assertFalse(addJesWorkingSetSubDialog.okButton.isEnabled())
         addJesWorkingSetSubDialog.cancelButton.click()
     }
@@ -354,7 +353,7 @@ class JesWorkingSetViaContextMenuTest {
         assertFalse(createJobFilterSubDialog.okButton.isEnabled())
         assertTrue(
             find<HeavyWeightWindowFixture>(messageLoc, Duration.ofSeconds(30)
-            ).findAllText().first().text == UNIQUE_JOB_FILTER
+            ).findAllText().first().text == errorNotUniqueJobFilter
         )
         createJobFilterSubDialog.cancelButton.click()
         closableFixtureCollector.closeOnceIfExists(createJobFilterSubDialog.dialogTitle)
@@ -402,7 +401,7 @@ class JesWorkingSetViaContextMenuTest {
         editJesWorkingSetSubDialog.deleteAllFilters(remoteRobot)
         editJesWorkingSetSubDialog.okButton.click()
         find<HeavyWeightWindowFixture>(jobFilterTableHeaderLoc).findText(
-            EMPTY_DATASET_MESSAGE
+            errorEmptyDataset
         )
         editJesWorkingSetSubDialog.okButton.click()
         closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
@@ -430,7 +429,7 @@ class JesWorkingSetViaContextMenuTest {
             findAll<ActionButtonFixture>(errorCloseIconLoc).first().click()
         }
         utilObject.openJobFilterInExplorer(
-            filterAllAndZos,INVALID_URL_PORT.format(104431),fixtureStack,remoteRobot
+            filterAllAndZos,errorInvalidUrlPort.format(104431),fixtureStack,remoteRobot
         )
     }
 
@@ -466,7 +465,7 @@ class JesWorkingSetViaContextMenuTest {
             messageLoc,
             Duration.ofSeconds(30)
         ).findAllText()
-        (message[0].text + message[1].text).shouldContain(UNIQUE_WORKING_SET_NAME.format(jwsNameV16))
+        (message[0].text + message[1].text).shouldContain(errorNotUniqueWorkingSetName.format(jwsNameV16))
         editJesWorkingSetSubDialog.setWsName(jwsNameV16b,fixtureStack,remoteRobot)
         editJesWorkingSetSubDialog.okButton.click()
         checkItemWasDeletedWSRefreshed(jwsNameV16a, fixtureStack, remoteRobot)
@@ -521,7 +520,7 @@ class JesWorkingSetViaContextMenuTest {
     fun testDeleteAllJWSViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot)= with(remoteRobot) {
         createAndExpendJws(testInfo,jwsNameV20, remoteRobot)
         utilObject.removeAllJwsWorkingSets(fixtureStack,remoteRobot)
-        assertTrue(find<ComponentFixture>(viewTree).hasText(NOTHING_TO_SHOW_MSG))
+        assertTrue(find<ComponentFixture>(viewTree).hasText(errorNothingToShow))
     }
 
     private fun createAndExpendJws(testInfo:TestInfo, jwsName: String, remoteRobot:RemoteRobot, filet: Triple<String, String, String> =filterAllAndZos){

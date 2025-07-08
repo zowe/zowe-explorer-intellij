@@ -148,12 +148,12 @@ class RenameDatasetTest : IdeaInteractionClass() {
      */
     @Test
     fun testRenameMemberWithNameOfAnotherMemberViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
-        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, anotherMemberName, 500, "4.0", MEMBER_ALREADY_EXISTS)
+        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, anotherMemberName, 500, "4.0", errorMemberAlreadyExists)
         injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
         callRenameMemberPoint(fixtureStack,pdsName,memberFinalName, remoteRobot)
         newMemberNameInput(anotherMemberName, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
-        checkErrorNotification(RENAME_MEMBER_FAILED, RENAME_MEMBER_FAILED, MEMBER_ALREADY_EXISTS, fixtureStack, remoteRobot)
+        checkErrorNotification(errorRenameMemberFailed, errorRenameMemberFailed, errorMemberAlreadyExists, fixtureStack, remoteRobot)
         closeNotificztion(fixtureStack, remoteRobot)
     }
 
@@ -167,7 +167,7 @@ class RenameDatasetTest : IdeaInteractionClass() {
         callRenameDatasetPoint(fixtureStack, dsName, remoteRobot)
         newDatasetNameInput(anotherDsName,fixtureStack,remoteRobot)
         clickByText(OK_TEXT,fixtureStack,remoteRobot)
-        checkErrorNotification(DATA_SET_RENAME_FAILED_MSG, DATA_SET_RENAME_FAILED_MSG, DATA_SET_RENAME_FAILED, fixtureStack, remoteRobot)
+        checkErrorNotification(errorDatasetRenameFailed, errorDatasetRenameFailed, DATA_SET_RENAME_FAILED, fixtureStack, remoteRobot)
         closeNotificztion(fixtureStack, remoteRobot)
     }
 
@@ -176,12 +176,12 @@ class RenameDatasetTest : IdeaInteractionClass() {
      */
     @Test
     fun testRenameMemberWithTheSameNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot)  {
-        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, memberFinalName, 500, "12.0", MEMBER_IN_USE)
+        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, memberFinalName, 500, "12.0", errorMemberInUse)
         injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
         callRenameMemberPoint(fixtureStack,pdsName,memberFinalName, remoteRobot)
         newMemberNameInput(memberFinalName, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
-        find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).hasText(DUBLICETA_MEMBER_NAME_ERROR)
+        find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).hasText(errorDuplicateMemberName)
         cancelButton.click()
     }
 
@@ -191,7 +191,7 @@ class RenameDatasetTest : IdeaInteractionClass() {
     @ParameterizedTest
     @MethodSource("valuesProviderMembers")
     fun testIncorrectRename(invalidName: String, errorMsg: String, testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, memberFinalName, 500, "12.0", MEMBER_IN_USE)
+        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, memberFinalName, 500, "12.0", errorMemberInUse)
         injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
         callRenameMemberPoint(fixtureStack,pdsName,memberFinalName,remoteRobot)
         newMemberNameInput(invalidName, fixtureStack, remoteRobot)
@@ -238,7 +238,7 @@ class RenameDatasetTest : IdeaInteractionClass() {
         msgAll.forEach { msg += it.text }
 
         clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
-        Assertions.assertEquals(DATASET_INVALID_SECTION_MESSAGE, msg)
+        Assertions.assertEquals(errorDatasetInvalidSection, msg)
     }
 
     /**
@@ -256,7 +256,7 @@ class RenameDatasetTest : IdeaInteractionClass() {
         msgAll.forEach { msg += it.text }
 
         clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
-        Assertions.assertEquals(DATASET_NAME_LENGTH_MESSAGE, msg)
+        Assertions.assertEquals(errorInvalidDatasetNameLength, msg)
     }
 
     /**
@@ -274,7 +274,7 @@ class RenameDatasetTest : IdeaInteractionClass() {
         msgAll.forEach { msg += it.text }
 
         clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
-        Assertions.assertEquals(MEMBER_EMPTY_NAME_MESSAGE, msg)
+        Assertions.assertEquals(errorEmptyField, msg)
     }
 
     private fun openWSAndListDatasets(testInfo: TestInfo, remoteRobot: RemoteRobot) {

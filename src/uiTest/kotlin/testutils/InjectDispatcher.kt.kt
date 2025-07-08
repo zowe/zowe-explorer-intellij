@@ -221,7 +221,7 @@ fun injectInvalidCertificate(testInfo: TestInfo, handler: Boolean = false){
     responseDispatcher.injectEndpoint(
         "${testInfo.displayName}_info",
         { it?.requestLine?.contains("zosmf/info") ?: handler },
-        { MockResponse().setBody(CERTIFICATE_ERROR) }
+        { MockResponse().setBody(errorCertificatePath) }
     )
 }
 

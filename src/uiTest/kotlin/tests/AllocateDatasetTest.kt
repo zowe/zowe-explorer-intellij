@@ -32,7 +32,7 @@ import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
 import java.util.stream.Stream
 
-private val dsTemplate =
+private const val dsTemplate =
   "{" +
   "\"dsname\": \"###dsname###\"," +
   "\"blksz\": \"###blksz###\"," +
@@ -99,6 +99,20 @@ class AllocateDatasetTest {
           }
         }
         .stream()
+    }
+
+    @JvmStatic
+    fun getInvalidDatasetConfigs(): Stream<Arguments> {
+      return invalidAllocateScenarios.stream().map{
+        Arguments.of(it.first, it.second)
+      }
+    }
+
+    @JvmStatic
+    fun getInvalidDatasetConfigsForServerValidation(): Stream<Arguments> {
+      return invalidAllocateScenariosOnServer.stream().map{
+        Arguments.of(it.first, it.second)
+      }
     }
 
     @JvmStatic
@@ -189,7 +203,7 @@ class AllocateDatasetTest {
 
   /**
    * @see
-   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#allocate-data-sets">
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocate-data-sets">
    *   Regression: Allocate data sets
    * </a>
    */
@@ -219,10 +233,12 @@ class AllocateDatasetTest {
           val allocRequestParams = it.body.clone().readUtf8()
           val blksz = allocRequestParams.substringAfter("blksize\":")
             .substringBefore(",")
+//            TODO: change matching
             .substringBefore("}")
           val dsorg = allocRequestParams.substringAfter("dsorg\":\"").substringBefore("\"")
           val lrecl = allocRequestParams.substringAfter("lrecl\":")
             .substringBefore(",")
+//            TODO: change matching
             .substringBefore("}")
           val recfm = allocRequestParams.substringAfter("recfm\":\"").substringBefore("\"")
           val alcunit = allocRequestParams.substringAfter("alcunit\":\"").substringBefore("\"")
@@ -254,5 +270,56 @@ class AllocateDatasetTest {
 //    addWsNotification.skipButton.click()
 
 //    assert(isNotificationShown)
+  }
+  /**
+  * @see
+  * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocating-data-sets-with-invalid-parameters">
+  *   Regression: Allocate data sets with invalid parameters
+  * </a>
+  */
+  @Tag("New")
+  @ParameterizedTest
+  @MethodSource("getInvalidDatasetConfigs")
+  fun allocateDatasetsWithInvalidParamsTest(allocationParams: AllocateDatasetParams, expectedMsg: String){
+    filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
+    allocateDatasetDialog.fillDialog(allocationParams)
+    allocateDatasetDialog.okButton.click()
+    val uiErrorMsg = allocateDatasetDialog.errorMsg.allTextAsString()
+    assert(uiErrorMsg==expectedMsg){"Incorrect error msg. expected '$expectedMsg', in ui: '$uiErrorMsg'"}
+  }
+
+  /**
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-allocating-data-sets-with-invalid-parameters">
+   *   Regression: Allocate data sets with invalid parameters
+   * </a>
+   */
+  @Tag("New")
+  @ParameterizedTest
+  @MethodSource("getInvalidDatasetConfigsForServerValidation")
+  fun serverDatasetConfigValidationTest(allocationParams: AllocateDatasetParams, expectedMsg: String, testInfo: TestInfo) {
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_dslevel",
+      endpointResolver = { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${allocationParams.name}") ?: false },
+      customHandler = {
+        MockResponse()
+          .setResponseCode(500)
+          .setBody(
+            "{\n" +
+              "\"category\":\"1\"," +
+              "\"rc\":\"4\"," +
+              "\"reason\":13," +
+              "\"message\": \"For a V file, the LRECL must be greater than 4 bytes.\"\n" +
+              "}"
+          )
+      }
+    )
+    filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
+    allocateDatasetDialog.fillDialog(allocationParams)
+    allocateDatasetDialog.okButton.click()
+
+    val uiErrorMsg = allocateDatasetDialog.errorDialogMsg.allTextAsString()
+    allocateDatasetDialog.cancelButton.click()
+    assert(uiErrorMsg==expectedMsg){"Incorrect error msg. expected '$expectedMsg', in ui: '$uiErrorMsg'"}
   }
 }

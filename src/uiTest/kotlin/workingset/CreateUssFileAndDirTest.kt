@@ -60,8 +60,8 @@ class CreateUssFileAndDirTest :IdeaInteractionClass(){
         private const val invalidFileName = "invalid/name"
 
         private val incorrectFileName = mapOf(
-            Pair(FILE_NAME_LENGTH_MESSAGE, fileNameA),
-            Pair(FILE_RESRVED_SYMBOL_MESSAGE, invalidFileName),
+            Pair(errorFileNameLength, fileNameA),
+            Pair(errorMissedReservedSymbol, invalidFileName),
         )
         @JvmStatic
         fun valuesProviderIncorrectFileName(): Stream<Arguments> {
@@ -71,8 +71,8 @@ class CreateUssFileAndDirTest :IdeaInteractionClass(){
         }
 
         private val incorrectDirName = mapOf(
-            Pair(FILE_RESRVED_SYMBOL_MESSAGE, invalidFileName),
-            Pair(    FILE_NAME_LENGTH_MESSAGE, fileNameB),
+            Pair(errorMissedReservedSymbol, invalidFileName),
+            Pair(    errorFileNameLength, fileNameB),
         )
 
         @JvmStatic

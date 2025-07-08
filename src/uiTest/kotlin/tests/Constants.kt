@@ -13,7 +13,7 @@
  *   Uladzislau Kalesnikau
  */
 
-package workingset
+package tests
 
 import auxiliary.*
 import tests.utils.AllocUnit
@@ -94,7 +94,7 @@ const val errorDatasetNameInvalid = "Each name segment (qualifier) is 1 to 8 cha
         "a hyphen (-). Name segments are separated by a period (.)"
 
 const val enterNumberOnly = "Please enter a number"
-const val enterInvalidRangeNotSeparated = "Please enter a number from 1 to 2147483646"
+const val errorInvalidRangeNonSeparated = "Please enter a number from 1 to 2147483646"
 const val errorInvalidRangeSeparated = "Please enter a number from 1 to 2,147,483,646"
 const val errorInvalidRange = "Please enter a number from 0 to 2,147,483,646"
 const val errorMemberAlreadyExists = "ISRZ002 Member already exists - Directory already contains the specified member name."
@@ -111,26 +111,26 @@ const val errorDatasetRenameFailed = "Data set rename failed"
 const val errorIdenticalMasks = "You cannot add several identical masks to table"
 const val errorEmptyDataset = "You are going to create a Working Set that doesn't fetch anything"
 const val errorInvalidUrlPort = "Invalid URL port: \"%s\""
-const val errorNotUniqueWorkingSetName = "You must provide unique working set name. Working Set %s already exists."
-const val errorNotUniqueJobFilter = "Job Filter with provided data already exists."
+const val errorNonUniqueWorkingSetName = "You must provide unique working set name. Working Set %s already exists."
+const val errorNonUniqueJobFilter = "Job Filter with provided data already exists."
 const val errorDuplicateMemberName = "Field value matches the previous one"
 
 
 const val errorNotUniqueMask = "You must provide unique mask in working set. Working Set \"%s\" already has mask - %s"
 
-const val errorFileNameLength = "Filename must not exceed 255 characters."
-const val errorMissedReservedSymbol = "Filename must not contain reserved '/' symbol."
+const val errorInvalidFileNameLength = "Filename must not exceed 255 characters."
+const val errorSlashMissing = "Filename must not contain reserved '/' symbol."
 //const val FILE_ALREADY_EXIST_MESSAGE = "The specified file already exists"
 var errorUnknownHost = "Этот хост неизвестен (%s)"
 var errorDuplicateConnectionName = "You must provide unique connection name. Connection %s already exists."
-var errorInvalidCreds = "Credentials are not valid"
-var errorCertificatePath = "Unable to find valid certification path to requested "
+var errorInvalidCreeds = "Credentials are not valid"
+var errorCertificatePathNotFound = "Unable to find valid certification path to requested "
 var errorInvalidUrl = "Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443"
 const val errorUnableFindValidCertificate = "Unable to find valid certification path to requested target"
 const val errorExistDependedWsError = "The following Files working sets use selected connections:%s."
 const val errorExistDependedJwsError = "The following JES working sets use selected connections:%s."
 
-const val errorComponentFixtureNotFounded = "Failed to find 'ComponentFixture' by '//div[@class='LinkLabel']'"
+const val errorComponentFixtureNotFound = "Failed to find 'ComponentFixture' by '//div[@class='LinkLabel']'"
 
 const val errorNothingToShow = "Nothing to show"
 
@@ -193,7 +193,7 @@ data class InvalidAllocate(
 val invalidDatasetNameParams = Pair(formAllocationParams(name="A23456789.A"), errorDatasetNameInvalid)
 val invalidPrimaryAllocationParams = Pair(formAllocationParams(primAlloc = "-2"), errorInvalidRangeSeparated)
 val invalidDirectoryParams = Pair(formAllocationParams(secAlloc = "0", dirBlock="0"), errorInvalidRangeSeparated)
-val invalidRecordLengthParams = Pair(formAllocationParams(secAlloc = "0",lrecl="0"), enterInvalidRangeNotSeparated)
+val invalidRecordLengthParams = Pair(formAllocationParams(secAlloc = "0",lrecl="0"), errorInvalidRangeNonSeparated)
 val invalidSecondaryAllocationParams = Pair(formAllocationParams(secAlloc = "-10", ), errorInvalidRange)
 val invalidBlockSizeParams = Pair(formAllocationParams(secAlloc = "0", blksz="-1"), errorInvalidRange)
 val invalidAverageBlockLengthParams = Pair(formAllocationParams(secAlloc = "0", avgBlkLen = "-1"), errorInvalidRange)
@@ -204,9 +204,9 @@ val textInBlockSizeParams = Pair(formAllocationParams(secAlloc = "0", blksz="Abc
 val specSymbolsInBlockSizeParams = Pair(formAllocationParams(secAlloc = "0",blksz="#@$%^&*"), enterNumberOnly)
 val textInSecondaryAllocationParams = Pair(formAllocationParams(secAlloc = "Abc"), enterNumberOnly)
 val specSymbolsInSecondaryAllocationParams = Pair(formAllocationParams(secAlloc = "#@$%^&*",), enterNumberOnly)
-val textInRecordLengthParams = Pair(formAllocationParams(secAlloc = "0",lrecl="Abc"), enterInvalidRangeNotSeparated)
+val textInRecordLengthParams = Pair(formAllocationParams(secAlloc = "0",lrecl="Abc"), errorInvalidRangeNonSeparated)
 val specSymbolsInRecordLengthParams = Pair(formAllocationParams(secAlloc = "0", lrecl="#@\$%^&*"),
-  enterInvalidRangeNotSeparated)
+  errorInvalidRangeNonSeparated)
 val textInDirectoryParams = Pair(formAllocationParams(secAlloc = "0", dirBlock="Abc"), enterNumberOnly)
 val specSymbolsInDirectoryParams = Pair(formAllocationParams(secAlloc = "0", dirBlock="#@/$%^&*"), enterNumberOnly)
 val textInPrimaryAllocationParams = Pair(formAllocationParams(primAlloc = "Abc",), enterNumberOnly)

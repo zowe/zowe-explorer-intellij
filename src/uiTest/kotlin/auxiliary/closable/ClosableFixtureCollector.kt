@@ -59,7 +59,6 @@ class ClosableFixtureCollector {
                 Duration.ofSeconds(60)
             )
 
-            AddWorkingSetDialog.name -> find<AddWorkingSetDialog>(locator, Duration.ofSeconds(60))
             EditWorkingSetDialog.name -> find<EditWorkingSetDialog>(locator, Duration.ofSeconds(60))
             CreateMaskDialog.name -> find<CreateMaskDialog>(locator, Duration.ofSeconds(60))
             AllocateDatasetDialog.name -> find<AllocateDatasetDialog>(locator, Duration.ofSeconds(60))
