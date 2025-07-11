@@ -11,31 +11,32 @@ name: Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   changelog-and-preparations:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # required for release
+      pull-requests: write # required for release
     steps:
     
       - name: Install libsecret-tools
         run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
-        uses: actions/checkout@v4
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: "zulu"
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
         with:
           gradle-home-cache-cleanup: true
 
@@ -113,7 +114,7 @@ jobs:
     needs: [changelog-and-preparations]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # required for release
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
@@ -138,19 +139,16 @@ jobs:
         run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
-        uses: actions/checkout@v4
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
         with:
           gradle-home-cache-cleanup: true
 
