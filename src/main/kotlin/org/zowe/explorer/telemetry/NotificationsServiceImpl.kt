@@ -165,4 +165,23 @@ class NotificationsServiceImpl : NotificationsService {
     Notifications.Bus.notify(errorNotification)
   }
 
+  override fun notifyWarning(project: Project?, title: String, detailsShort: String, detailsLong: String) {
+    val warningNotification = Notification(
+      EXPLORER_NOTIFICATION_GROUP_ID,
+      title,
+      detailsShort,
+      NotificationType.WARNING
+    )
+
+    if (detailsLong != "") {
+      warningNotification.addAction(object : NotificationAction("More") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          Messages.showWarningDialog(project, detailsLong, title)
+        }
+      })
+    }
+
+    Notifications.Bus.notify(warningNotification)
+  }
+
 }

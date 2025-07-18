@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.fetch
@@ -59,7 +60,7 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
     progressIndicator.fraction = 0.0
 
     if (query is UnitRemoteQueryImpl) {
-      val response = fetchBatch(query, progressIndicator, null)
+      val response = fetchBatch(query, progressIndicator, null, null)
       if (response.isSuccessful) {
         fetchedItems = convertResponseToBody(response.body()).items
       } else {
@@ -74,24 +75,24 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
 
       if (batchedQuery.fetchNeeded) {
 
-        val response = fetchBatch(query, progressIndicator, batchedQuery.start)
+        val response = fetchBatch(query, progressIndicator, batchedQuery.start, batchedQuery.pattern)
         if (response.isSuccessful) {
           val newBatchList = convertResponseToBody(response.body())
           batchedQuery.totalRows = batchedQuery.totalRows ?: newBatchList.totalRows
 
           val newBatch = newBatchList.items?.toMutableList()
-          if (batchedQuery.alreadyFetched != 0 && newBatch?.size != 0) {
-            newBatch?.removeFirst()
+          if (batchedQuery.alreadyFetched != 0 && newBatch?.isNotEmpty() == true) {
+            newBatch.removeFirst()
           }
 
           fetchedItems = newBatch?.let {
             fetchedItems?.toMutableList()?.apply { addAll(newBatch) }
-          } ?: newBatch
+          } ?: listOf()
 
-          if (fetchedItems?.size != 0) {
-            batchedQuery.start = fetchedItems?.last()?.name
+          if (fetchedItems.isNotEmpty()) {
+            batchedQuery.start = fetchedItems.last().name
           }
-          batchedQuery.alreadyFetched += fetchedItems?.size ?: 0
+          batchedQuery.alreadyFetched += fetchedItems.size
 
           log.info("${query.request} returned ${newBatch?.size ?: 0} entities")
         } else {
@@ -116,12 +117,14 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
    * @param query query with all necessary information to send request to zosmf.
    * @param progressIndicator progress indicator to display progress of fetching items in UI.
    * @param start name of the file from which next batch started.
+   * @param pattern a pattern of the batch names to fetch, respective to the elements type
    * @return response with batch response list inside.
    */
   abstract fun fetchBatch(
     query: RemoteQuery<ConnectionConfig, Request, Unit>,
     progressIndicator: ProgressIndicator,
-    start: String?
+    start: String?,
+    pattern: String?
   ): retrofit2.Response<ResponseList>
 
   /**

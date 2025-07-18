@@ -59,15 +59,6 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 <br/>
 About us:<br/>
 Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible open source framework for z/OS that combines the past and present to build the future of mainframes. The Zowe Explorer for Intellij IDEA is developed by the <a href="https://github.com/zowe/community">Zowe community</a>, and you can visit the <a href="https://zowe.org">Zowe website</a> to learn more about Zowe. Contributing to the Zowe Explorer for Intellij IDEA is the <a href="https://ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">IBA Group</a>, and other contributors to Zowe community projects include Broadcom, IBM, and Rocket Software.
-
-About the IBA Group:
-With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
-One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe and plugins).
-<br/>
-We are also familiar with <a href="https://mainframe.ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
-We value your feedback and welcome any suggestions, proposals, or even complaints. Please feel free to contact us or schedule a call with our Mainframe DevOps expert.
-<br/>
-Thank you for considering IBA Group for your mainframe needs.
 ]]></description>
 
     <extensionPoints>
@@ -386,7 +377,8 @@ Thank you for considering IBA Group for your mainframe needs.
                             testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManagerImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
-                            serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
+                            serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestErrorSeparatorService"/>
 
         <applicationService serviceInterface="org.zowe.explorer.editor.ChangeContentService"
                             serviceImplementation="org.zowe.explorer.editor.ChangeContentServiceImpl"/>
@@ -433,6 +425,17 @@ Thank you for considering IBA Group for your mainframe needs.
                 class="org.zowe.explorer.explorer.actions.RefreshNodeAction"
                 text="Refresh"
                 icon="AllIcons.Actions.Refresh"/>
+
+        <action id="org.zowe.explorer.v3.actions.filter.ds.FilterChildrenAction"
+                class="org.zowe.explorer.v3.actions.filter.ds.FilterChildrenAction"
+                icon="AllIcons.General.Filter"/>
+
+        <action id="org.zowe.explorer.v3.actions.filter.ds.DeleteChildrenFilterAction"
+                class="org.zowe.explorer.v3.actions.filter.ds.DeleteChildrenFilterAction"
+                text="Delete Filter"
+                icon="CollaborationToolsIcons.Delete">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"
                 class="org.zowe.explorer.explorer.actions.AddWorkingSetAction"
@@ -807,6 +810,9 @@ Thank you for considering IBA Group for your mainframe needs.
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.MigrateAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RecallAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.v3.actions.filter.ds.FilterChildrenAction"/>
+            <reference id="org.zowe.explorer.v3.actions.filter.ds.DeleteChildrenFilterAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RenameAction"/>

@@ -32,6 +32,14 @@ interface NotificationsService {
       custDetailsShort: String? = null,
       custDetailsLong: String? = null
     ) = getService().notifyError(t, project, custTitle, custDetailsShort, custDetailsLong)
+
+    @JvmStatic
+    fun warningNotification(
+      project: Project? = null,
+      title: String = "Warning",
+      detailsShort: String = "There is a warning in the project",
+      detailsLong: String = ""
+    ) = getService().notifyWarning(project, title, detailsShort, detailsLong)
   }
 
   /**
@@ -48,6 +56,20 @@ interface NotificationsService {
     custTitle: String? = null,
     custDetailsShort: String? = null,
     custDetailsLong: String? = null
+  )
+
+  /**
+   * Show a warning notification with the provided title, short and long (if applicable) description
+   * @param project the project to show the notification for (could be null)
+   * @param title a custom title to use in the notification
+   * @param detailsShort a custom short details to use in the notification
+   * @param detailsLong a custom long details text to use in the notification
+   */
+  fun notifyWarning(
+    project: Project?,
+    title: String,
+    detailsShort: String,
+    detailsLong: String
   )
 
 }
