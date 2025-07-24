@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config.connect.ui.zosmf
@@ -29,7 +30,6 @@ import org.zowe.explorer.zowe.service.ZoweConfigType
 import java.awt.Component
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPasswordField
 
 /** Dialog to add a new zowe config file */
 class ZoweTeamConfigDialog(

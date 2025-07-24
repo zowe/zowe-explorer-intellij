@@ -10,11 +10,11 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config.ws.ui.jes
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT

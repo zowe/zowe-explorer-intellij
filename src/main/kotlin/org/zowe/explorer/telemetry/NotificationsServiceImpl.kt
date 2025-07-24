@@ -173,7 +173,7 @@ class NotificationsServiceImpl : NotificationsService {
       NotificationType.WARNING
     )
 
-    if (detailsLong != "") {
+    if (detailsLong.isNotEmpty()) {
       warningNotification.addAction(object : NotificationAction("More") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           Messages.showWarningDialog(project, detailsLong, title)

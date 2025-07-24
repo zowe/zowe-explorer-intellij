@@ -31,7 +31,6 @@ import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.Crudable
 import kotlin.jvm.optionals.getOrNull
-import kotlin.let
 
 /** Base abstract class for the Edit Working set action */
 abstract class EditWorkingSetAction<
