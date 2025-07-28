@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops
@@ -27,6 +28,7 @@ import org.zowe.explorer.utils.UNIT_CLASS
  *  @param totalRows total rows count for specified query.
  *  @param alreadyFetched count of ptf that was fetched for this query.
  *  @param start file name from which to get selection (will be the first file of fetched files list).
+ *  @param pattern a pattern of the batch names to fetch, respective to the elements type
  *  @param fetchNeeded identifies if all files have been fetched or not.
  *  @author Valiantsin Krus
  */
@@ -36,6 +38,7 @@ class BatchedRemoteQuery<R>(
   var totalRows: Int? = null,
   var alreadyFetched: Int = 0,
   var start: String? = null,
+  var pattern: String? = null,
   var fetchNeeded: Boolean = true
 ) : RemoteQuery<ConnectionConfig, R, Unit>, SortableQuery {
   override val resultClass: Class<out Unit>
@@ -54,6 +57,7 @@ class BatchedRemoteQuery<R>(
   fun clear() {
     totalRows = null
     start = null
+    pattern = null
     fetchNeeded = true
     alreadyFetched = 0
   }
@@ -62,6 +66,7 @@ class BatchedRemoteQuery<R>(
     totalRows = query.totalRows
     alreadyFetched = query.alreadyFetched
     start = query.start
+    pattern = query.pattern
     fetchNeeded = query.fetchNeeded
   }
 

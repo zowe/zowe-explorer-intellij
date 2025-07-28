@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
@@ -55,6 +56,8 @@ private val jobIdRegex = Regex("[A-Za-z0-9]+")
 private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
 private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
 private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
+private val memberFirstLetterPatternRegex = Regex("[A-Z@\$#a-z*%]")
+private val memberPatternRegex = Regex("[A-Z@$#a-z*%][A-Z@#\$a-z0-9*%]{0,8}")
 
 /**
  * Validate text field for a match with the previous value
@@ -513,6 +516,22 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
     ValidationInfo("Member name should start with A-Z a-z or national characters", component)
   } else if (component.text.isNotBlank() && !component.text.matches(memberRegex)) {
     ValidationInfo("Member name should contain only A-Z a-z 0-9 or national characters", component)
+  } else {
+    null
+  }
+}
+
+/**
+ * Validate that the dataset member name pattern matches the provided rules
+ * @param component the component to check the dataset member name pattern and show the validation error for
+ */
+fun validateMemberPattern(component: JTextField): ValidationInfo? {
+  return if (component.text.length > 8) {
+    ValidationInfo("Member name must not exceed 8 characters.", component)
+  } else if (component.text.isNotEmpty() && !component.text[0].toString().matches(memberFirstLetterPatternRegex)) {
+    ValidationInfo("Member name should start with A-Z, a-z, *, % or national characters", component)
+  } else if (component.text.isNotBlank() && !component.text.matches(memberPatternRegex)) {
+    ValidationInfo("Member name should contain only A-Z, a-z, 0-9, *, % or national characters", component)
   } else {
     null
   }

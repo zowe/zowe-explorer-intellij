@@ -142,7 +142,7 @@ class FilesExplorerPanel(val driver: Driver) {
       }
       selectRightClickMenuItem(startElemIdx, "Delete…")
       deleteFilesDialog.isVisible()
-      assert(deleteFilesDialog.allTextAsString().contains("Are you sure want to delete $elementsToDeleteCount file(s)?"))
+      assert(deleteFilesDialog.allTextAsString().contains("Are you sure you want to delete $elementsToDeleteCount file(s)?"))
       val deleteFilesYesButton = deleteFilesDialog.actionButton { byVisibleText("Yes") }
       deleteFilesYesButton.click()
 

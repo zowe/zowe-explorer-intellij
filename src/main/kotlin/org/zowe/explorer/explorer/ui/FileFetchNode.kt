@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -29,8 +30,10 @@ import org.zowe.explorer.dataops.Query
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.explorer.ExplorerUnit
+import org.zowe.explorer.v3.actions.filter.ds.FilterChildrenNode
 import org.zowe.explorer.utils.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.firstOrNull
 import kotlin.concurrent.withLock
 
 /**
@@ -46,6 +49,13 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
+
+  private val filterChildrenNode by lazy { FilterChildrenNode(project, this, explorer, treeStructure, "") }
+  var savedFilter
+    get() = filterChildrenNode.savedFilter
+    set(value) {
+      filterChildrenNode.savedFilter = value
+    }
 
   @Volatile
   private var needsToShowPlus = true
@@ -111,6 +121,17 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
   }
 
   /**
+   * Add a [FilterChildrenNode] to the tree nodes when there is a filter applied for the specified node
+   * @param nodesTree the nodes tree to add the filter node to
+   */
+  private fun addFilterChildrenNodeIfFilterApplied(nodesTree: MutableList<AbstractTreeNode<*>>) {
+    val firstNode = nodesTree.firstOrNull()
+    if (firstNode != filterChildrenNode && filterChildrenNode.savedFilter.isNotEmpty()) {
+      nodesTree.add(0, filterChildrenNode)
+    }
+  }
+
+  /**
    * Method which is called when tree node is expanded or refresh is pressed on tree node.
    * It fetches the children nodes if no cached nodes are present / displays "loading..." during fetch / displays any Error if an error happened during fetch.
    * Normally, this function is called after nodes invalidation
@@ -122,20 +143,26 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
       if (childrenNodes == null) {
         val q = fileFetchProvider.getRealQueryInstance(query) ?: query
         if (q != null && fileFetchProvider.isCacheValid(q)) {
+          val batchedQ = q.castOrNull<BatchedRemoteQuery<*>>()
+          if (batchedQ != null && savedFilter.isNotEmpty()) {
+            batchedQ.pattern = savedFilter
+          }
           val fetched = fileFetchProvider.getCached(q)?.toMutableList()
           if (fetched != null && !needToLoadMore && !fileFetchProvider.isCacheFetching(q)) {
             fetched
               .toChildrenNodes()
               .toMutableList()
               .apply {
-                val batchedQ = q.castOrNull<BatchedRemoteQuery<*>>()
+                addFilterChildrenNodeIfFilterApplied(this)
+              }
+              .apply {
                 if (batchedQ?.fetchNeeded == true) {
                   val itemsLeft = batchedQ.totalRows?.let { it - batchedQ.alreadyFetched }
                   add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
                 }
               }
               .apply {
-                if (isEmpty()) {
+                if (isEmpty() || (size == 1 && firstOrNull() == filterChildrenNode)) {
                   add(NoItemsFoundNode(notNullProject, this@FileFetchNode, explorer, treeStructure))
                 }
               }
@@ -170,7 +197,11 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                 needToLoadMore = false
               }
             }
-            (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }
+            (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf())
+              .apply {
+                addFilterChildrenNodeIfFilterApplied(this)
+                add(loadingNode)
+              }
           }
         } else {
           errorNode(

@@ -10,11 +10,11 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.api
 
-import com.google.gson.GsonBuilder
 import com.intellij.util.net.ssl.CertificateManager
 import org.zowe.kotlinsdk.buildApi
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -23,8 +23,6 @@ import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
-import org.zowe.kotlinsdk.buildApi
-import org.zowe.kotlinsdk.buildApiWithBytesConverter
 import java.security.SecureRandom
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -127,15 +125,13 @@ private fun buildUnsafeClient(): OkHttpClient {
       override fun checkClientTrusted(
         chain: Array<X509Certificate?>?,
         authType: String?
-      ) {
-      }
+      ) { /* Unsafe client does not need a trust check */ }
 
       @Throws(CertificateException::class)
       override fun checkServerTrusted(
         chain: Array<X509Certificate?>?,
         authType: String?
-      ) {
-      }
+      ) { /* Unsafe client does not need a trust check */ }
 
       override fun getAcceptedIssuers(): Array<X509Certificate> {
         return arrayOf()

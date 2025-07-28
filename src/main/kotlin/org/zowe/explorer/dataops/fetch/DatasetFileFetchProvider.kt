@@ -10,13 +10,11 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.fetch
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.ConfigService
@@ -30,7 +28,6 @@ import org.zowe.explorer.dataops.attributes.MaskedRequester
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.exceptions.responseMessageMap
-import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.utils.asMutableList
 import org.zowe.explorer.utils.cancelByIndicator
@@ -40,6 +37,7 @@ import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.DataSetsList
 import org.zowe.kotlinsdk.Dataset
@@ -120,7 +118,8 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
   override fun fetchBatch(
     query: RemoteQuery<ConnectionConfig, DSMask, Unit>,
     progressIndicator: ProgressIndicator,
-    start: String?
+    start: String?,
+    pattern: String?
   ): Response<DataSetsList> {
     val batchSize = if (start != null) configService.batchSize + 1 else configService.batchSize
 
@@ -148,30 +147,28 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
             .getOrElse(1) { "" }
             .split("\"")
             .getOrElse(0) { "" }
+            .trim()
 
           val isCustMigrVolRecognized = MFVirtualFileSystem.belongsToCustMigrVols(custMigrVolComputed)
           val furtherProcessingMessage =
             if (isCustMigrVolRecognized)
-              " Plug-in is capable of processing datasets on this volume and won't try to fetch attributes or content for such datasets."
+              "Plug-in is capable of processing datasets on this volume and won't try to fetch attributes or content for such datasets."
             else
-              " Plug-in does not recognize this custom migration volume. Please, provide us with the diagnostics message in the issue below."
+              "Plug-in does not recognize this custom migration volume. Please, provide us with the diagnostics message in the issue below."
 
-          Notification(
-            EXPLORER_NOTIFICATION_GROUP_ID,
-            "Fetching datasets list error",
-            "Failed to fetch attributes for datasets."
-              + " The cause: there is a custom migration volume that z/OSMF does not recognize."
-              + " The volume: $custMigrVolComputed."
-              + furtherProcessingMessage
-              + " Current workaround: try to use a mask that omits the datasets on the custom migration volumes."
-              + " The issue to provide more diagnostics and get some understanding: https://github.com/zowe/zowe-explorer-intellij/issues/129."
+          NotificationsService.warningNotification(
+            title = "Fetching datasets list issue",
+            detailsShort = "Failed to fetch attributes for some datasets.",
+            detailsLong = "Failed to fetch attributes for datasets."
+              + "\nThe cause: there is a custom migration volume that z/OSMF does not recognize."
+              + "\nThe volume: $custMigrVolComputed."
+              + "\n" + furtherProcessingMessage
+              + "\nCurrent workaround: try to use a mask that omits the datasets on the custom migration volumes."
+              + "\nThe issue to provide more diagnostics and get some understanding: https://github.com/zowe/zowe-explorer-intellij/issues/129."
               + "\nDetailed message from z/OSMF REST API:"
               + "\n"
-              + responseErrorBodyStr,
-            NotificationType.WARNING
-          ).let {
-            Notifications.Bus.notify(it)
-          }
+              + responseErrorBodyStr
+          )
 
           api<DataAPI>(query.connectionConfig).listDataSets(
             authorizationToken = query.connectionConfig.authToken,

@@ -917,6 +917,59 @@ class UtilsTestSpec : AppInitShouldSpec("utils/utils", {
         }
       }
     }
+
+    context("validateMemberPattern") {
+      val component = JTextField()
+
+      should("return validation info for a component with a text that is more than 8 characters long") {
+        component.text = "LONGMEMBERNAME"
+        val actual = validateMemberPattern(component)
+        val expected = "Member name must not exceed 8 characters."
+
+        assertSoftly { actual?.message shouldBe expected }
+      }
+
+      should("return validation info for a component with a text that start with an incorrect character") {
+        component.text = "1MEMBER"
+        val actual = validateMemberPattern(component)
+        val expected = "Member name should start with A-Z, a-z, *, % or national characters"
+
+        assertSoftly { actual?.message shouldBe expected }
+      }
+
+      should("return validation info for a component with a text that contains an incorrect character") {
+        component.text = "MEMBER^"
+        val actual = validateMemberPattern(component)
+        val expected = "Member name should contain only A-Z, a-z, 0-9, *, % or national characters"
+
+        assertSoftly { actual?.message shouldBe expected }
+      }
+
+      should("return null for a component with a text that contains only an asterisk") {
+        component.text = "*"
+        val actual = validateMemberPattern(component)
+        assertSoftly { actual shouldBe null }
+      }
+
+      should("return null for a component with a text that contains an asterisk in the middle") {
+        component.text = "T*ST"
+        val actual = validateMemberPattern(component)
+        assertSoftly { actual shouldBe null }
+      }
+
+      should("return null for a component with a text that contains a percent character in the middle") {
+        component.text = "T%ST"
+        val actual = validateMemberPattern(component)
+        assertSoftly { actual shouldBe null }
+      }
+
+      should("return null for a component with a text that contains a percent and an asterisk characters in the middle") {
+        component.text = "T%*S*T"
+        val actual = validateMemberPattern(component)
+        assertSoftly { actual shouldBe null }
+      }
+    }
+
     context("validateTsoSessionName") {
       val jTextField = JTextField()
       val crudableMock = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })

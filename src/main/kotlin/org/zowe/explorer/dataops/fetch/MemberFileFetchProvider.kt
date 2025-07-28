@@ -10,11 +10,11 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.fetch
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.ConfigService
@@ -115,7 +115,8 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
   override fun fetchBatch(
     query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator,
-    start: String?
+    start: String?,
+    pattern: String?
   ): Response<MembersList> {
     val libraryAttributes = remoteDatasetAttributesService.getAttributes(query.request.library)
     val batchSize = if (start != null) configService.batchSize + 1 else configService.batchSize
@@ -125,7 +126,8 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
         datasetName = libraryAttributes.name,
         xIBMAttr = XIBMAttr(isTotal = true),
         xIBMMaxItems = if (query is UnitRemoteQueryImpl) 0 else batchSize,
-        start = start
+        start = start,
+        pattern = pattern
       ).cancelByIndicator(progressIndicator).execute()
     else throw IllegalArgumentException("Virtual file is not a library")
   }

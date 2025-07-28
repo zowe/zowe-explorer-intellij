@@ -450,7 +450,7 @@ class FileExplorerView(
         if (
           showYesNoDialog(
             title = "Confirm Files Deletion",
-            message = "Are you sure want to delete ${files.size} file(s)?",
+            message = "Are you sure you want to delete ${files.size} file(s)?",
             project = project,
             icon = AllIcons.General.QuestionDialog
           )

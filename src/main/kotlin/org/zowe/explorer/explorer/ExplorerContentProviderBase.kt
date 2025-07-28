@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer
@@ -26,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.utils.getAncestorNodes
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
 import kotlin.concurrent.withLock

@@ -10,7 +10,9 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
+
 package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,7 +20,6 @@ import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.addNewLine
 import org.zowe.explorer.dataops.exceptions.CallException
