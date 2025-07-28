@@ -433,7 +433,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <action id="org.zowe.explorer.v3.actions.filter.ds.DeleteChildrenFilterAction"
                 class="org.zowe.explorer.v3.actions.filter.ds.DeleteChildrenFilterAction"
                 text="Delete Filter"
-                icon="CollaborationToolsIcons.Delete">
+                icon="AllIcons.Actions.GC">
             <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
         </action>
 
