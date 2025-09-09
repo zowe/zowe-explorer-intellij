@@ -4,6 +4,12 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+### Features
+
+* Feature: Added a Scorecard action ([2efec2ef](https://github.com/zowe/zowe-explorer-intellij/commit/2efec2ef))
+* Feature: Automated regression #2: Allocating data sets with invalid parameters ([2e57ad41](https://github.com/zowe/zowe-explorer-intellij/commit/2e57ad41))
+* Feature: Dataset members filtering ([44fd8043](https://github.com/zowe/zowe-explorer-intellij/commit/44fd8043))
+
 ## [2.2.0] (2025-05-05)
 
 ### Features
