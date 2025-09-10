@@ -22,7 +22,7 @@ The plugin is a core component of the Zowe project.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
-Zowe is a project hosted under the Open Mainframe Project™ of the Linux Foundation™. Zowe Explorer plug-in for IntelliJ IDEA extends the IntelliJ IDEA platform’s tools in a way similar to that of the Zowe Explorer extension for Visual Studio Code™, giving developers a modern way to interact with the mainframe.
+Zowe is a project hosted under the Open Mainframe Project™ of the Linux Foundation™. Zowe Explorer plug-in for IntelliJ IDEA extends the IntelliJ IDEA platform's tools in a way similar to that of the Zowe Explorer extension for Visual Studio Code™, giving developers a modern way to interact with the mainframe.
 <br/>
 <br/>
 It also:
@@ -312,6 +312,8 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <postStartupActivity implementation="org.zowe.explorer.rateus.RateUsStartupActivity"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.v3.diffs.MockWebServerActivity"/>
+
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
@@ -582,10 +584,14 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 id="org.zowe.explorer.explorer.actions.TsoConsoleCreateAction"
                 icon="AllIcons.Debugger.Console"/>
 
-
-        <action class="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"
-                id="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"
+        <action id="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"
+                class="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"
                 text="Properties"/>
+
+        <action id="org.zowe.explorer.explorer.actions.CompareWithAction"
+                class="org.zowe.explorer.explorer.actions.CompareWithAction"
+                text="Compare with..."
+                icon="AllIcons.Actions.Diff"/>
 
         <action class="org.zowe.explorer.explorer.actions.GetJobPropertiesAction"
                 id="org.zowe.explorer.explorer.actions.GetJobPropertiesAction"
@@ -819,6 +825,8 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <reference id="org.zowe.explorer.explorer.actions.DuplicateMemberAction"/>
             <separator/>
             <reference id="$Delete"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.CompareWithAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"/>
         </group>
