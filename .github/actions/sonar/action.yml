@@ -25,3 +25,4 @@ runs:
         -Dsonar.coverage.exclusions="**src/IC-*/**"
         -Dsonar.inclusions="**src/main/kotlin/org/zowe/explorer/**"
         -Dsonar.projectKey=zowe_zowe-explorer-intellij
+        -Dsonar.scanner.skipJreProvisioning=true
