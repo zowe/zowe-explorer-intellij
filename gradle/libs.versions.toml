@@ -10,7 +10,7 @@ mockk = "1.14.0"
 kotest = "5.9.1"
 jgrapht = "1.5.2"
 keytar = "1.0.0"
-zowe-kotlin-sdk = "0.5.2-rc.1"
+zowe-kotlin-sdk = "0.5.2"
 ibm-mq-allclient = "9.4.0.0"
 
 # plugins
