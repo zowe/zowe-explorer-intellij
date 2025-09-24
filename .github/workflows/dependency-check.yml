@@ -28,7 +28,18 @@ jobs:
       - name: Run dependency check
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: ./gradlew dependencyCheckAnalyze -Dnvd.api.key=$NVD_API_KEY --quiet
+        run: ./gradlew dependencyCheckAnalyze -Dnvd.api.key=$NVD_API_KEY
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() # Load even if there are vulnerabilities
+        with:
+          name: dependency-check-report
+          path: |
+            ${{ github.workspace }}/build/reports/dependency-check-report.html
+            ${{ github.workspace }}/build/reports/dependency-check-report.json
+            ${{ github.workspace }}/build/reports/dependency-check-report.xml
+          retention-days: 5
 
       # Upload the results to GitHub's code scanning dashboard (optional).
       # Commenting out will disable upload of results to your repo's Code Scanning dashboard
