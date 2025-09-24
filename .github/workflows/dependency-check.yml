@@ -1,0 +1,51 @@
+# Original action got from https://github.com/ossf/scorecard/blob/main/.github/workflows/scorecard-analysis.yml
+
+name: OWASP Dependency-Check analysis
+on:
+  schedule:
+    # Weekly on Tuesdays at 08:00 PM UTC
+    - cron:  '0 20 * * 2'
+  workflow_dispatch:
+
+# Visible only for the repository members
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Set up JDK
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+        with:
+          java-version: '21'
+          distribution: 'jetbrains'
+
+      - name: Run dependency check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: ./gradlew dependencyCheckAnalyze -Dnvd.api.key=$NVD_API_KEY
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() # Load even if there are vulnerabilities
+        with:
+          name: dependency-check-report
+          path: |
+            ${{ github.workspace }}/build/reports/dependency-check-report.html
+            ${{ github.workspace }}/build/reports/dependency-check-report.json
+            ${{ github.workspace }}/build/reports/dependency-check-report.xml
+          retention-days: 5
+
+      # Upload the results to GitHub's code scanning dashboard (optional).
+      # Commenting out will disable upload of results to your repo's Code Scanning dashboard
+      - name: Upload to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@39edc492dbe16b1465b0cafca41432d857bdb31a # v3.29.1
+        if: always() && hashFiles('${{ github.workspace }}/build/reports/dependency-check-report.sarif') != ''
+        with:
+          sarif_file: ${{ github.workspace }}/build/reports/dependency-check-report.sarif
+          category: dependency-check

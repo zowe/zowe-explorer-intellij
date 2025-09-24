@@ -214,6 +214,16 @@ kover {
 }
 
 dependencyCheck {
+  analyzers.apply {
+    // Analyze only first-level dependencies, not internal JARs
+    archiveEnabled = false
+  }
+  formats = listOf(
+    "HTML",
+    "SARIF",
+    "JSON",
+    "XML"
+  )
   suppressionFiles = listOf("$projectDir/owasp-dependency-check-suppression.xml")
 }
 
