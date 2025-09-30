@@ -344,6 +344,11 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
+        <toolWindow id="Zowe Explorer (v3)" anchor="right"
+                    factoryClass="org.zowe.explorer.v3.ZoweExplorerToolWindowFactory"
+                    icon="org.zowe.explorer.v3.icons.ZoweExplorerIcons.zoweExplorerIcon"
+                    doNotActivateOnStart="true"/>
+
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            key="zowemf"/>
@@ -440,6 +445,24 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 class="org.zowe.explorer.explorer.actions.AddWorkingSetAction"
                 text="Working Set"
                 icon="AllIcons.Actions.ShowAsTree"/>
+
+        <action id="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"
+                class="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"
+                icon="AllIcons.Actions.ShowAsTree"/>
+
+        <action id="org.zowe.explorer.v3.actions.RefreshNodeAction"
+                class="org.zowe.explorer.v3.actions.RefreshNodeAction"
+                text="Refresh"
+                icon="AllIcons.Actions.Refresh">
+            <keyboard-shortcut first-keystroke="F5" keymap="$default"/>
+        </action>
+
+        <action id="org.zowe.explorer.v3.actions.RenameNodeAction"
+                class="org.zowe.explorer.v3.actions.RenameNodeAction"
+                text="Rename">
+            <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+        </action>
+
 
         <action id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
                 class="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
@@ -782,6 +805,22 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <group id="org.zowe.explorer.actions.FilesActionBarGroup">
             <reference id="org.zowe.explorer.actions.AddWsOrConnectionGroup"/>
             <reference id="org.zowe.explorer.explorer.actions.SettingAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.AddNewItemGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
+            <reference id="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.files.FilesExplorerActionBarGroup">
+            <reference id="org.zowe.explorer.actions.AddNewItemGroup"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">
+            <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.v3.actions.RenameNodeAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.JESActionBarGroup">
