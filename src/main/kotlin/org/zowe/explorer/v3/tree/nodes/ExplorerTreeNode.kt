@@ -9,32 +9,43 @@
  *
  * Contributors:
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
 
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
-import javax.swing.Icon
 
 // TODO: doc
-abstract class ExplorerTreeNode(
+open class ExplorerTreeNode(
+  var nodeDescriptor: ExplorerTreeNodeDescriptor,
   project: Project,
-  protected val nodeData: ExplorerTreeNodeData,
-  parent: ExplorerTreeNode? = null,
-) : AbstractTreeNode<ExplorerTreeNodeData>(project, nodeData) {
-  override fun getName(): String? {
-    return nodeData.displayName
+  parent: ExplorerTreeNode? = null
+) : AbstractTreeNode<ExplorerTreeNodeDescriptor>(project, nodeDescriptor) {
+  override fun isAlwaysLeaf(): Boolean {
+    return nodeDescriptor.isLeaf
   }
 
-  override fun setIcon(closedIcon: Icon?) {
-    nodeData.icon = closedIcon
-    super.setIcon(nodeData.icon)
-    presentation.setIcon(nodeData.icon)
+  override fun isAlwaysExpand(): Boolean {
+    return nodeDescriptor.isExpanded
+  }
+
+  override fun getName(): String {
+    return nodeDescriptor.displayName
+  }
+
+  override fun getChildren(): Collection<AbstractTreeNode<*>?> {
+    return nodeDescriptor.getNodeChildren(this)
+  }
+
+  override fun update(presentation: PresentationData) {
+    nodeDescriptor.updateNode(presentation)
   }
 
   init {
     this.parent = parent
-    icon = nodeData.icon
+    nodeDescriptor.setNodeIcon(this, nodeDescriptor.icon)
   }
 }

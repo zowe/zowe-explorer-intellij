@@ -9,39 +9,36 @@
  *
  * Contributors:
  *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
-package org.zowe.explorer.v3.components.files
+package org.zowe.explorer.v3.components.jes
 
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
+import org.zowe.explorer.v3.state.config.jes.JesWorkingSetConfig
 import org.zowe.explorer.v3.tree.ExplorerTreeStructure
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.RootNode
-import kotlin.collections.forEach
 
 // TODO: doc
-class FilesExplorerTreeStructure(private val project: Project) : ExplorerTreeStructure(project) {
+class JesExplorerTreeStructure(private val project: Project) : ExplorerTreeStructure(project) {
   override val rootNode by lazy { RootNode(project) }
 
-  fun addFilesWorkingSetsFromConfigs() {
+  fun addJesWorkingSetsFromConfigs() {
     // TODO: check that the working set node is not already initialized (by uuid)
-    // TODO: pathStrings forming logic
     ConfigCacheService.getService()
-      .getConfigsFromCache(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+      .getConfigsFromCache(ConfigType.JES_WORKING_SET_CONFIG_V1)
       .toList()
       .forEach { config ->
-        config as FilesWorkingSetConfig
-        registerWorkingSetNode(
-          ExplorerTreeNode(
-            FilesWorkingSetNodeDescriptor(config.name, config),
-            project,
-            rootNode
-          )
-        )
+        config as JesWorkingSetConfig
+        TODO("Not yet implemented")
+//        registerWorkingSetNode(
+//          JesWorkingSetNode(
+//            project,
+//            JesWorkingSetNodeData(config.name, config),
+//            rootElement
+//          )
+//        )
       }
   }
 }

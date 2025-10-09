@@ -19,12 +19,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
-import org.zowe.explorer.v3.components.ExplorerTreeComponentService
+import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 
 // TODO: doc
 class ZoweExplorerToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
+
     val filesExplorerComponent = ExplorerTreeComponentService.getService().getFilesExplorerComponent(project)
     val filesExplorerContent = contentFactory.createContent(
       filesExplorerComponent.initExplorerTreeComponent(),
@@ -32,10 +33,18 @@ class ZoweExplorerToolWindowFactory : ToolWindowFactory, DumbAware {
       filesExplorerComponent.isLockable
     )
     toolWindow.contentManager.addContent(filesExplorerContent)
-    // TODO: JES Explorer View
+
+    val jesExplorerComponent = ExplorerTreeComponentService.getService().getJesExplorerComponent(project)
+    val jesExplorerContent = contentFactory.createContent(
+      jesExplorerComponent.initExplorerTreeComponent(),
+      jesExplorerComponent.explorerName,
+      jesExplorerComponent.isLockable
+    )
+    toolWindow.contentManager.addContent(jesExplorerContent)
   }
 
   override fun init(toolWindow: ToolWindow) {
+    // TODO: define what to do with it
 //    subscribe(
 //      project = toolWindow.project,
 //      topic = AutoSyncFileListener.AUTO_SYNC_FILE,

@@ -17,6 +17,10 @@ package org.zowe.explorer.v3.tree
 import com.intellij.openapi.Disposable
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jetbrains.concurrency.Promise
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import javax.swing.JComponent
@@ -28,6 +32,7 @@ abstract class ExplorerTreeComponent : Disposable {
   protected val explorerStructureTreeModel by lazy { StructureTreeModel(explorerTreeStructure, this) }
   protected val explorerAsyncTreeModel by lazy { AsyncTreeModel(explorerStructureTreeModel, false, this) }
   protected abstract val explorerTreeView: ExplorerTreeView
+  val explorerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
   abstract val explorerName: String
   val isLockable = true
@@ -46,6 +51,7 @@ abstract class ExplorerTreeComponent : Disposable {
   }
 
   override fun dispose() {
+    explorerScope.cancel()
     explorerTreeView.dispose()
     explorerAsyncTreeModel.dispose()
     explorerStructureTreeModel.dispose()

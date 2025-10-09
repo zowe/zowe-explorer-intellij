@@ -10,7 +10,7 @@ mockk = "1.14.0"
 kotest = "5.9.1"
 jgrapht = "1.5.2"
 keytar = "1.0.0"
-zowe-kotlin-sdk = "0.5.2"
+zowe-kotlin-sdk = "1.0.0-rc.1"
 ibm-mq-allclient = "9.4.0.0"
 
 # plugins
@@ -29,7 +29,7 @@ retrofit2-converter-scalars = { group = "com.squareup.retrofit2", name = "conver
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht" }
 java-keytar = { group = "com.starxg", name = "java-keytar", version.ref = "keytar" }
-zowe-kotlin-sdk = { group = "org.zowe.sdk", name = "zowe-kotlin-sdk", version.ref = "zowe-kotlin-sdk" }
+zowe-kotlin-sdk = { group = "org.zowe.sdk", name = "kotlinsdk", version.ref = "zowe-kotlin-sdk" }
 ibm-mq-allclient = { group = "com.ibm.mq", name = "com.ibm.mq.allclient", version.ref = "ibm-mq-allclient" }
 
 # test deps

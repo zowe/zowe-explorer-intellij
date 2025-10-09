@@ -12,7 +12,7 @@
  *   Uladzislau Kalesnikau
  */
 
-package org.zowe.explorer.v3.components.files
+package org.zowe.explorer.v3.components.jes
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -20,16 +20,16 @@ import com.intellij.util.ui.tree.AbstractTreeModel
 import org.zowe.explorer.v3.tree.ExplorerTreeView
 
 // TODO: doc
-class FilesExplorerTreeView(
+class JesExplorerTreeView(
   explorerName: String,
   explorerTreeModel: AbstractTreeModel
 ) : ExplorerTreeView(explorerName, explorerTreeModel) {
   override val actionGroup =
     ActionManager.getInstance()
-      .getAction("org.zowe.explorer.components.files.FilesExplorerActionBarGroup") as ActionGroup
+      .getAction("org.zowe.explorer.components.jes.JesExplorerActionBarGroup") as ActionGroup
   override val contextMenuGroup =
     ActionManager.getInstance()
-      .getAction("org.zowe.explorer.components.files.FilesExplorerContextMenuGroup") as ActionGroup
+      .getAction("org.zowe.explorer.components.jes.JesExplorerContextMenuGroup") as ActionGroup
 
   override fun dispose() {
     // TODO: implement if needed

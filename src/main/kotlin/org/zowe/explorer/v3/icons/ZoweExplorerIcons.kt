@@ -27,7 +27,7 @@ object ZoweExplorerIcons {
   @JvmField
   val zoweExplorerIcon = loadIcon("icons/explorer.svg")
   @JvmField
-  val filesWorkingSetIcon = AllIcons.Actions.ShowAsTree
+  val workingSetIcon = AllIcons.Actions.ShowAsTree
   @JvmField
   val datasetMask = loadIcon("icons/datasetMask.svg")
 }

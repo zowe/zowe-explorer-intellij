@@ -15,8 +15,7 @@
 package org.zowe.explorer.v3.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.components.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.RefreshableNode
+import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.Renameable
 
 // TODO: doc
@@ -27,7 +26,7 @@ class RenameNodeAction : DumbAwareEDTAction() {
       .getFilesExplorerComponent(project)
       .selectedNodes
     if (selectedNodes.size == 1) {
-      (selectedNodes[0] as? Renameable)?.renameNode()
+      (selectedNodes[0].nodeDescriptor as? Renameable)?.renameNode()
     }
     // TODO: process e.dataContext as well???
   }
@@ -41,7 +40,7 @@ class RenameNodeAction : DumbAwareEDTAction() {
       .getFilesExplorerComponent(project)
     val selectedNodes = explorerComponent.selectedNodes
     if (selectedNodes.size == 1) {
-      e.presentation.isEnabledAndVisible = (selectedNodes[0] as? Renameable) != null
+      e.presentation.isEnabledAndVisible = (selectedNodes[0].nodeDescriptor as? Renameable) != null
     }
     // TODO: process e.dataContext as well???
   }

@@ -15,15 +15,14 @@
 package org.zowe.explorer.v3.actions.workingset
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.components.files.FilesExplorerComponent
+import org.zowe.explorer.v3.components.jes.JesExplorerComponent
 
 // TODO: doc
-class CreateFilesWorkingSetAction : CreateWorkingSetAction(
-"Files Working Set",
-  FilesExplorerComponent.FILES_EXPLORER_COMPONENT_NAME
+class CreateJesWorkingSetAction : CreateWorkingSetAction(
+"JES Working Set",
+  JesExplorerComponent.JES_EXPLORER_COMPONENT_NAME
 ) {
   override fun actionPerformed(e: AnActionEvent) {
     TODO("Not yet implemented")
-    // TODO: CreateFilesWorkingSetDialog
   }
 }

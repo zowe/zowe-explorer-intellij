@@ -15,8 +15,8 @@
 package org.zowe.explorer.v3.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.components.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.RefreshableNode
+import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
+import org.zowe.explorer.v3.tree.nodes.Refreshable
 
 // TODO: doc
 class RefreshNodeAction : DumbAwareEDTAction() {
@@ -26,8 +26,11 @@ class RefreshNodeAction : DumbAwareEDTAction() {
       .getFilesExplorerComponent(project)
       .selectedNodes
       .forEach {
-        if (it is RefreshableNode) {
-          it.refreshNode()
+        if (
+          it.nodeDescriptor is Refreshable
+          && ((it.nodeDescriptor as? Refreshable)?.isNodeReadyForRefresh(it) ?: false)
+        ) {
+          (it.nodeDescriptor as? Refreshable)?.refreshNode(it)
         }
       }
   }
@@ -41,6 +44,12 @@ class RefreshNodeAction : DumbAwareEDTAction() {
       .getFilesExplorerComponent(project)
     e.presentation.isEnabledAndVisible = explorerComponent
       .selectedNodes
-      .any { it is RefreshableNode }
+      .any { it.nodeDescriptor is Refreshable }
+    e.presentation.isVisible = explorerComponent
+      .selectedNodes
+      .any {
+        it.nodeDescriptor is Refreshable
+          && ((it.nodeDescriptor as? Refreshable)?.isNodeReadyForRefresh(it) ?: false)
+      }
   }
 }

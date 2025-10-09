@@ -450,6 +450,10 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 class="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
+        <action id="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"
+                class="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"
+                icon="AllIcons.Actions.ShowAsTree"/>
+
         <action id="org.zowe.explorer.v3.actions.RefreshNodeAction"
                 class="org.zowe.explorer.v3.actions.RefreshNodeAction"
                 text="Refresh"
@@ -807,20 +811,34 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <reference id="org.zowe.explorer.explorer.actions.SettingAction"/>
         </group>
 
-        <group id="org.zowe.explorer.actions.AddNewItemGroup"
+        <group id="org.zowe.explorer.actions.AddNewItemFilesExplorerGroup"
                icon="AllIcons.General.Add"
                popup="true">
             <reference id="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"/>
         </group>
 
+        <group id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
+            <reference id="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"/>
+        </group>
+
         <group id="org.zowe.explorer.components.files.FilesExplorerActionBarGroup">
-            <reference id="org.zowe.explorer.actions.AddNewItemGroup"/>
+            <reference id="org.zowe.explorer.actions.AddNewItemFilesExplorerGroup"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.jes.JesExplorerActionBarGroup">
+            <reference id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"/>
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">
             <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
             <separator/>
             <reference id="org.zowe.explorer.v3.actions.RenameNodeAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.jes.JesExplorerContextMenuGroup">
+            <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.JESActionBarGroup">

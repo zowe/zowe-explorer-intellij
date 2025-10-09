@@ -1,0 +1,75 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ * Contributors:
+ *   Zowe Community
+ *   Uladzislau Kalesnikau
+ */
+
+package org.zowe.explorer.v3.components.files
+
+import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
+import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
+import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
+import org.zowe.explorer.v3.tree.nodes.NodeSyncService
+import org.zowe.explorer.v3.tree.nodes.WorkingSetNodeDescriptor
+
+// TODO: doc
+class FilesWorkingSetNodeDescriptor(
+  displayName: String,
+  config: FilesWorkingSetConfig?
+) : WorkingSetNodeDescriptor(displayName, "Files Working Set", config) {
+  override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
+    // TODO: complete
+//    nodeDescriptor as FilesWorkingSetNodeData
+//    nodeDescriptor.config as FilesWorkingSetConfig?
+//    val dsMasks = nodeDescriptor.config?.dsMasks
+//    val ussFilters = nodeDescriptor.config?.ussPaths
+//    val dsMaskNodes = dsMasks
+//      ?.map {
+//        DatasetMaskNode(
+//          project,
+//          DatasetMaskNodeData(
+//            it.mask,
+//            connectionConfigUuid=nodeDescriptor.config?.connectionConfigUuid ?: ""
+//          ),
+//          this
+//        )
+//      }
+//      ?: listOf()
+//    val ussFilterNodes = ussFilters
+//      ?.map {
+//        UssFilterNode(
+//          project,
+//          UssFilterNodeData(
+//            it.path,
+//            connectionConfigUuid=nodeDescriptor.config?.connectionConfigUuid ?: ""
+//          ),
+//          this
+//        )
+//      }
+//      ?: listOf()
+//    return (dsMaskNodes + ussFilterNodes)
+//      .ifEmpty { listOf(NoItemsFoundNode(project, parent=this)) }
+    return (config as FilesWorkingSetConfig?)
+      ?.ussPaths
+      ?.map {
+        val ussFilterNodeDescriptor = UssFilterNodeDescriptor(
+          it.path,
+          connectionConfigUuid = config?.connectionConfigUuid ?: ""
+        )
+        val ussFilterNode = ExplorerTreeNode(ussFilterNodeDescriptor, node.project, node)
+        NodeSyncService.getService()
+          .registerParentNode(ussFilterNode)
+        ussFilterNode
+      }
+      ?.ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node)) }
+      ?: listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
+  }
+}

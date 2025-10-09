@@ -25,7 +25,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.tree.AbstractTreeModel
-import org.zowe.explorer.v3.tree.nodes.ExpandableNode
+import org.zowe.explorer.v3.tree.nodes.LazyExpandable
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import java.awt.Component
 import javax.swing.JComponent
@@ -44,7 +44,10 @@ abstract class ExplorerTreeView(
   private val contextMenuGroupPlace = explorerName
   protected val explorerDnDAwareTree by lazy { DnDAwareTree(explorerTreeModel) }
 
-  abstract fun initActionToolbar(): ActionToolbar
+  fun initActionToolbar(): ActionToolbar {
+    return ActionManager.getInstance()
+      .createActionToolbar(explorerName, actionGroup, true)
+  }
 
   val selectedNodes: List<ExplorerTreeNode>
     get() {
@@ -75,8 +78,8 @@ abstract class ExplorerTreeView(
     explorerDnDAwareTree.addTreeWillExpandListener(object : TreeWillExpandListener {
       override fun treeWillExpand(event: TreeExpansionEvent) {
         val defaultMutableTreeNode = event.path.lastPathComponent as? DefaultMutableTreeNode
-        val expandableNode = defaultMutableTreeNode?.userObject as? ExpandableNode
-        expandableNode?.expandNode()
+        val explorerTreeNode = defaultMutableTreeNode?.userObject as? ExplorerTreeNode
+        (explorerTreeNode?.nodeDescriptor as? LazyExpandable)?.expandNode(explorerTreeNode)
       }
 
       override fun treeWillCollapse(event: TreeExpansionEvent) {}

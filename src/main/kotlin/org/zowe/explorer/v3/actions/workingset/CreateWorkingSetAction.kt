@@ -14,7 +14,28 @@
 
 package org.zowe.explorer.v3.actions.workingset
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.util.containers.isEmpty
+import org.zowe.explorer.common.message
+import org.zowe.explorer.utils.addTooltip
 import org.zowe.explorer.v3.actions.DumbAwareEDTAction
+import org.zowe.explorer.v3.state.config.ConfigType
+import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 
 // TODO: doc
-abstract class CreateWorkingSetAction : DumbAwareEDTAction()
+abstract class CreateWorkingSetAction(
+  private val workingSetType: String,
+  private val targetExplorer: String
+) : DumbAwareEDTAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = workingSetType
+    e.presentation.isEnabledAndVisible = e.place.contains(targetExplorer)
+    val isConnectionConfigCreated = !ConfigCacheService.getService()
+      .getConfigsFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1)
+      .isEmpty()
+    e.presentation.isEnabled = isConnectionConfigCreated
+    if (!isConnectionConfigCreated) {
+      e.presentation.addTooltip(message("create.connection.tooltip"))
+    }
+  }
+}
