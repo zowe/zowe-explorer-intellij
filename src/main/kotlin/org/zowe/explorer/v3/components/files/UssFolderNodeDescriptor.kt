@@ -17,50 +17,27 @@ import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperationData
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperationData
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.Renameable
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.FileFetcherNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.LazyExpandable
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.UpdateInfoHolder
 import org.zowe.explorer.v3.tree.nodes.Refreshable
-import org.zowe.explorer.v3.tree.nodes.getCurrentRefreshDateTime
+import org.zowe.explorer.v3.tree.nodes.UpdateInfoHolder
 
 // TODO: doc
-class UssFilterNodeDescriptor(
+class UssFolderNodeDescriptor(
   displayName: String,
+  var pathFilter: String,
+  override var path: List<String>,
   override var connectionConfigUuid: String,
 ) : FileFetcherNodeDescriptor(
   displayName,
-  "USS filter",
-  AllIcons.Nodes.Module,
+  "USS folder",
+  AllIcons.Nodes.Folder,
   connectionConfigUuid=connectionConfigUuid
 ), Renameable, LazyExpandable, Refreshable, UpdateInfoHolder {
-  companion object {
-    fun formUssBasePath(host: String): List<String> {
-      return listOf(host, "files", "uss")
-    }
-
-    fun formUssFilterPath(displayName: String): List<String> {
-      return if (displayName == "/") listOf(displayName)
-        else displayName.split("/").map { "$it/"}
-    }
-  }
-
-  override val path: List<String>
-    get() {
-      val connectionConfig = ConfigCacheService.getService()
-        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
-        ?: throw Exception("Connection config is not found for node $this")
-      val host = (connectionConfig as HttpConnectionConfig).host
-      return formUssBasePath(host) + formUssFilterPath(displayName)
-    }
-
   override var wasExpanded = false
-
   override val textToPreserve = listOf(
     PresentableNodeDescriptor.ColoredFragment(
       displayName,
@@ -71,9 +48,10 @@ class UssFilterNodeDescriptor(
   override fun expandNode(node: ExplorerTreeNode) {
     if (!wasExpanded) {
       setUpdateInfo(genuinePresentationData)
-      wasExpanded = true
-      invalidateAssociatedNodes()
     }
+    wasExpanded = true
+    getNodeChildren(node)
+    invalidateAssociatedNodes()
   }
 
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
@@ -88,7 +66,7 @@ class UssFilterNodeDescriptor(
     } else {
       if (wasExpanded) {
         val operation = LoadUssNodesOperation(
-          LoadUssNodesOperationData(node, path, displayName)
+          LoadUssNodesOperationData(node, path, pathFilter)
         )
         operation.run().loadedNodes
       } else {
@@ -104,7 +82,7 @@ class UssFilterNodeDescriptor(
   override fun refreshNode(node: ExplorerTreeNode) {
     setUpdateInfo(genuinePresentationData)
     val operation = RefreshUssNodesOperation(
-      RefreshUssNodesOperationData(node, path, displayName)
+      RefreshUssNodesOperationData(node, path, pathFilter)
     )
     operation.run()
     invalidateAssociatedNodes()

@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
@@ -28,9 +24,10 @@ class ErrorNodeDescriptor(
 {
   override val path: List<String> = listOf()
 
-  override fun updateNode(presentationData: PresentationData) {
-    presentationData.tooltip = tooltip
-    presentationData.clearText()
-    presentationData.addText(displayName, SimpleTextAttributes.ERROR_ATTRIBUTES)
-  }
+  override val genuinePresentationData: PresentationData
+    get() = super.genuinePresentationData
+      .also {
+        it.clearText()
+        it.addText(displayName, SimpleTextAttributes.ERROR_ATTRIBUTES)
+      }
 }

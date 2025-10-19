@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID

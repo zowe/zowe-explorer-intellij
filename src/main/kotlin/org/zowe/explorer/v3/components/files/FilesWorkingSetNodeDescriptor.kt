@@ -14,6 +14,9 @@
 
 package org.zowe.explorer.v3.components.files
 
+import org.zowe.explorer.v3.state.config.ConfigType
+import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
@@ -57,17 +60,25 @@ class FilesWorkingSetNodeDescriptor(
 //      ?: listOf()
 //    return (dsMaskNodes + ussFilterNodes)
 //      .ifEmpty { listOf(NoItemsFoundNode(project, parent=this)) }
+    val connectionConfig = ConfigCacheService.getService()
+      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, config?.connectionConfigUuid ?: "")
+      ?: throw Exception("Connection config is not found for node $this")
+    val host = (connectionConfig as HttpConnectionConfig).host
     return (config as FilesWorkingSetConfig?)
       ?.ussPaths
-      ?.map {
-        val ussFilterNodeDescriptor = UssFilterNodeDescriptor(
-          it.path,
-          connectionConfigUuid = config?.connectionConfigUuid ?: ""
-        )
-        val ussFilterNode = ExplorerTreeNode(ussFilterNodeDescriptor, node.project, node)
-        NodeSyncService.getService()
-          .registerParentNode(ussFilterNode)
-        ussFilterNode
+      ?.map { ussPath ->
+        // TODO: sync filter nodes info with real nodes info if the path is similar (e.g. filter /u/ULADZ and a folder ULADZ)
+        val ussFilterNodeDescriptor = NodeSyncService.getService()
+          .getOrCreateFilterNodeDescriptor(
+            UssFilterNodeDescriptor.formUssBasePath(host),
+            ussPath.path
+          ) {
+            UssFilterNodeDescriptor(
+              ussPath.path,
+              connectionConfigUuid = config?.connectionConfigUuid ?: ""
+            )
+          }
+        ExplorerTreeNode(ussFilterNodeDescriptor, node.project, node)
       }
       ?.ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node)) }
       ?: listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))

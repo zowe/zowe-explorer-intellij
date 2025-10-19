@@ -156,6 +156,8 @@ dependencies {
   implementation(libs.jgrapht.core)
   implementation(libs.java.keytar)
   implementation(libs.zowe.kotlin.sdk)
+  implementation(libs.json.schema.validator) // Needed for Zowe Client Kotlin SDK to be able to validate zowe.schema.json
+  implementation(libs.dotenv) // Needed for Zowe Client Kotlin SDK to load environment variables
   if (productName >= "IC-242") {
     testImplementation(libs.mockk) {
       exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")

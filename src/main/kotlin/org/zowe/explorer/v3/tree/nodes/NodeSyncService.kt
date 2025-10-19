@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
@@ -32,6 +28,7 @@ import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperationData
 import org.zowe.explorer.v3.performWithProgressiveDelay
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
+import org.zowe.explorer.v3.tree.nodes.path.PathTree
 
 /**
  * Nodes synchronization service.
@@ -44,8 +41,8 @@ class NodeSyncService {
     fun getService(): NodeSyncService = service()
   }
 
-  /** Node path to the path parents map. Is needed to refresh existing parent nodes on the path invalidate request */
-  private val parentNodesMap by lazy { ParentNodesMap() }
+  /** Map to track filter nodes to load their children as a single node */
+  private val filterNodesMap by lazy { mutableMapOf<List<String>, MutableMap<String, ExplorerTreeNodeDescriptor>>() }
 
   /** A single tree of node paths. Contains node descriptors for each of the loaded paths, as well as path states */
   private val pathTree by lazy { PathTree() }
@@ -62,7 +59,7 @@ class NodeSyncService {
     coroutineScope: CoroutineScope,
     taskProducer: () -> Task.Backgroundable
   ): String {
-    if (pathTree.getPathState(operationData.path) == PathTree.PathState.BUSY) {
+    if (pathTree.getOrInitPathState(operationData.path) == PathTree.PathState.BUSY) {
       NotificationsService.getService()
         .notifyWarning(
           operationData.node.project,
@@ -107,21 +104,18 @@ class NodeSyncService {
 
     val reason = runIfNoOtherJobs(operationData, explorerComponent.explorerScope) {
       val originalTitle = "Loading children for ${parentNodeData.displayName}..."
+
       object : Task.Backgroundable(parentNode.project, originalTitle, true) {
         private var newChildren: List<ExplorerTreeNode>? = null
 
         override fun run(indicator: ProgressIndicator) {
           runBlocking {
-            parentNodesMap.setRefreshInfoForPath(operationData.path)
             pathTree.setPathState(operationData.path, PathTree.PathState.BUSY)
-            val busyNodeDescriptors = pathTree
-              .getPathElements(operationData.path)
-              .mapNotNull { it as? ExplorerTreeNodeDescriptor }
-              .filter { it !is Ephemeral }
-              .map { BusyNodeDescriptor(it.displayName) }
-              .ifEmpty { listOf(LoadingNodeDescriptor()) }
-            pathTree.updatePath(operationData.path, busyNodeDescriptors)
-            parentNodesMap.invalidatePath(operationData.path)
+            pathTree.updatePathWithChildren(operationData.path) {
+              if (it is ExplorerTreeNodeDescriptor) {
+                it.isBusy = true
+              }
+            }
 
             title = "Waiting until all children operations are complete..."
             performWithProgressiveDelay {
@@ -177,7 +171,12 @@ class NodeSyncService {
 
         override fun onFinished() {
           pathTree.setPathState(operationData.path, PathTree.PathState.LOADED)
-          parentNodesMap.invalidatePath(operationData.path)
+          pathTree.updatePathWithChildren(operationData.path) {
+            if (it is ExplorerTreeNodeDescriptor) {
+              it.isBusy = false
+            }
+          }
+          operationData.node.nodeDescriptor.invalidateAssociatedNodes()
         }
       }
     }
@@ -192,11 +191,12 @@ class NodeSyncService {
               listOf(ErrorNodeDescriptor(reason))
             )
         }
-      parentNodesMap.invalidatePath(operationData.path)
     }
     return pathTree
       .getPathElements(operationData.path)
       .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+      .filter { it !is Ephemeral }
+      .ifEmpty { listOf(LoadingNodeDescriptor()) }
       .map { ExplorerTreeNode(it, parentNode.project, parentNode) }
   }
 
@@ -211,10 +211,20 @@ class NodeSyncService {
   fun loadNodes(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData as LoadNodesOperationData
     val parentNode = loadNodesOperationData.node
-    val pathState = pathTree.getPathState(loadNodesOperationData.path)
+    val pathState = pathTree.getOrInitPathState(loadNodesOperationData.path)
     return when (pathState) {
       PathTree.PathState.INIT -> startChildrenLoading(operation)
-      PathTree.PathState.BUSY, PathTree.PathState.LOADED -> {
+      PathTree.PathState.BUSY -> {
+        pathTree
+          .getPathElements(loadNodesOperationData.path)
+          .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+          .filter { it !is Ephemeral }
+          .map { ExplorerTreeNode(it, parentNode.project, parentNode) }
+          .ifEmpty {
+            listOf(ExplorerTreeNode(LoadingNodeDescriptor(), parentNode.project, parentNode))
+          }
+      }
+      PathTree.PathState.LOADED -> {
         pathTree
           .getPathElements(loadNodesOperationData.path)
           .mapNotNull { it as? ExplorerTreeNodeDescriptor }
@@ -223,12 +233,16 @@ class NodeSyncService {
     }
   }
 
-  // TODO: doc
+  /**
+   * Refresh children nodes of by the provided operation.
+   * Will not start a refresh operation if either any parent or any child node is already being operated on
+   * @param operation the operation to get info about the nodes to refresh from
+   */
   fun refreshNodes(operation: RefreshNodesOperation) {
     val refreshNodesOperationData = operation.operationData as RefreshNodesOperationData
     val parentNode = refreshNodesOperationData.node
 
-    if (pathTree.getPathState(refreshNodesOperationData.path) == PathTree.PathState.BUSY) {
+    if (pathTree.getOrInitPathState(refreshNodesOperationData.path) == PathTree.PathState.BUSY) {
       NotificationsService.getService()
         .notifyWarning(
           parentNode.project,
@@ -258,13 +272,19 @@ class NodeSyncService {
     }
   }
 
-  // TODO: doc
-  fun registerParentNode(node: ExplorerTreeNode) {
-    parentNodesMap.registerParentNode(node)
-  }
-
-  // TODO: doc
-  fun unregisterParentNode(node: ExplorerTreeNode) {
-    parentNodesMap.unregisterParentNode(node)
+  /**
+   * Get or put a new filter node descriptor
+   * @param basePath the base path to get or put the node by
+   * @param filterName the name of the filter node
+   * @param descriptorCreatorFn the function to create a new filter node if it does not exist in the map
+   * @return the filter node, found or created
+   */
+  fun getOrCreateFilterNodeDescriptor(
+    basePath: List<String>,
+    filterName: String,
+    descriptorCreatorFn: () -> ExplorerTreeNodeDescriptor
+  ): ExplorerTreeNodeDescriptor {
+    val filtersForHost = filterNodesMap.getOrPut(basePath) { mutableMapOf() }
+    return filtersForHost.getOrPut(filterName) { descriptorCreatorFn() }
   }
 }

@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
@@ -29,7 +25,7 @@ open class ExplorerTreeNode(
   }
 
   override fun isAlwaysExpand(): Boolean {
-    return nodeDescriptor.isExpanded
+    return nodeDescriptor.hasExpandChevron
   }
 
   override fun getName(): String {
@@ -46,6 +42,7 @@ open class ExplorerTreeNode(
 
   init {
     this.parent = parent
-    nodeDescriptor.setNodeIcon(this, nodeDescriptor.icon)
+    nodeDescriptor.setNodeIcon(nodeDescriptor.icon)
+    nodeDescriptor.associateNode(this)
   }
 }

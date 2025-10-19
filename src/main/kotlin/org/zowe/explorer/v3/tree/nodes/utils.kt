@@ -6,17 +6,20 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
 
-import com.intellij.ide.projectView.PresentationData
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 // TODO: doc
-class RootNodeDescriptor : ExplorerTreeNodeDescriptor(isLeaf=false, hasExpandChevron=true) {
-//  override fun updateNode(presentationData: PresentationData) {}
+fun getCurrentRefreshDateTime(): String {
+  return DateTimeFormatter
+    .ofPattern("dd MMM YYYY HH:mm:ss", Locale.ENGLISH)
+    .withZone(ZoneId.systemDefault())
+    .format(LocalDateTime.now())
+    .uppercase(Locale.getDefault())
 }

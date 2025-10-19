@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.components.files.operations
@@ -17,6 +13,7 @@ package org.zowe.explorer.v3.components.files.operations
 import io.ktor.http.isSuccess
 import org.zowe.explorer.v3.api.ZosmfApiService
 import org.zowe.explorer.v3.components.files.UssFileNodeDescriptor
+import org.zowe.explorer.v3.components.files.UssFolderNodeDescriptor
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
@@ -26,7 +23,9 @@ import org.zowe.explorer.v3.tree.nodes.ErrorNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NodeSyncService
-import org.zowe.kotlinsdk.providers.zowe.UserPassHttpConnection
+import org.zowe.kotlinsdk.core.ZoweProfileManager
+import org.zowe.kotlinsdk.core.connectivity.ZoweConnectionManager
+import org.zowe.kotlinsdk.core.files.data.FileItem
 import org.zowe.kotlinsdk.providers.zowe.zosmf.files.definitions.ZosmfSymlinkMode
 import org.zowe.kotlinsdk.providers.zowe.zosmf.files.messaging.ZosmfListFilesRequest
 import org.zowe.kotlinsdk.providers.zowe.zosmf.files.messaging.ZosmfListFilesResponse
@@ -41,14 +40,14 @@ class LoadUssNodesOperation(
     val connectionConfig = ConfigCacheService.getService()
       .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, parentNodeData.connectionConfigUuid)
       ?: throw Exception("Connection config is not found for node $this")
+    // TODO: move Zowe config handling out to some service
+    val zoweProfileManager = ZoweProfileManager()
+    zoweProfileManager.teamConfigDir = parentNode.project.basePath
+    val zoweConnectionManager = ZoweConnectionManager(zoweProfileManager)
+    val httpConnection = zoweConnectionManager.produceHttpConnection("zosmf", shouldOverrideWithEnv = true)
     connectionConfig as HttpConnectionConfig
     val listFilesRequest = ZosmfListFilesRequest(
-      UserPassHttpConnection(
-        connectionConfig.host,
-        connectionConfig.port,
-        user = "...",
-        password = "..."
-      ),
+      httpConnection,
       filter = operationData.filter,
       depth = 0,
       followSymlinks = ZosmfSymlinkMode.REPORT
@@ -71,20 +70,22 @@ class LoadUssNodesOperation(
         .items
         .filter { it.name != "." && it.name != ".." }
         .map {
-          val ussPath = operationData.path + it.name
-          val childeNode = ExplorerTreeNode(
-            UssFileNodeDescriptor(it.name, ussPath, parentNodeData.connectionConfigUuid),
-            parentNode.project,
-            parentNode
-          )
-//        val childNode = if (it.fileType == FileItem.FileType.DIRECTORY) {
-//          val childNodeData = UssFolderNodeData(it.name, ussPath, connectionConfigUuid = nodeDescriptor.connectionConfigUuid)
-//          UssFolderNode(project, childNodeData, this)
-//        } else {
-//          val childNodeData = UssFileNodeData(it.name, ussPath, connectionConfigUuid=nodeDescriptor.connectionConfigUuid)
-//          UssFileNode(project,childNodeData, this)
-//        }
-          childeNode
+          if (it.fileType == FileItem.FileType.DIRECTORY) {
+            val ussPath = operationData.path + "${it.name}/"
+            val ussFolderNodeDescriptor = UssFolderNodeDescriptor(
+              it.name,
+              "${operationData.filter}/${it.name}",
+              ussPath,
+              connectionConfigUuid = parentNodeData.connectionConfigUuid
+            )
+            val ussFolderNode = ExplorerTreeNode(ussFolderNodeDescriptor, parentNode.project, parentNode)
+            ussFolderNode
+          } else {
+            val ussPath = operationData.path + it.name
+            val ussFileNodeDescriptor = UssFileNodeDescriptor(it.name, ussPath, connectionConfigUuid = parentNodeData.connectionConfigUuid)
+            val ussFileNode = ExplorerTreeNode(ussFileNodeDescriptor, parentNode.project, parentNode)
+            ussFileNode
+          }
         }
         .ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), parentNode.project, parentNode)) }
     }
