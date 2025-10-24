@@ -11,8 +11,6 @@
 package org.zowe.explorer.v3.components.files
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.util.treeView.PresentableNodeDescriptor
-import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperationData
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
@@ -20,28 +18,36 @@ import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
+import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.Renameable
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
-import org.zowe.explorer.v3.tree.nodes.FileFetcherNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.LazyExpandable
+import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.UpdateInfoHolder
 import org.zowe.explorer.v3.tree.nodes.Refreshable
-import org.zowe.explorer.v3.tree.nodes.getCurrentRefreshDateTime
 
 // TODO: doc
 class UssFilterNodeDescriptor(
   displayName: String,
   override var connectionConfigUuid: String,
-) : FileFetcherNodeDescriptor(
+) : FetcherNodeDescriptor(
   displayName,
+  basePath = formUssBasePathFromConnectionConfig(connectionConfigUuid),
+  filterPath = formUssFilterPath(displayName),
   "USS filter",
   AllIcons.Nodes.Module,
   connectionConfigUuid=connectionConfigUuid
-), Renameable, LazyExpandable, Refreshable, UpdateInfoHolder {
+), Renameable, Refreshable {
   companion object {
-    fun formUssBasePath(host: String): List<String> {
+    fun formUssBasePathFromHost(host: String): List<String> {
       return listOf(host, "files", "uss")
+    }
+
+    fun formUssBasePathFromConnectionConfig(connectionConfigUuid: String): List<String> {
+      val connectionConfig = ConfigCacheService.getService()
+        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
+        ?: throw Exception("Connection config is not found for node $this")
+      val host = (connectionConfig as HttpConnectionConfig).host
+      return formUssBasePathFromHost(host)
     }
 
     fun formUssFilterPath(displayName: String): List<String> {
@@ -50,31 +56,13 @@ class UssFilterNodeDescriptor(
     }
   }
 
-  override val path: List<String>
-    get() {
-      val connectionConfig = ConfigCacheService.getService()
-        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
-        ?: throw Exception("Connection config is not found for node $this")
-      val host = (connectionConfig as HttpConnectionConfig).host
-      return formUssBasePath(host) + formUssFilterPath(displayName)
-    }
+  private val fetchPath = basePath + filterPath
 
-  override var wasExpanded = false
+  override val fetchFilter = if (filterPath.size > 1) filterPath.joinToString("").dropLast(1) else filterPath[0]
 
-  override val textToPreserve = listOf(
-    PresentableNodeDescriptor.ColoredFragment(
-      displayName,
-      SimpleTextAttributes.REGULAR_ATTRIBUTES
-    )
-  )
+  override val invalidationElem = if (filterPath.size > 1) filterPath.last().dropLast(1) else ""
 
-  override fun expandNode(node: ExplorerTreeNode) {
-    if (!wasExpanded) {
-      setUpdateInfo(genuinePresentationData)
-      wasExpanded = true
-      invalidateAssociatedNodes()
-    }
-  }
+  override val invalidationPath = basePath + if (filterPath.size > 1) filterPath.dropLast(1) else filterPath
 
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
     return if (connectionConfigUuid.isEmpty()) {
@@ -88,7 +76,7 @@ class UssFilterNodeDescriptor(
     } else {
       if (wasExpanded) {
         val operation = LoadUssNodesOperation(
-          LoadUssNodesOperationData(node, path, displayName)
+          LoadUssNodesOperationData(node, fetchPath, fetchFilter)
         )
         operation.run().loadedNodes
       } else {
@@ -102,12 +90,10 @@ class UssFilterNodeDescriptor(
   }
 
   override fun refreshNode(node: ExplorerTreeNode) {
-    setUpdateInfo(genuinePresentationData)
     val operation = RefreshUssNodesOperation(
-      RefreshUssNodesOperationData(node, path, displayName)
+      RefreshUssNodesOperationData(node, fetchPath, fetchFilter)
     )
     operation.run()
-    invalidateAssociatedNodes()
   }
 
   override fun renameNode() {

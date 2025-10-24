@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
@@ -18,7 +14,11 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 
-// TODO: doc
+/**
+ * A base root node of an explorer view. Is invisible and holds working set nodes as direct children
+ * @property project the [Project] where the node is initialized
+ * @property workingSetNodes the working set nodes of the explorer tree view
+ */
 class RootNode(project: Project) : ExplorerTreeNode(RootNodeDescriptor(), project) {
   val workingSetNodes = hashSetOf<ExplorerTreeNode>()
 

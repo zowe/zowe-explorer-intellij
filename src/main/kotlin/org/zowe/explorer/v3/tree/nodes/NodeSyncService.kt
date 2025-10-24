@@ -42,7 +42,7 @@ class NodeSyncService {
   }
 
   /** Map to track filter nodes to load their children as a single node */
-  private val filterNodesMap by lazy { mutableMapOf<List<String>, MutableMap<String, ExplorerTreeNodeDescriptor>>() }
+  private val filterNodesMap by lazy { mutableMapOf<List<String>, MutableMap<String, FetcherNodeDescriptor>>() }
 
   /** A single tree of node paths. Contains node descriptors for each of the loaded paths, as well as path states */
   private val pathTree by lazy { PathTree() }
@@ -98,12 +98,12 @@ class NodeSyncService {
   private fun startChildrenLoading(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val operationData = operation.operationData as LoadNodesOperationData
     val parentNode = operationData.node
-    val parentNodeData = parentNode.nodeDescriptor
+    val parentNodeData = parentNode.nodeDescriptor as FetcherNodeDescriptor
     val explorerComponent = ExplorerTreeComponentService.getService()
       .getFilesExplorerComponent(parentNode.project)
 
     val reason = runIfNoOtherJobs(operationData, explorerComponent.explorerScope) {
-      val originalTitle = "Loading children for ${parentNodeData.displayName}..."
+      val originalTitle = "Loading children for ${parentNodeData.fetchFilter}..."
 
       object : Task.Backgroundable(parentNode.project, originalTitle, true) {
         private var newChildren: List<ExplorerTreeNode>? = null
@@ -111,9 +111,17 @@ class NodeSyncService {
         override fun run(indicator: ProgressIndicator) {
           runBlocking {
             pathTree.setPathState(operationData.path, PathTree.PathState.BUSY)
+            updateRelatedDescriptorsAndInvalidate(
+              parentNodeData,
+              operation::setNodesRefreshInfo
+            )
+            invalidatePath(parentNodeData)
             pathTree.updatePathWithChildren(operationData.path) {
               if (it is ExplorerTreeNodeDescriptor) {
                 it.isBusy = true
+              }
+              if (it is FetcherNodeDescriptor) {
+                invalidatePath(it)
               }
             }
 
@@ -171,12 +179,15 @@ class NodeSyncService {
 
         override fun onFinished() {
           pathTree.setPathState(operationData.path, PathTree.PathState.LOADED)
+          invalidatePath(parentNodeData)
           pathTree.updatePathWithChildren(operationData.path) {
             if (it is ExplorerTreeNodeDescriptor) {
               it.isBusy = false
             }
+            if (it is FetcherNodeDescriptor) {
+              invalidatePath(it)
+            }
           }
-          operationData.node.nodeDescriptor.invalidateAssociatedNodes()
         }
       }
     }
@@ -191,6 +202,7 @@ class NodeSyncService {
               listOf(ErrorNodeDescriptor(reason))
             )
         }
+      invalidatePath(parentNodeData)
     }
     return pathTree
       .getPathElements(operationData.path)
@@ -273,18 +285,94 @@ class NodeSyncService {
   }
 
   /**
+   * Create a new node descriptor, enhance it with update info if it is a [FetcherNodeDescriptor]
+   * @param descriptorCreatorFn the function to create a new node descriptor
+   * @return the newly created node descriptor
+   */
+  private fun createDescriptorWithUpdateInfo(descriptorCreatorFn: () -> ExplorerTreeNodeDescriptor): ExplorerTreeNodeDescriptor {
+    val createdDescriptor = descriptorCreatorFn()
+    if (createdDescriptor is FetcherNodeDescriptor) {
+      findRelatedDescriptors(createdDescriptor)
+        .find { descriptor -> descriptor.currentUpdateInfo != null }
+        ?.currentUpdateInfo
+        ?.let { currentUpdateInfo ->
+          createdDescriptor.setUpdateInfo(currentUpdateInfo)
+        }
+    }
+    return createdDescriptor
+  }
+
+  /**
    * Get or put a new filter node descriptor
    * @param basePath the base path to get or put the node by
    * @param filterName the name of the filter node
-   * @param descriptorCreatorFn the function to create a new filter node if it does not exist in the map
-   * @return the filter node, found or created
+   * @param descriptorCreatorFn the function to create a new filter node descriptor if it does not exist in the map
+   * @return the filter node descriptor, found or created
    */
   fun getOrCreateFilterNodeDescriptor(
     basePath: List<String>,
     filterName: String,
+    descriptorCreatorFn: () -> FetcherNodeDescriptor
+  ): FetcherNodeDescriptor {
+    return filterNodesMap.getOrPut(basePath) { mutableMapOf() }
+      .getOrPut(filterName) { createDescriptorWithUpdateInfo(descriptorCreatorFn) as FetcherNodeDescriptor }
+  }
+
+  /**
+   * Get or put a new real node descriptor
+   * @param descriptorPlacingPath the path where the descriptor is meant to be placed
+   * @param descriptorName the descriptor name to find in the [pathTree]
+   * @param descriptorCreatorFn the function to create a new real node descriptor if it does not exist in the map
+   * @return the real node descriptor, found or created
+   */
+  fun getOrCreateRealNodeDescriptor(
+    descriptorPlacingPath: List<String>,
+    descriptorName: String,
     descriptorCreatorFn: () -> ExplorerTreeNodeDescriptor
   ): ExplorerTreeNodeDescriptor {
-    val filtersForHost = filterNodesMap.getOrPut(basePath) { mutableMapOf() }
-    return filtersForHost.getOrPut(filterName) { descriptorCreatorFn() }
+    return pathTree.getPathElement(descriptorPlacingPath, descriptorName)
+      as? ExplorerTreeNodeDescriptor
+      ?: createDescriptorWithUpdateInfo(descriptorCreatorFn)
+  }
+
+  /**
+   * Find real and filter node descriptors to that are related by invalidation info
+   * @param fetcherNodeDescriptor the original node descriptor to find the other descriptor by
+   * @return a list with the descriptors if they are found
+   */
+  private fun findRelatedDescriptors(fetcherNodeDescriptor: FetcherNodeDescriptor): List<FetcherNodeDescriptor> {
+    val realDescriptorToInvalidate = pathTree.getPathElement(
+      fetcherNodeDescriptor.invalidationPath,
+      fetcherNodeDescriptor.invalidationElem
+    ) as? FetcherNodeDescriptor
+    val filterDescriptorToInvalidate = filterNodesMap.getOrDefault(fetcherNodeDescriptor.basePath, mapOf())
+      .values
+      .find { it.fetchFilter == fetcherNodeDescriptor.fetchFilter }
+    return listOfNotNull(realDescriptorToInvalidate, filterDescriptorToInvalidate)
+  }
+
+  /**
+   * Invalidate the path by the provided node descriptor to invalidate originally
+   * @param fetcherNodeDescriptor the original node descriptor to invalidate and find the related nodes by
+   */
+  fun invalidatePath(fetcherNodeDescriptor: FetcherNodeDescriptor) {
+    findRelatedDescriptors(fetcherNodeDescriptor)
+      .forEach { it.invalidateAssociatedNodes() }
+  }
+
+  /**
+   * Update the nodes, related to the descriptor, real and filter
+   * @param fetcherNodeDescriptor the node descriptor to find related nodes by
+   * @param operationToPerformFn the operation function to perform on the nodes
+   */
+  fun updateRelatedDescriptorsAndInvalidate(
+    fetcherNodeDescriptor: FetcherNodeDescriptor,
+    operationToPerformFn: (FetcherNodeDescriptor) -> Unit
+  ) {
+    findRelatedDescriptors(fetcherNodeDescriptor)
+      .forEach {
+        operationToPerformFn(it)
+        it.invalidateAssociatedNodes()
+      }
   }
 }

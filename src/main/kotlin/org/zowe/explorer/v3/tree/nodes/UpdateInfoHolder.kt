@@ -17,12 +17,21 @@ import com.intellij.ui.SimpleTextAttributes
 // TODO: doc
 interface UpdateInfoHolder {
   val textToPreserve: List<PresentableNodeDescriptor.ColoredFragment>
+  var currentUpdateInfo: PresentableNodeDescriptor.ColoredFragment?
 
-  fun setUpdateInfo(presentationData: PresentationData) {
+  fun setUpdateInfo(
+    presentationData: PresentationData,
+    updateInfoToSet: PresentableNodeDescriptor.ColoredFragment? = null
+  ) {
     presentationData.clearText()
     textToPreserve.forEach { textFragment ->
       presentationData.addText(textFragment)
     }
-    presentationData.addText(" refreshed: ${getCurrentRefreshDateTime()}", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
+    currentUpdateInfo = updateInfoToSet
+      ?: PresentableNodeDescriptor.ColoredFragment(
+        " refreshed: ${getCurrentRefreshDateTime()}",
+        SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
+      )
+    presentationData.addText(currentUpdateInfo)
   }
 }

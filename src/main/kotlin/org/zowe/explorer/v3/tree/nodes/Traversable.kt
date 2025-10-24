@@ -6,15 +6,22 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
 
-// TODO: doc
+/**
+ * Interface to mark an element as something that could be identified by the exact path
+ * @property placingPath the path where the element is placed
+ * @property elemName the element name to identify the element placed under the [placingPath]
+ */
 interface Traversable {
-  val path: List<String>
+  val placingPath: List<String>
+  val elemName: String
+
+  /**
+   * Get the element's exact placing path
+   * @return the list of strings that identify the element by the path
+   */
+  fun getExactPath(): List<String>
 }

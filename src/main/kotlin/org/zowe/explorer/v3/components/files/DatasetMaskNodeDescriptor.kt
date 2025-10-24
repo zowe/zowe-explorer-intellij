@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.components.files
@@ -17,14 +13,20 @@ package org.zowe.explorer.v3.components.files
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.tree.nodes.Renameable
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
-import org.zowe.explorer.v3.tree.nodes.FileFetcherNodeDescriptor
+import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 
 // TODO: doc
 class DatasetMaskNodeDescriptor(
   displayName: String,
-  connectionConfigUuid: String
-) : FileFetcherNodeDescriptor(
+  connectionConfigUuid: String,
+  override val fetchFilter: String,
+  override val invalidationElem: String,
+  override val invalidationPath: List<String>,
+  override var wasExpanded: Boolean
+) : FetcherNodeDescriptor(
   displayName,
+  listOf(),
+  listOf(),
   "Data set mask",
   ZoweExplorerIcons.datasetMask,
   connectionConfigUuid=connectionConfigUuid
@@ -50,6 +52,10 @@ class DatasetMaskNodeDescriptor(
   }
 
   override fun renameNode() {
+    TODO("Not yet implemented")
+  }
+
+  override fun expandNode(node: ExplorerTreeNode) {
     TODO("Not yet implemented")
   }
 }

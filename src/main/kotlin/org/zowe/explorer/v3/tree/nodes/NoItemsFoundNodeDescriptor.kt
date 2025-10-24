@@ -19,11 +19,7 @@ class NoItemsFoundNodeDescriptor(
   displayName: String = "No items found",
   tooltip: String = "No children items to display",
   icon: Icon? = null
-) : ExplorerTreeNodeDescriptor(displayName, tooltip, icon),
-  Traversable, Ephemeral
-{
-  override val path: List<String> = listOf()
-
+) : ExplorerTreeNodeDescriptor(displayName, tooltip, icon), Ephemeral {
   override val genuinePresentationData: PresentationData
     get() {
       return super.genuinePresentationData

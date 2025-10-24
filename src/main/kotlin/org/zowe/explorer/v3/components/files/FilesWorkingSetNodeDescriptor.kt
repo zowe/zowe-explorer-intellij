@@ -70,7 +70,7 @@ class FilesWorkingSetNodeDescriptor(
         // TODO: sync filter nodes info with real nodes info if the path is similar (e.g. filter /u/ULADZ and a folder ULADZ)
         val ussFilterNodeDescriptor = NodeSyncService.getService()
           .getOrCreateFilterNodeDescriptor(
-            UssFilterNodeDescriptor.formUssBasePath(host),
+            UssFilterNodeDescriptor.formUssBasePathFromHost(host),
             ussPath.path
           ) {
             UssFilterNodeDescriptor(

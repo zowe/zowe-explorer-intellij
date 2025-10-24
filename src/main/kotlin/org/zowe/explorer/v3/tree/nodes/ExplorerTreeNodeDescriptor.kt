@@ -26,7 +26,11 @@ open class ExplorerTreeNodeDescriptor(
   var isLeaf: Boolean = true,
   var hasExpandChevron: Boolean = false
 ) {
-  private val associatedNodes: MutableList<ExplorerTreeNode> = mutableListOf()
+  /**
+   * A mutable list of [ExplorerTreeNode]'s, associated with the descriptor.
+   * Is used to operate on nodes representation from a single endpoint
+   */
+  val associatedNodes: MutableList<ExplorerTreeNode> = mutableListOf()
 
   protected open val genuinePresentationData = PresentationData()
     .also {
@@ -61,26 +65,9 @@ open class ExplorerTreeNodeDescriptor(
     associatedNodes.add(node)
   }
 
-  fun invalidateAssociatedNodes() {
+  /** Trigger [ExplorerTreeNode]'s invalidation on the nodes, associated with this descriptor */
+  open fun invalidateAssociatedNodes() {
     associatedNodes
-      .fold(mutableMapOf<Project, MutableList<ExplorerTreeNode>>()) { projectsToNodes, node ->
-        projectsToNodes.getOrPut(node.project) { mutableListOf() }.add(node)
-        projectsToNodes
-      }
-      .forEach { (project, nodes) ->
-        val filesExplorerComponent = ExplorerTreeComponentService.getService()
-          .getFilesExplorerComponent(project)
-        nodes.forEach { node ->
-          filesExplorerComponent.invalidateNode(node, true)
-        }
-      }
-  }
-
-  fun invalidateAssociatedParents() {
-    associatedNodes
-      .mapNotNull { it.parent }
-      .distinct()
-      .filterIsInstance<ExplorerTreeNode>()
       .fold(mutableMapOf<Project, MutableList<ExplorerTreeNode>>()) { projectsToNodes, node ->
         projectsToNodes.getOrPut(node.project) { mutableListOf() }.add(node)
         projectsToNodes

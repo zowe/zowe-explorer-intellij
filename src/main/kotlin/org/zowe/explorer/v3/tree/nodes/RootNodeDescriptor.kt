@@ -6,17 +6,9 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
 
-import com.intellij.ide.projectView.PresentationData
-
-// TODO: doc
-class RootNodeDescriptor : ExplorerTreeNodeDescriptor(isLeaf=false, hasExpandChevron=true) {
-//  override fun updateNode(presentationData: PresentationData) {}
-}
+/** Root node descriptor. Is designed for an invisible root nodes that will hold working set nodes */
+class RootNodeDescriptor : ExplorerTreeNodeDescriptor(isLeaf=false, hasExpandChevron=true)

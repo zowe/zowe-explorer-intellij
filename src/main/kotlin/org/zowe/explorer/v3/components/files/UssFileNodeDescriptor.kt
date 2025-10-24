@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.components.files
@@ -21,8 +17,13 @@ import org.zowe.explorer.v3.tree.nodes.Traversable
 
 // TODO: doc
 class UssFileNodeDescriptor(
-  displayName: String,
-  override val path: List<String>,
+  override val elemName: String,
+  override val placingPath: List<String>,
   override var connectionConfigUuid: String
-) : ExplorerTreeNodeDescriptor(displayName, "USS file", AllIcons.FileTypes.Text),
+) : ExplorerTreeNodeDescriptor(elemName, "USS file", AllIcons.FileTypes.Text),
   ConnectionConfigRelated, Traversable
+{
+  override fun getExactPath(): List<String> {
+    return placingPath + elemName
+  }
+}

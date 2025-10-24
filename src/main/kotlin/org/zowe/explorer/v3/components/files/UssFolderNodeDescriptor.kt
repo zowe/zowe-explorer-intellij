@@ -11,48 +11,45 @@
 package org.zowe.explorer.v3.components.files
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.util.treeView.PresentableNodeDescriptor
-import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperationData
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperationData
+import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.Renameable
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
-import org.zowe.explorer.v3.tree.nodes.FileFetcherNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.LazyExpandable
+import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.Refreshable
-import org.zowe.explorer.v3.tree.nodes.UpdateInfoHolder
+import org.zowe.explorer.v3.tree.nodes.Traversable
 
 // TODO: doc
 class UssFolderNodeDescriptor(
   displayName: String,
-  var pathFilter: String,
-  override var path: List<String>,
+  parentFetchFilter: String,
   override var connectionConfigUuid: String,
-) : FileFetcherNodeDescriptor(
+) : FetcherNodeDescriptor(
   displayName,
+  basePath = UssFilterNodeDescriptor.formUssBasePathFromConnectionConfig(connectionConfigUuid),
+  filterPath = UssFilterNodeDescriptor.formUssFilterPath(parentFetchFilter) + "$displayName/",
   "USS folder",
   AllIcons.Nodes.Folder,
   connectionConfigUuid=connectionConfigUuid
-), Renameable, LazyExpandable, Refreshable, UpdateInfoHolder {
-  override var wasExpanded = false
-  override val textToPreserve = listOf(
-    PresentableNodeDescriptor.ColoredFragment(
-      displayName,
-      SimpleTextAttributes.REGULAR_ATTRIBUTES
-    )
-  )
+), Renameable, Refreshable, Traversable
+{
+  private val fetchPath = basePath + filterPath
 
-  override fun expandNode(node: ExplorerTreeNode) {
-    if (!wasExpanded) {
-      setUpdateInfo(genuinePresentationData)
-    }
-    wasExpanded = true
-    getNodeChildren(node)
-    invalidateAssociatedNodes()
-  }
+  override val fetchFilter = filterPath.joinToString("").dropLast(1)
+
+  override val placingPath = basePath + filterPath.dropLast(1)
+
+  override val elemName = displayName
+
+  override val invalidationPath = placingPath
+
+  override val invalidationElem = displayName
+
+  override fun getExactPath() = placingPath + elemName
 
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
     return if (connectionConfigUuid.isEmpty()) {
@@ -66,7 +63,7 @@ class UssFolderNodeDescriptor(
     } else {
       if (wasExpanded) {
         val operation = LoadUssNodesOperation(
-          LoadUssNodesOperationData(node, path, pathFilter)
+          LoadUssNodesOperationData(node, fetchPath, fetchFilter)
         )
         operation.run().loadedNodes
       } else {
@@ -80,12 +77,10 @@ class UssFolderNodeDescriptor(
   }
 
   override fun refreshNode(node: ExplorerTreeNode) {
-    setUpdateInfo(genuinePresentationData)
     val operation = RefreshUssNodesOperation(
-      RefreshUssNodesOperationData(node, path, pathFilter)
+      RefreshUssNodesOperationData(node, fetchPath, fetchFilter)
     )
     operation.run()
-    invalidateAssociatedNodes()
   }
 
   override fun renameNode() {

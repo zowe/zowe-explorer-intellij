@@ -6,17 +6,15 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.newoperations
 
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
+import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 
 // TODO: doc
 interface LoadNodesOperation : Operation {
   suspend fun fetchChildren(): List<ExplorerTreeNode>
+  fun setNodesRefreshInfo(fetcherNodeDescriptor: FetcherNodeDescriptor)
 }

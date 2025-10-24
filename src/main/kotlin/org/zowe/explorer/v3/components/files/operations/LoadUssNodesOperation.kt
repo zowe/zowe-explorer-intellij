@@ -21,6 +21,7 @@ import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.ErrorNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
+import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NodeSyncService
 import org.zowe.kotlinsdk.core.ZoweProfileManager
@@ -69,26 +70,34 @@ class LoadUssNodesOperation(
       listFilesResponse
         .items
         .filter { it.name != "." && it.name != ".." }
-        .map {
-          if (it.fileType == FileItem.FileType.DIRECTORY) {
-            val ussPath = operationData.path + "${it.name}/"
-            val ussFolderNodeDescriptor = UssFolderNodeDescriptor(
-              it.name,
-              "${operationData.filter}/${it.name}",
-              ussPath,
-              connectionConfigUuid = parentNodeData.connectionConfigUuid
-            )
-            val ussFolderNode = ExplorerTreeNode(ussFolderNodeDescriptor, parentNode.project, parentNode)
-            ussFolderNode
+        .map { ussEntity ->
+          val ussNodeDescriptor = if (ussEntity.fileType == FileItem.FileType.DIRECTORY) {
+            NodeSyncService.getService()
+              .getOrCreateRealNodeDescriptor(operationData.path, ussEntity.name) {
+                UssFolderNodeDescriptor(
+                  ussEntity.name,
+                  operationData.filter,
+                  connectionConfigUuid = parentNodeData.connectionConfigUuid
+                )
+              }
           } else {
-            val ussPath = operationData.path + it.name
-            val ussFileNodeDescriptor = UssFileNodeDescriptor(it.name, ussPath, connectionConfigUuid = parentNodeData.connectionConfigUuid)
-            val ussFileNode = ExplorerTreeNode(ussFileNodeDescriptor, parentNode.project, parentNode)
-            ussFileNode
+            NodeSyncService.getService()
+              .getOrCreateRealNodeDescriptor(operationData.path, ussEntity.name) {
+                UssFileNodeDescriptor(
+                  ussEntity.name,
+                  operationData.path,
+                  connectionConfigUuid = parentNodeData.connectionConfigUuid
+                )
+              }
           }
+          ExplorerTreeNode(ussNodeDescriptor, parentNode.project, parentNode)
         }
         .ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), parentNode.project, parentNode)) }
     }
+  }
+
+  override fun setNodesRefreshInfo(fetcherNodeDescriptor: FetcherNodeDescriptor) {
+    fetcherNodeDescriptor.setUpdateInfo()
   }
 
   override fun run(): LoadUssNodesOperationResult {

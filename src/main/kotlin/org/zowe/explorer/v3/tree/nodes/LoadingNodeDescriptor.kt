@@ -18,11 +18,7 @@ import com.intellij.ui.SimpleTextAttributes
 class LoadingNodeDescriptor(
   displayName: String = "loading...",
   tooltip: String = "Loading..."
-) : ExplorerTreeNodeDescriptor(displayName, tooltip, AnimatedIcon.Default()),
-  Traversable, Ephemeral
-{
-  override val path: List<String> = listOf()
-
+) : ExplorerTreeNodeDescriptor(displayName, tooltip, AnimatedIcon.Default()), Ephemeral {
   override val genuinePresentationData: PresentationData
     get() {
       return super.genuinePresentationData

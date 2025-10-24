@@ -19,11 +19,7 @@ class ErrorNodeDescriptor(
   errorText: String = "Unknown error",
   errorTooltip: String = "",
   icon: Icon? = null
-) : ExplorerTreeNodeDescriptor(errorText, errorTooltip, icon),
-  Traversable, Ephemeral
-{
-  override val path: List<String> = listOf()
-
+) : ExplorerTreeNodeDescriptor(errorText, errorTooltip, icon), Ephemeral {
   override val genuinePresentationData: PresentationData
     get() = super.genuinePresentationData
       .also {

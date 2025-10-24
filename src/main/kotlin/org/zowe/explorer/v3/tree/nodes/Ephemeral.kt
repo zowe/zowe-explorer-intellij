@@ -6,16 +6,20 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.tree.nodes
 
+// TODO: doc update
 /**
  * Describes node descriptors that do not represent the real object on the mainframe side.
  * These nodes are only needed to describe the state of the node path when there are no real children available for it
  */
-interface Ephemeral
+interface Ephemeral : Traversable {
+  override val elemName: String
+    get() = ""
+  override val placingPath: List<String>
+    get() = listOf()
+
+  override fun getExactPath(): List<String> = listOf()
+}

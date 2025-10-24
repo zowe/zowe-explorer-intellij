@@ -175,6 +175,14 @@ open class PathTree {
   }
 
   /**
+   * Get the element under the specified [placingPath] by the [elemName]
+   * @return the found element or null if it does not exist
+   */
+  fun getPathElement(placingPath: List<String>, elemName: String): Traversable? {
+    return getPathElements(placingPath).find { it.elemName == elemName }
+  }
+
+  /**
    * Update the specified path with the new path elements.
    * Will remove all [org.zowe.explorer.v3.tree.nodes.Ephemeral] elements from the existing path,
    * refresh the stored elements info with the data from [newPathElements],
@@ -190,18 +198,22 @@ open class PathTree {
       .filter { newPathElement ->
         pathNode.pathElements
           .filter { it !is Ephemeral }
-          .find { oldPathElement -> newPathElement.path == oldPathElement.path } == null
+          .find { oldPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() } == null
       }
     pathNode.pathElements
       .removeIf { oldPathElement ->
         oldPathElement is Ephemeral
-          || newPathElements.find { newPathElement -> newPathElement.path == oldPathElement.path } == null
+          || newPathElements.find { newPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() } == null
       }
     pathNode.pathElements.addAll(newPathElementsToAdd)
     return pathNode.pathElements
   }
 
-  // TODO: doc
+  /**
+   * Update the specified path with its children recursively
+   * @param pathStrings the path to update
+   * @param updateFn the update function to apply on the elements
+   */
   fun updatePathWithChildren(pathStrings: List<String>, updateFn: (Traversable) -> Unit) {
     val parentPathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
@@ -226,18 +238,18 @@ open class PathTree {
     return pathNode.pathElements
   }
 
-  // TODO: check if it is needed
-  fun removePathElement(pathElement: Traversable) {
-    val pathTreeNode = findPathTreeNodeByPath(pathElement.path)
-      ?: throw Exception("Path ${pathElement.path} is not yet initialized")
-    pathTreeNode.pathElements.remove(pathElement)
-    if (pathTreeNode.pathElements.isEmpty() && pathTreeNode.innerNodes.isEmpty()) {
-      val (pathSegmentToRemove, _) = pathTreeNode.parent
-        ?.innerNodes
-        ?.entries
-        ?.find { (_, innerNode) -> innerNode == pathTreeNode }
-        ?: return
-      pathTreeNode.parent.innerNodes.remove(pathSegmentToRemove)
-    }
-  }
+//  // TODO: check if it is needed
+//  fun removePathElement(pathElement: Traversable) {
+//    val pathTreeNode = findPathTreeNodeByPath(pathElement.path)
+//      ?: throw Exception("Path ${pathElement.path} is not yet initialized")
+//    pathTreeNode.pathElements.remove(pathElement)
+//    if (pathTreeNode.pathElements.isEmpty() && pathTreeNode.innerNodes.isEmpty()) {
+//      val (pathSegmentToRemove, _) = pathTreeNode.parent
+//        ?.innerNodes
+//        ?.entries
+//        ?.find { (_, innerNode) -> innerNode == pathTreeNode }
+//        ?: return
+//      pathTreeNode.parent.innerNodes.remove(pathSegmentToRemove)
+//    }
+//  }
 }
