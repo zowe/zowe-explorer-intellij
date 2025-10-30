@@ -12,5 +12,6 @@ package org.zowe.explorer.v3.newoperations
 
 // TODO: doc
 interface RefreshNodesOperation : Operation {
-  fun generateLoadNodesOperation(): LoadNodesOperation
+  override val operationData: RefreshNodesOperationData
+  override fun run(): RefreshNodesOperationResult
 }

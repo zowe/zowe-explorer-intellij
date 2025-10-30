@@ -312,6 +312,8 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <postStartupActivity implementation="org.zowe.explorer.rateus.RateUsStartupActivity"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.v3.connection.ConnectionStartupActivity"/>
+
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>

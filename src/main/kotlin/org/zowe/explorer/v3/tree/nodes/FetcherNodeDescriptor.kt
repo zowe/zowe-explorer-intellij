@@ -12,6 +12,8 @@ package org.zowe.explorer.v3.tree.nodes
 
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.v3.newoperations.LoadNodesOperation
+import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
 import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import javax.swing.Icon
@@ -20,16 +22,13 @@ import javax.swing.Icon
 abstract class FetcherNodeDescriptor(
   displayName: String,
   val basePath: List<String>,
-  val filterPath: List<String>,
   tooltip: String,
   icon: Icon,
-  override var connectionConfigUuid: String
+  override val connectionConfigUuid: String
 ) : ExplorerTreeNodeDescriptor(displayName, tooltip, icon, isLeaf=false, hasExpandChevron=true),
-  LazyExpandable, ConnectionConfigRelated, UpdateInfoHolder
+  LazyExpandable, Refreshable, ConnectionConfigRelated, UpdateInfoHolder
 {
   abstract val fetchFilter: String
-  abstract val invalidationElem: String
-  abstract val invalidationPath: List<String>
 
   override val textToPreserve = listOf(
     PresentableNodeDescriptor.ColoredFragment(
@@ -53,5 +52,35 @@ abstract class FetcherNodeDescriptor(
         .getFilesExplorerComponent(node.project)
         .invalidateNode(node)
     }
+  }
+
+  abstract fun generateLoadNodesOperation(node: ExplorerTreeNode): LoadNodesOperation
+
+  override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
+    return if (connectionConfigUuid.isEmpty()) {
+      listOf(
+        ExplorerTreeNode(
+          NoItemsFoundNodeDescriptor("connection is not set"),
+          node.project,
+          node
+        )
+      )
+    } else {
+      if (wasExpanded) {
+        generateLoadNodesOperation(node).run().loadedNodes
+      } else {
+        listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
+      }
+    }
+  }
+
+  override fun isNodeReadyForRefresh(node: ExplorerTreeNode): Boolean {
+    return connectionConfigUuid.isNotEmpty() && wasExpanded
+  }
+
+  abstract fun generateRefreshNodesOperation(node: ExplorerTreeNode): RefreshNodesOperation
+
+  override fun refreshNode(node: ExplorerTreeNode) {
+    generateRefreshNodesOperation(node).run()
   }
 }

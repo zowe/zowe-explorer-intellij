@@ -12,8 +12,7 @@ package org.zowe.explorer.v3.components.files.operations
 
 import io.ktor.http.isSuccess
 import org.zowe.explorer.v3.api.ZosmfApiService
-import org.zowe.explorer.v3.components.files.UssFileNodeDescriptor
-import org.zowe.explorer.v3.components.files.UssFolderNodeDescriptor
+import org.zowe.explorer.v3.components.files.MemberNodeDescriptor
 import org.zowe.explorer.v3.connection.ZoweConnectionService
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.state.config.ConfigType
@@ -25,14 +24,12 @@ import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NodeSyncService
-import org.zowe.kotlinsdk.core.files.data.FileItem
-import org.zowe.kotlinsdk.providers.zowe.zosmf.files.definitions.ZosmfSymlinkMode
-import org.zowe.kotlinsdk.providers.zowe.zosmf.files.messaging.ZosmfListFilesRequest
-import org.zowe.kotlinsdk.providers.zowe.zosmf.files.messaging.ZosmfListFilesResponse
+import org.zowe.kotlinsdk.providers.zowe.zosmf.datasets.messaging.ZosmfListDatasetMembersRequest
+import org.zowe.kotlinsdk.providers.zowe.zosmf.datasets.messaging.ZosmfListDatasetMembersResponse
 
 // TODO: doc
-class LoadUssNodesOperation(
-  override val operationData: LoadUssNodesOperationData
+class LoadMemberNodesOperation(
+  override val operationData: LoadMemberNodesOperationData
 ) : LoadNodesOperation {
   override suspend fun fetchChildren(): List<ExplorerTreeNode> {
     val parentNode = operationData.node
@@ -44,18 +41,16 @@ class LoadUssNodesOperation(
       .getZoweConnectionManager(parentNode.project)
     val httpConnection = zoweConnectionManager.produceHttpConnection("zosmf", shouldOverrideWithEnv = true)
     connectionConfig as HttpConnectionConfig
-    val listFilesRequest = ZosmfListFilesRequest(
+    val listDataSetMembersRequest = ZosmfListDatasetMembersRequest(
       httpConnection,
-      filter = operationData.filter,
-      depth = 0,
-      followSymlinks = ZosmfSymlinkMode.REPORT
+      dsName = operationData.filter
     )
-    val listFilesResponse = ZosmfApiService.getService()
-      .files
-      .listFiles(listFilesRequest) as ZosmfListFilesResponse
-    return if (!listFilesResponse.status.isSuccess()) {
-      val errorCode = listFilesResponse.status.value
-      val errorDescription = listFilesResponse.status.description
+    val listDataSetMembersResponse = ZosmfApiService.getService()
+      .datasets
+      .listDatasetMembers(listDataSetMembersRequest) as ZosmfListDatasetMembersResponse
+    return if (!listDataSetMembersResponse.status.isSuccess()) {
+      val errorCode = listDataSetMembersResponse.status.value
+      val errorDescription = listDataSetMembersResponse.status.description
       listOf(
         ExplorerTreeNode(
           ErrorNodeDescriptor("Host returned $errorCode: $errorDescription"),
@@ -64,30 +59,21 @@ class LoadUssNodesOperation(
         )
       )
     } else {
-      listFilesResponse
-        .items
-        .filter { it.name != "." && it.name != ".." }
-        .map { ussEntity ->
-          val ussNodeDescriptor = if (ussEntity.fileType == FileItem.FileType.DIRECTORY) {
-            NodeSyncService.getService()
-              .getOrPutRealNodeDescriptor(operationData.path, ussEntity.name) {
-                UssFolderNodeDescriptor(
-                  ussEntity.name,
-                  operationData.filter,
-                  connectionConfigUuid = parentNodeData.connectionConfigUuid
-                )
-              }
-          } else {
-            NodeSyncService.getService()
-              .getOrPutRealNodeDescriptor(operationData.path, ussEntity.name) {
-                UssFileNodeDescriptor(
-                  ussEntity.name,
-                  operationData.path,
-                  connectionConfigUuid = parentNodeData.connectionConfigUuid
-                )
-              }
-          }
-          ExplorerTreeNode(ussNodeDescriptor, parentNode.project, parentNode)
+      listDataSetMembersResponse
+        .memberItems
+        .map { memberEntry ->
+          val memberNodeDescriptor = NodeSyncService.getService()
+            .getOrPutRealNodeDescriptor(
+              operationData.path,
+              memberEntry.memberName
+            ) {
+              MemberNodeDescriptor(
+                memberEntry.memberName,
+                operationData.path,
+                connectionConfigUuid = parentNodeData.connectionConfigUuid
+              )
+            }
+          ExplorerTreeNode(memberNodeDescriptor, parentNode.project, parentNode)
         }
         .ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), parentNode.project, parentNode)) }
     }
@@ -97,8 +83,8 @@ class LoadUssNodesOperation(
     fetcherNodeDescriptor.setUpdateInfo()
   }
 
-  override fun run(): LoadUssNodesOperationResult {
+  override fun run(): LoadMemberNodesOperationResult {
     val loadedNodes = NodeSyncService.getService().loadNodesForFetcherFilter(this)
-    return LoadUssNodesOperationResult(loadedNodes)
+    return LoadMemberNodesOperationResult(loadedNodes)
   }
 }

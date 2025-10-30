@@ -6,16 +6,21 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.newoperations
 
-// TODO: doc
+/**
+ * Operation interface. Provides a representation of an operation instance.
+ * Must contain an [operationData] as parameters of the operation to execute.
+ * Also inherited classes should implement [run] method for the operation to be able to run
+ */
 interface Operation {
   val operationData: OperationData
+
+  /**
+   * Run the operation
+   * @return [OperationResult] as the result of the operation run
+   */
   fun run(): OperationResult
 }

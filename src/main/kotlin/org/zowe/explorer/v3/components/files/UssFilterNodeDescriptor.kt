@@ -10,94 +10,27 @@
 
 package org.zowe.explorer.v3.components.files
 
-import com.intellij.icons.AllIcons
-import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperation
-import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperationData
-import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
-import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperationData
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
-import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.Renameable
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
-import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.Refreshable
+import org.zowe.explorer.v3.icons.ZoweExplorerIcons
+import org.zowe.explorer.v3.tree.nodes.RealNodeAssociation
 
 // TODO: doc
 class UssFilterNodeDescriptor(
   displayName: String,
-  override var connectionConfigUuid: String,
-) : FetcherNodeDescriptor(
+  connectionConfigUuid: String
+) : UssFetcherNodeDescriptor(
   displayName,
-  basePath = formUssBasePathFromConnectionConfig(connectionConfigUuid),
   filterPath = formUssFilterPath(displayName),
   "USS filter",
-  AllIcons.Nodes.Module,
-  connectionConfigUuid=connectionConfigUuid
-), Renameable, Refreshable {
-  companion object {
-    fun formUssBasePathFromHost(host: String): List<String> {
-      return listOf(host, "files", "uss")
-    }
-
-    fun formUssBasePathFromConnectionConfig(connectionConfigUuid: String): List<String> {
-      val connectionConfig = ConfigCacheService.getService()
-        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
-        ?: throw Exception("Connection config is not found for node $this")
-      val host = (connectionConfig as HttpConnectionConfig).host
-      return formUssBasePathFromHost(host)
-    }
-
-    fun formUssFilterPath(displayName: String): List<String> {
-      return if (displayName == "/") listOf(displayName)
-        else displayName.split("/").map { "$it/"}
-    }
-  }
-
-  private val fetchPath = basePath + filterPath
-
+  ZoweExplorerIcons.ussFilter,
+  connectionConfigUuid = connectionConfigUuid
+), RealNodeAssociation
+{
   override val fetchFilter = if (filterPath.size > 1) filterPath.joinToString("").dropLast(1) else filterPath[0]
 
-  override val invalidationElem = if (filterPath.size > 1) filterPath.last().dropLast(1) else ""
+  override val elemName = if (filterPath.size > 1) filterPath.last().dropLast(1) else ""
+  override val placingPath = basePath + if (filterPath.size > 1) filterPath.dropLast(1) else filterPath
 
-  override val invalidationPath = basePath + if (filterPath.size > 1) filterPath.dropLast(1) else filterPath
-
-  override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    return if (connectionConfigUuid.isEmpty()) {
-      listOf(
-        ExplorerTreeNode(
-          NoItemsFoundNodeDescriptor("connection is not set"),
-          node.project,
-          node
-        )
-      )
-    } else {
-      if (wasExpanded) {
-        val operation = LoadUssNodesOperation(
-          LoadUssNodesOperationData(node, fetchPath, fetchFilter)
-        )
-        operation.run().loadedNodes
-      } else {
-        listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
-      }
-    }
-  }
-
-  override fun isNodeReadyForRefresh(node: ExplorerTreeNode): Boolean {
-    return connectionConfigUuid.isNotEmpty() && wasExpanded
-  }
-
-  override fun refreshNode(node: ExplorerTreeNode) {
-    val operation = RefreshUssNodesOperation(
-      RefreshUssNodesOperationData(node, fetchPath, fetchFilter)
-    )
-    operation.run()
-  }
-
-  override fun renameNode() {
-    TODO("Not yet implemented")
+//  override fun renameNode() {
 //    if (nodeState == State.BUSY) {
 //      NotificationsService.getService()
 //        .notifyWarning(
@@ -122,7 +55,7 @@ class UssFilterNodeDescriptor(
 //        }
 //      }
 //    }
-  }
+//  }
 
 //  override fun updateNode(presentationData: PresentationData) {
 //    presentationData.tooltip = tooltip

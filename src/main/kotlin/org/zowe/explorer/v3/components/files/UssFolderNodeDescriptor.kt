@@ -11,80 +11,27 @@
 package org.zowe.explorer.v3.components.files
 
 import com.intellij.icons.AllIcons
-import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperation
-import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperationData
-import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
-import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperationData
-import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.Renameable
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
-import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.Refreshable
 import org.zowe.explorer.v3.tree.nodes.Traversable
 
 // TODO: doc
 class UssFolderNodeDescriptor(
   displayName: String,
   parentFetchFilter: String,
-  override var connectionConfigUuid: String,
-) : FetcherNodeDescriptor(
+  connectionConfigUuid: String,
+) : UssFetcherNodeDescriptor(
   displayName,
-  basePath = UssFilterNodeDescriptor.formUssBasePathFromConnectionConfig(connectionConfigUuid),
-  filterPath = UssFilterNodeDescriptor.formUssFilterPath(parentFetchFilter) + "$displayName/",
+  filterPath = formUssFilterPath(parentFetchFilter) + "$displayName/",
   "USS folder",
-  AllIcons.Nodes.Folder,
-  connectionConfigUuid=connectionConfigUuid
-), Renameable, Refreshable, Traversable
+  AllIcons.Modules.SourceRoot,
+  connectionConfigUuid = connectionConfigUuid
+), Traversable
 {
-  private val fetchPath = basePath + filterPath
-
   override val fetchFilter = filterPath.joinToString("").dropLast(1)
 
   override val placingPath = basePath + filterPath.dropLast(1)
-
   override val elemName = displayName
 
-  override val invalidationPath = placingPath
-
-  override val invalidationElem = displayName
-
-  override fun getExactPath() = placingPath + elemName
-
-  override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    return if (connectionConfigUuid.isEmpty()) {
-      listOf(
-        ExplorerTreeNode(
-          NoItemsFoundNodeDescriptor("connection is not set"),
-          node.project,
-          node
-        )
-      )
-    } else {
-      if (wasExpanded) {
-        val operation = LoadUssNodesOperation(
-          LoadUssNodesOperationData(node, fetchPath, fetchFilter)
-        )
-        operation.run().loadedNodes
-      } else {
-        listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
-      }
-    }
-  }
-
-  override fun isNodeReadyForRefresh(node: ExplorerTreeNode): Boolean {
-    return connectionConfigUuid.isNotEmpty() && wasExpanded
-  }
-
-  override fun refreshNode(node: ExplorerTreeNode) {
-    val operation = RefreshUssNodesOperation(
-      RefreshUssNodesOperationData(node, fetchPath, fetchFilter)
-    )
-    operation.run()
-  }
-
-  override fun renameNode() {
-    TODO("Not yet implemented")
+//  override fun renameNode() {
 //    if (nodeState == State.BUSY) {
 //      NotificationsService.getService()
 //        .notifyWarning(
@@ -109,7 +56,7 @@ class UssFolderNodeDescriptor(
 //        }
 //      }
 //    }
-  }
+//  }
 
 //  override fun updateNode(presentationData: PresentationData) {
 //    presentationData.tooltip = tooltip

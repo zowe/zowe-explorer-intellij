@@ -133,14 +133,29 @@ open class PathTree {
     return pathNode.pathState
   }
 
+  // TODO: doc
+  private fun setPathStateCascadelly(pathNode: PathTreeNode, newPathState: PathState) {
+    pathNode.pathState = newPathState
+    pathNode.innerNodes
+      .values
+      .forEach { childPathNode ->
+        setPathStateCascadelly(childPathNode, newPathState)
+      }
+  }
+
   /**
+   * TODO: doc
    * Set the path state
    * @param pathStrings the path strings list to set the path state by
    * @param newPathState the path state to set for the path
    */
-  fun setPathState(pathStrings: List<String>, newPathState: PathState) {
+  fun setPathState(pathStrings: List<String>, newPathState: PathState, childrenShouldReflect: Boolean = false) {
     val pathNode = formPathTree(pathStrings)
-    pathNode.pathState = newPathState
+    if (childrenShouldReflect) {
+      setPathStateCascadelly(pathNode, newPathState)
+    } else {
+      pathNode.pathState = newPathState
+    }
   }
 
   /**
@@ -183,6 +198,7 @@ open class PathTree {
   }
 
   /**
+   * TODO: doc update
    * Update the specified path with the new path elements.
    * Will remove all [org.zowe.explorer.v3.tree.nodes.Ephemeral] elements from the existing path,
    * refresh the stored elements info with the data from [newPathElements],
@@ -192,6 +208,24 @@ open class PathTree {
    * @return the list of the path elements stored under the path after the update
    */
   fun updatePath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> {
+    val pathNode = findPathTreeNodeByPath(pathStrings)
+      ?: throw Exception("Path $pathStrings is not yet initialized")
+    pathNode.pathElements.removeIf { oldPathElement -> oldPathElement is Ephemeral }
+    pathNode.pathElements.map { oldPathElement ->
+      newPathElements.find { newPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() }
+        ?: oldPathElement
+    }
+    val newPathElementsToAdd = newPathElements
+      .filter { newPathElement ->
+        pathNode.pathElements
+          .find { oldPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() } == null
+      }
+    pathNode.pathElements.addAll(newPathElementsToAdd)
+    return pathNode.pathElements
+  }
+
+  // TODO: doc
+  fun rewritePath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> {
     val pathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
     val newPathElementsToAdd = newPathElements

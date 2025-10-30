@@ -14,11 +14,11 @@ import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
 import org.zowe.explorer.v3.tree.nodes.NodeSyncService
 
 // TODO: doc
-class RefreshUssNodesOperation(
-  override val operationData: RefreshUssNodesOperationData
+class RefreshMemberNodesOperation(
+  override val operationData: RefreshMemberNodesOperationData
 ) : RefreshNodesOperation {
-  override fun run(): RefreshUssNodesOperationResult {
+  override fun run(): RefreshMemberNodesOperationResult {
     NodeSyncService.getService().refreshNodesForFetcherFilter(this)
-    return RefreshUssNodesOperationResult()
+    return RefreshMemberNodesOperationResult()
   }
 }

@@ -109,7 +109,7 @@ class GetFilePropertiesAction : AnAction() {
                               group = attributes.groupId ?: ""
                             ), attributes.path
                           ),
-                          connectionConfig = connectionConfig
+                          connectionConfig = connectionConfig as ConnectionConfig
                         ),
                         progressIndicator = it
                       )
@@ -132,7 +132,7 @@ class GetFilePropertiesAction : AnAction() {
                       dataOpsManager.performOperation(
                         operation = UssChangeModeOperation(
                           request = UssChangeModeParams(ChangeMode(mode = attributes.fileMode), attributes.path),
-                          connectionConfig = connectionConfig
+                          connectionConfig = connectionConfig as ConnectionConfig
                         ),
                         progressIndicator = it
                       )

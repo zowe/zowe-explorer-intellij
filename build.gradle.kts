@@ -36,52 +36,32 @@ data class PluginDescriptor(
   val sourceFolder: String, // used as the source root for specifics of this build
 )
 
+// Supported build number ranges and IntelliJ Platform versions -> https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
 val availableDescriptors = listOf(
   PluginDescriptor(
-    jvmTargetVersion = JavaVersion.VERSION_17,
-    since = properties("pluginSinceBuild").get(),
-    getUntil = { provider { "232.*" } },
-    sdkVersion = "2023.1.7",
-    sourceFolder = "IC-231"
-  ),
-  PluginDescriptor(
-    jvmTargetVersion = JavaVersion.VERSION_17,
-    since = "233.11799",
-    getUntil = { provider { "241.*" } },
-    sdkVersion = "2023.3",
-    sourceFolder = "IC-233"
-  ),
-  PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_21,
-    since = "242.20224",
-    getUntil = { provider { "242.*" } },
-    sdkVersion = "2024.2",
-    sourceFolder = "IC-242"
-  ),
-  PluginDescriptor(
-    jvmTargetVersion = JavaVersion.VERSION_21,
-    since = "243.12818",
-    getUntil = { provider { "243.*" } },
-    sdkVersion = "2024.3",
-    sourceFolder = "IC-243"
-  ),
-  PluginDescriptor(
-    jvmTargetVersion = JavaVersion.VERSION_21,
-    since = "251.23774",
+    since = "251.28774",
     getUntil = { provider { null } },
-    sdkVersion = "2025.1",
+    sdkVersion = "2025.1.6",
     sourceFolder = "IC-251"
   )
+// ===== Left as an example: =====
+//  PluginDescriptor(
+//    jvmTargetVersion = JavaVersion.VERSION_21,
+//    since = "233.11799",
+//    getUntil = { provider { "241.*" } },
+//    sdkVersion = "2023.3",
+//    sourceFolder = "IC-233"
+//  ),
 )
-
-val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
+val productName = System.getenv("PRODUCT_NAME") ?: "IC-251"
 val descriptor = availableDescriptors.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
 plugins {
-  alias(libs.plugins.gradle) // IntelliJ Platform Gradle Plugin
+  alias(libs.plugins.gradle.platform.plugin) // IntelliJ Platform Gradle Plugin
 //  alias(libs.plugins.kotlinJvm)
   id("org.jetbrains.kotlin.jvm")
   alias(libs.plugins.sonarqube)
@@ -155,11 +135,25 @@ dependencies {
   implementation(libs.okhttp3)
   implementation(libs.jgrapht.core)
   implementation(libs.java.keytar)
-  implementation(libs.zowe.kotlin.sdk)
+  implementation(libs.zowe.kotlin.sdk) {
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+  }
+  implementation(libs.ktor.client.cio) {
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+  }
+  implementation(libs.ktor.client.content.negotiation) {
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+  }
+  implementation(libs.ktor.serialization.kotlinx.json) {
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+  }
   implementation(libs.json.schema.validator) // Needed for Zowe Client Kotlin SDK to be able to validate zowe.schema.json
   implementation(libs.dotenv) // Needed for Zowe Client Kotlin SDK to load environment variables
-  if (productName >= "IC-242") {
-    testImplementation(libs.mockk) {
+  testImplementation(libs.mockk) {
       exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
       exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
     }
@@ -171,11 +165,6 @@ dependencies {
       exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
       exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
     }
-  } else {
-    testImplementation(libs.mockk)
-    testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.kotest.runner.junit5)
-  }
 }
 
 intellijPlatform {

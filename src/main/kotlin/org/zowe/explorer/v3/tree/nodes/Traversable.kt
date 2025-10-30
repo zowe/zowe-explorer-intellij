@@ -12,16 +12,15 @@ package org.zowe.explorer.v3.tree.nodes
 
 /**
  * Interface to mark an element as something that could be identified by the exact path
- * @property placingPath the path where the element is placed
- * @property elemName the element name to identify the element placed under the [placingPath]
+ * @see [RealNodeAssociation]
  */
-interface Traversable {
-  val placingPath: List<String>
-  val elemName: String
+interface Traversable : RealNodeAssociation {
+  override val placingPath: List<String>
+  override val elemName: String
 
   /**
    * Get the element's exact placing path
    * @return the list of strings that identify the element by the path
    */
-  fun getExactPath(): List<String>
+  fun getExactPath(): List<String> = placingPath + elemName
 }

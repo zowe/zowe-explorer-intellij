@@ -8,13 +8,15 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.newoperations
+package org.zowe.explorer.v3.connection
 
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 
 // TODO: doc
-interface RefreshNodesOperationData : OperationData {
-  val node: ExplorerTreeNode
-  val path: List<String>
-  val filter: String
+class ConnectionStartupActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    ZoweConnectionService.getService()
+      .initConnectivity(project)
+  }
 }

@@ -15,6 +15,8 @@ import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 
 // TODO: doc
 interface LoadNodesOperation : Operation {
+  override val operationData: LoadNodesOperationData
   suspend fun fetchChildren(): List<ExplorerTreeNode>
   fun setNodesRefreshInfo(fetcherNodeDescriptor: FetcherNodeDescriptor)
+  override fun run(): LoadNodesOperationResult
 }

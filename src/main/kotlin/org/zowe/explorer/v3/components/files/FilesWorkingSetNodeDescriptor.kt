@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.components.files
@@ -29,58 +25,39 @@ class FilesWorkingSetNodeDescriptor(
   config: FilesWorkingSetConfig?
 ) : WorkingSetNodeDescriptor(displayName, "Files Working Set", config) {
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    // TODO: complete
-//    nodeDescriptor as FilesWorkingSetNodeData
-//    nodeDescriptor.config as FilesWorkingSetConfig?
-//    val dsMasks = nodeDescriptor.config?.dsMasks
-//    val ussFilters = nodeDescriptor.config?.ussPaths
-//    val dsMaskNodes = dsMasks
-//      ?.map {
-//        DatasetMaskNode(
-//          project,
-//          DatasetMaskNodeData(
-//            it.mask,
-//            connectionConfigUuid=nodeDescriptor.config?.connectionConfigUuid ?: ""
-//          ),
-//          this
-//        )
-//      }
-//      ?: listOf()
-//    val ussFilterNodes = ussFilters
-//      ?.map {
-//        UssFilterNode(
-//          project,
-//          UssFilterNodeData(
-//            it.path,
-//            connectionConfigUuid=nodeDescriptor.config?.connectionConfigUuid ?: ""
-//          ),
-//          this
-//        )
-//      }
-//      ?: listOf()
-//    return (dsMaskNodes + ussFilterNodes)
-//      .ifEmpty { listOf(NoItemsFoundNode(project, parent=this)) }
+    val filesWorkingSetConfig = config as? FilesWorkingSetConfig
+      ?: throw Exception("Files working set config must not be null")
     val connectionConfig = ConfigCacheService.getService()
-      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, config?.connectionConfigUuid ?: "")
+      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, filesWorkingSetConfig.connectionConfigUuid)
       ?: throw Exception("Connection config is not found for node $this")
     val host = (connectionConfig as HttpConnectionConfig).host
-    return (config as FilesWorkingSetConfig?)
-      ?.ussPaths
-      ?.map { ussPath ->
-        // TODO: sync filter nodes info with real nodes info if the path is similar (e.g. filter /u/ULADZ and a folder ULADZ)
+
+    val dsMaskNodeDescriptors = filesWorkingSetConfig
+      .dsMasks
+      .map { dsMask ->
+        val dsMaskNodeDescriptor = NodeSyncService.getService()
+          .getOrPutFilterNodeDescriptor(
+            formDsBasePathFromHost(host),
+            dsMask.mask
+          ) {
+            DatasetMaskNodeDescriptor(dsMask.mask, filesWorkingSetConfig.connectionConfigUuid)
+          }
+        ExplorerTreeNode(dsMaskNodeDescriptor, node.project, node)
+      }
+
+    val ussFilterNodeDescriptors = filesWorkingSetConfig
+      .ussPaths
+      .map { ussPath ->
         val ussFilterNodeDescriptor = NodeSyncService.getService()
-          .getOrCreateFilterNodeDescriptor(
-            UssFilterNodeDescriptor.formUssBasePathFromHost(host),
+          .getOrPutFilterNodeDescriptor(
+            formUssBasePathFromHost(host),
             ussPath.path
           ) {
-            UssFilterNodeDescriptor(
-              ussPath.path,
-              connectionConfigUuid = config?.connectionConfigUuid ?: ""
-            )
+            UssFilterNodeDescriptor(ussPath.path, filesWorkingSetConfig.connectionConfigUuid)
           }
         ExplorerTreeNode(ussFilterNodeDescriptor, node.project, node)
       }
-      ?.ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node)) }
-      ?: listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
+    return (dsMaskNodeDescriptors + ussFilterNodeDescriptors)
+      .ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node)) }
   }
 }

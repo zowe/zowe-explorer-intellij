@@ -16,9 +16,12 @@ import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.Traversable
 
 // TODO: doc
-class UssFileNodeDescriptor(
+class MemberNodeDescriptor(
   override val elemName: String,
   override val placingPath: List<String>,
   override var connectionConfigUuid: String
-) : ExplorerTreeNodeDescriptor(elemName, "USS file", AllIcons.FileTypes.Any_type),
-  ConnectionConfigRelated, Traversable
+) : ExplorerTreeNodeDescriptor(
+  elemName,
+  "Data set member",
+  AllIcons.FileTypes.Any_type
+), ConnectionConfigRelated, Traversable

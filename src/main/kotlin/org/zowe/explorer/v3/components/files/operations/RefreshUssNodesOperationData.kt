@@ -18,8 +18,4 @@ data class RefreshUssNodesOperationData(
   override val node: ExplorerTreeNode,
   override val path: List<String>,
   override val filter: String
-) : RefreshNodesOperationData {
-  override fun toLoadNodesOperationData(): LoadUssNodesOperationData {
-    return LoadUssNodesOperationData(node, path, filter)
-  }
-}
+) : RefreshNodesOperationData

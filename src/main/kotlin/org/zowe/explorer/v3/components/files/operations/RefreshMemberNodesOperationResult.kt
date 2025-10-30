@@ -8,13 +8,9 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.newoperations
+package org.zowe.explorer.v3.components.files.operations
 
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
+import org.zowe.explorer.v3.newoperations.RefreshNodesOperationResult
 
 // TODO: doc
-interface RefreshNodesOperationData : OperationData {
-  val node: ExplorerTreeNode
-  val path: List<String>
-  val filter: String
-}
+class RefreshMemberNodesOperationResult() : RefreshNodesOperationResult
