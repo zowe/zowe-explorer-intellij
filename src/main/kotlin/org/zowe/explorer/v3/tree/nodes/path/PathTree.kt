@@ -133,29 +133,14 @@ open class PathTree {
     return pathNode.pathState
   }
 
-  // TODO: doc
-  private fun setPathStateCascadelly(pathNode: PathTreeNode, newPathState: PathState) {
-    pathNode.pathState = newPathState
-    pathNode.innerNodes
-      .values
-      .forEach { childPathNode ->
-        setPathStateCascadelly(childPathNode, newPathState)
-      }
-  }
-
   /**
-   * TODO: doc
    * Set the path state
    * @param pathStrings the path strings list to set the path state by
    * @param newPathState the path state to set for the path
    */
-  fun setPathState(pathStrings: List<String>, newPathState: PathState, childrenShouldReflect: Boolean = false) {
+  fun setPathState(pathStrings: List<String>, newPathState: PathState) {
     val pathNode = formPathTree(pathStrings)
-    if (childrenShouldReflect) {
-      setPathStateCascadelly(pathNode, newPathState)
-    } else {
-      pathNode.pathState = newPathState
-    }
+    pathNode.pathState = newPathState
   }
 
   /**
@@ -244,19 +229,26 @@ open class PathTree {
   }
 
   /**
-   * Update the specified path with its children recursively
-   * @param pathStrings the path to update
-   * @param updateFn the update function to apply on the elements
+   * Apply updates of the [applyFn] to elements by the specified path
+   * @param pathStrings the path to apply the function on elements of
+   * @param shouldUpdateChildren if "true", will update children elements recursively ("true" is a default)
+   * @param applyFn the function to apply on the elements
    */
-  fun updatePathWithChildren(pathStrings: List<String>, updateFn: (Traversable) -> Unit) {
+  fun applyToPathElements(
+    pathStrings: List<String>,
+    shouldUpdateChildren: Boolean = true,
+    applyFn: (Traversable) -> Unit
+  ) {
     val parentPathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
-    parentPathNode.pathElements.forEach(updateFn)
-    parentPathNode.innerNodes
-      .keys
-      .forEach { nextPathStr ->
-        updatePathWithChildren(pathStrings + listOf(nextPathStr), updateFn)
-      }
+    parentPathNode.pathElements.forEach(applyFn)
+    if (shouldUpdateChildren) {
+      parentPathNode.innerNodes
+        .keys
+        .forEach { nextPathStr ->
+          applyToPathElements(pathStrings + listOf(nextPathStr), true, applyFn)
+        }
+    }
   }
 
   /**

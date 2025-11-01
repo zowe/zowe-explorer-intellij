@@ -27,12 +27,15 @@ import org.zowe.explorer.v3.tree.nodes.path.PathTree
 import kotlin.collections.ifEmpty
 import kotlin.collections.map
 
-// TODO: doc
+/** Plain filter nodes loader. Provides functionality to manage nodes loading for [PlainFilterNodeDescriptor]'s */
 class PlainFilterNodesLoader(
   pathTree: PathTree,
   filterNodeDescriptors: MutableMap<List<String>, MutableMap<String, FetcherNodeDescriptor>>
 ) : NodesLoader(pathTree, filterNodeDescriptors) {
-  // TODO: doc
+  /**
+   * Find direct children node descriptors of the provided [PlainFilterNodeDescriptor].
+   * Will match node descriptors against the provided filter and return the [ExplorerTreeNodeDescriptor]'s list
+   */
   private fun findDirectChildrenNodeDescriptors(
     plainFilterNodeDescriptor: PlainFilterNodeDescriptor
   ): List<ExplorerTreeNodeDescriptor> {
@@ -59,6 +62,7 @@ class PlainFilterNodesLoader(
     )
   }
 
+  // TODO: doc
   override fun startChildrenLoading(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val operationData = operation.operationData
     val parentNode = operationData.node
@@ -71,15 +75,30 @@ class PlainFilterNodesLoader(
       override fun run(indicator: ProgressIndicator) {
         runBlocking {
           parentNodeData.filterState = PlainFilterNodeDescriptor.FilterState.BUSY
-          // TODO: update children nodes as well
-          val assocRealNodeDescriptors = findDirectChildrenNodeDescriptors(parentNodeData)
           findRelatedDescriptors(parentNodeData)
             .forEach { foundDescriptor ->
               operation.setNodesRefreshInfo(foundDescriptor)
             }
-          pathTree.updatePathWithChildren(operationData.path) {
-            if (it is ExplorerTreeNodeDescriptor && assocRealNodeDescriptors.contains(it)) {
-              it.isBusy = true
+          val directChildrenDescriptors = findDirectChildrenNodeDescriptors(parentNodeData)
+          // Update direct + next level children
+          pathTree.applyToPathElements(
+            operationData.path,
+            false
+          ) { firstLvlChild ->
+            if (firstLvlChild is ExplorerTreeNodeDescriptor && directChildrenDescriptors.contains(firstLvlChild)) {
+              firstLvlChild.isBusy = true
+              val secondLvlChildrenPath = operationData.path + firstLvlChild.elemName
+              if (firstLvlChild is FetcherNodeDescriptor) {
+                pathTree.getOrInitPathState(secondLvlChildrenPath)
+                pathTree.applyToPathElements(
+                  secondLvlChildrenPath,
+                  false
+                ) { secondLvlChild ->
+                  if (secondLvlChild is ExplorerTreeNodeDescriptor) {
+                    secondLvlChild.isBusy = true
+                  }
+                }
+              }
             }
           }
           filterNodeDescriptors.getOrDefault(operationData.path, mapOf())
@@ -129,11 +148,26 @@ class PlainFilterNodesLoader(
 
       override fun onFinished() {
         parentNodeData.wasLoadedBefore = true
-        // TODO: update children nodes as well
-        val assocRealNodeDescriptors = findDirectChildrenNodeDescriptors(parentNodeData)
-        pathTree.updatePathWithChildren(operationData.path) {
-          if (it is ExplorerTreeNodeDescriptor && assocRealNodeDescriptors.contains(it)) {
-            it.isBusy = false
+        val directChildrenDescriptors = findDirectChildrenNodeDescriptors(parentNodeData)
+        // Update direct + next level children
+        pathTree.applyToPathElements(
+          operationData.path,
+          false
+        ) { firstLvlChild ->
+          if (firstLvlChild is ExplorerTreeNodeDescriptor && directChildrenDescriptors.contains(firstLvlChild)) {
+            firstLvlChild.isBusy = false
+            val secondLvlChildrenPath = operationData.path + firstLvlChild.elemName
+            if (firstLvlChild is FetcherNodeDescriptor) {
+              pathTree.getOrInitPathState(secondLvlChildrenPath)
+              pathTree.applyToPathElements(
+                firstLvlChild.basePath + firstLvlChild.elemName,
+                false
+              ) { secondLvlChild ->
+                if (secondLvlChild is ExplorerTreeNodeDescriptor) {
+                  secondLvlChild.isBusy = false
+                }
+              }
+            }
           }
         }
         filterNodeDescriptors.getOrDefault(operationData.path, mapOf())
@@ -180,6 +214,7 @@ class PlainFilterNodesLoader(
     }
   }
 
+  // TODO: doc
   override fun getBusyChildren(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData
     val datasetFilterNode = loadNodesOperationData.node
@@ -207,6 +242,7 @@ class PlainFilterNodesLoader(
     }
   }
 
+  // TODO: doc
   override fun getLoadedChildren(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData
     val datasetFilterNode = loadNodesOperationData.node
@@ -224,6 +260,7 @@ class PlainFilterNodesLoader(
       }
   }
 
+  // TODO: doc
   override fun loadNodes(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData
     val parentNode = loadNodesOperationData.node
@@ -242,6 +279,7 @@ class PlainFilterNodesLoader(
     }
   }
 
+  // TODO: doc
   override fun refreshNodes(operation: RefreshNodesOperation) {
     val refreshNodesOperationData = operation.operationData
     val parentNode = refreshNodesOperationData.node

@@ -37,12 +37,11 @@ open class ExplorerTreeNode(
   }
 
   override fun update(presentation: PresentationData) {
-    nodeDescriptor.updateNode(presentation)
+    nodeDescriptor.updatePresentation(presentation)
   }
 
   init {
     this.parent = parent
-    nodeDescriptor.setNodeIcon(nodeDescriptor.icon)
     nodeDescriptor.associateNode(this)
   }
 }

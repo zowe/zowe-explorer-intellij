@@ -31,13 +31,16 @@ class NodeSyncService {
   /** Map to track filter nodes to load their children as a single node */
   private val filterNodeDescriptors by lazy { mutableMapOf<List<String>, MutableMap<String, FetcherNodeDescriptor>>() }
 
-  // TODO: doc
+  /** Loader for plain filter nodes */
   private val plainFilterNodesLoader by lazy { PlainFilterNodesLoader(pathTree, filterNodeDescriptors) }
 
-  // TODO: doc
+  /** Loader for fetcher nodes. Differs from the plain filter node in terms of associating with real elements */
   private val fetcherFilterNodesLoader by lazy { FetcherNodesLoader(pathTree, filterNodeDescriptors) }
 
-  // TODO: doc
+  /**
+   * Find descriptors, related to the provided [FetcherNodeDescriptor]
+   * @param fetcherNodeDescriptor the node descriptor to find related descriptors by
+   */
   private fun findRelatedDescriptors(fetcherNodeDescriptor: FetcherNodeDescriptor): List<FetcherNodeDescriptor> {
     return plainFilterNodesLoader.findRelatedDescriptors(fetcherNodeDescriptor) +
       fetcherFilterNodesLoader.findRelatedDescriptors(fetcherNodeDescriptor)
@@ -63,6 +66,22 @@ class NodeSyncService {
         }
     }
     return createdDescriptor
+  }
+
+  /**
+   * Check if there is a [PlainFilterNodeDescriptor], associated with the node, busy
+   * @param path the path to get a base path from to find the [PlainFilterNodeDescriptor]
+   * @param nodeName the node name to check if the filter is busy
+   * @return true if there is a busy filter, associated with the node
+   */
+  private fun checkPlainFilterBusy(path: List<String>, nodeName: String): Boolean {
+    val basePath = path.take(3)
+    return filterNodeDescriptors.getOrDefault(basePath, mutableMapOf())
+      .values
+      .mapNotNull { it as? PlainFilterNodeDescriptor }
+      .any {
+        it.checkMatchesFilter(nodeName) && it.filterState == PlainFilterNodeDescriptor.FilterState.BUSY
+      }
   }
 
   /**
@@ -94,15 +113,18 @@ class NodeSyncService {
           ""
         )
       pathIsBusy
-    } else if (checkParentNodes && pathTree.isAnyParentBusy(path)) {
+    } else if (
+      checkParentNodes
+      && (pathTree.isAnyParentBusy(path) || checkPlainFilterBusy(path, nodeName))
+    ) {
       val parentPathIsBusy = "Parent node path is busy for node '$nodeName' in path '$path'"
-      NotificationsService.getService()
-        .notifyWarning(
-          project,
-          parentPathIsBusy,
-          "Operation is not possible while one of the path's parent nodes has an active job in progress",
-          ""
-        )
+        NotificationsService.getService()
+          .notifyWarning(
+            project,
+            parentPathIsBusy,
+            "Operation is not possible while one of the path's parent nodes has an active job in progress",
+            ""
+          )
       parentPathIsBusy
     } else if (checkChildrenNodes && pathTree.isAnyChildBusy(path)) {
       val childPathIsBusy = "Child node path is busy for node '$nodeName' in path '$path'"
@@ -155,22 +177,38 @@ class NodeSyncService {
       }
   }
 
-  // TODO: doc
+  /**
+   * Load nodes for a fetcher filter with the provided operation parameters
+   * @param operation the [LoadNodesOperation] to get operation parameters from
+   * @return a list of [ExplorerTreeNode]'s, formed as a result of the operation trigger
+   */
   fun loadNodesForFetcherFilter(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     return fetcherFilterNodesLoader.loadNodes(operation)
   }
 
-  // TODO: doc
+  /**
+   * Load nodes for a plain filter with the provided operation parameters
+   * @param operation the [LoadNodesOperation] to get operation parameters from
+   * @return a list of [ExplorerTreeNode]'s, formed as a result of the operation trigger
+   */
   fun loadNodesForPlainFilter(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     return plainFilterNodesLoader.loadNodes(operation)
   }
 
-  // TODO: doc
+  /**
+   * Refresh nodes for a fetcher filter with the provided operation parameters
+   * @param operation the [RefreshNodesOperation] to get operation parameters from
+   * @return a list of [ExplorerTreeNode]'s, formed as a result of the operation trigger
+   */
   fun refreshNodesForFetcherFilter(operation: RefreshNodesOperation) {
     fetcherFilterNodesLoader.refreshNodes(operation)
   }
 
-  // TODO: doc
+  /**
+   * Refresh nodes for a plain filter with the provided operation parameters
+   * @param operation the [RefreshNodesOperation] to get operation parameters from
+   * @return a list of [ExplorerTreeNode]'s, formed as a result of the operation trigger
+   */
   fun refreshNodesForPlainFilter(operation: RefreshNodesOperation) {
     plainFilterNodesLoader.refreshNodes(operation)
   }

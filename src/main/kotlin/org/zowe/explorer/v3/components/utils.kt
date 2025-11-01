@@ -8,7 +8,7 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.components.files
+package org.zowe.explorer.v3.components
 
 // TODO: move where needed, when needed
 
@@ -90,4 +90,18 @@ fun formUssBasePathFromHost(host: String): List<String> {
 // TODO: doc
 fun formDsBasePathFromHost(host: String): List<String> {
   return formBasePathFromHost(host, "files", "ds")
+}
+
+// TODO: doc
+fun formJesBasePathFromHost(host: String): List<String> {
+  return formBasePathFromHost(host, "jes", "jobs")
+}
+
+// TODO: doc
+fun formJobFilterName(prefix: String, owner: String, jobId: String): String {
+  return if (jobId.isNotEmpty()) {
+    "Job ID: $jobId"
+  } else {
+    "Prefix: $prefix; Owner: $owner"
+  }
 }

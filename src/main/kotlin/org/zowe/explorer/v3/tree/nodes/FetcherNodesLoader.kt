@@ -83,7 +83,7 @@ class FetcherNodesLoader(
               foundDescriptor.invalidateAssociatedNodes()
             }
           invalidatePathByNodeDescriptor(parentNodeData)
-          pathTree.updatePathWithChildren(operationData.path) {
+          pathTree.applyToPathElements(operationData.path) {
             if (it is ExplorerTreeNodeDescriptor) {
               it.isBusy = true
             }
@@ -141,7 +141,7 @@ class FetcherNodesLoader(
       override fun onFinished() {
         pathTree.setPathState(operationData.path, PathTree.PathState.LOADED)
         invalidatePathByNodeDescriptor(parentNodeData)
-        pathTree.updatePathWithChildren(operationData.path) {
+        pathTree.applyToPathElements(operationData.path) {
           if (it is ExplorerTreeNodeDescriptor) {
             it.isBusy = false
           }

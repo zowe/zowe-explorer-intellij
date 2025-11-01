@@ -14,6 +14,7 @@ import org.zowe.explorer.v3.components.files.operations.LoadDatasetMaskNodesOper
 import org.zowe.explorer.v3.components.files.operations.LoadDatasetMaskNodesOperationData
 import org.zowe.explorer.v3.components.files.operations.RefreshDatasetMaskNodesOperation
 import org.zowe.explorer.v3.components.files.operations.RefreshDatasetMaskNodesOperationData
+import org.zowe.explorer.v3.components.formDsBasePathFromHost
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService

@@ -14,6 +14,7 @@ import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.LoadUssNodesOperationData
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperation
 import org.zowe.explorer.v3.components.files.operations.RefreshUssNodesOperationData
+import org.zowe.explorer.v3.components.formUssBasePathFromHost
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
