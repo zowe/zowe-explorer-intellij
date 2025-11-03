@@ -11,6 +11,7 @@
  *   IBA Group
  *   Zowe Community
  *   Uladzislau Kalesnikau
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.actions
@@ -38,7 +39,7 @@ import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.v3.operations.OperationsService
-import org.zowe.explorer.v3.operations.RenameOperationData
+import org.zowe.explorer.v3.operations.rename.RenameOperationData
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe

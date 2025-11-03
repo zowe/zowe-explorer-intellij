@@ -10,18 +10,19 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.v3.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.v3.ConnectionConfigOldStruct
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 
 /**
  * Abstract class to represent unit operation runner
  * @property resultClass the result class of the operation, that is [Unit]
  */
-abstract class UnitOperationRunner<C : ConnectionConfigOldStruct, O : UnitOperationData<C>> :
+abstract class UnitOperationRunner<C : HttpConnectionConfig, O : UnitOperationData<C>> :
   OperationRunner<Unit, C, O>() {
 
   override val resultClass = Unit::class.java

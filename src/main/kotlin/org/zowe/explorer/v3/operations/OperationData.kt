@@ -10,19 +10,20 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.v3.operations
 
-import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.explorer.v3.Requester
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 
 /**
  * Interface to describe an operation data
  * @property resultClass the result class of the result that should be returned after an operation execution
  * @property origin the exact operation requester to distinguish the source of the operation request
  */
-interface OperationData<Result, ConnectionConfigType : ConnectionConfigOldStruct> {
+interface OperationData<Result, ConnectionConfigType : HttpConnectionConfig> {
   val resultClass: Class<out Result>
   val origin: Requester<ConnectionConfigType>?
 }

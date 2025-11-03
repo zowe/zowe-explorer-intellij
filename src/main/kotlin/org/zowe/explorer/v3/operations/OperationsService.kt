@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.v3.operations
@@ -20,7 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.v3.ConnectionConfigOldStruct
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 
 /** Service to provide the endpoint which will run operations */
 @Service(Service.Level.APP)
@@ -36,7 +37,7 @@ class OperationsService {
    * @param operationData the [OperationData] compatible class to search for the respective operation runner by
    * @return found operation runner or null
    */
-  private fun <R : Any, C : ConnectionConfigOldStruct, O : OperationData<R, C>> findOperationRunner(
+  private fun <R : Any, C : HttpConnectionConfig, O : OperationData<R, C>> findOperationRunner(
     operationData: O
   ): OperationRunner<R, C, O>? {
     val foundRunner = EP_NAME.extensionList
@@ -53,7 +54,7 @@ class OperationsService {
    * @return a [Result] with success data or failure with the exception happened during either the operation preparation
    *         or the operation run
    */
-  fun <R : Any, C : ConnectionConfigOldStruct, O : OperationData<R, C>> performOperation(
+  fun <R : Any, C : HttpConnectionConfig, O : OperationData<R, C>> performOperation(
     operationData: O,
     progressIndicator: ProgressIndicator
   ): Result<R> {

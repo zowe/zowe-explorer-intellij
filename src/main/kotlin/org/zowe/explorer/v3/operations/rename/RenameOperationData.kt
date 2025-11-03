@@ -10,14 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
-package org.zowe.explorer.v3.operations
+package org.zowe.explorer.v3.operations.rename
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.explorer.v3.Requester
+import org.zowe.explorer.v3.operations.UnitOperationData
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 
 /**
  * Class that represents a rename operation data
@@ -25,7 +27,7 @@ import org.zowe.explorer.v3.Requester
  * @param attributes the virtual file's attributes
  * @param newName the new name to apply to the virtual file
  */
-data class RenameOperationData<ConnectionConfigType : ConnectionConfigOldStruct>(
+data class RenameOperationData<ConnectionConfigType : HttpConnectionConfig>(
   val file: VirtualFile,
   val attributes: FileAttributes,
   val newName: String,

@@ -10,11 +10,14 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.v3
 
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
+
 /** Class to track USS requests origins */
-class UssRequester<ConnectionConfigType : ConnectionConfigOldStruct>(
+class UssRequester<ConnectionConfigType : HttpConnectionConfig>(
   override val connectionConfig: ConnectionConfigType
 ) : Requester<ConnectionConfigType>

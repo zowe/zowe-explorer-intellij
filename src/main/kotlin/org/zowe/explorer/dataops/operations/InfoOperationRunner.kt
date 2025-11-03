@@ -10,18 +10,22 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.exceptions.responseMessageMap
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
+import org.zowe.explorer.v3.state.config.getUrlWithBasePath
 import org.zowe.kotlinsdk.SystemsApi
 import org.zowe.kotlinsdk.SystemsResponse
 
@@ -56,8 +60,25 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
    * @return SystemsResponse serialized object (body of the request)
    */
   override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): SystemsResponse {
-    val response = api<SystemsApi>(connectionConfig = operation.connectionConfig)
-      .getSystems(operation.connectionConfig.authToken)
+    val authToken: String
+    val api: SystemsApi
+    when(operation.connectionConfig) {
+      is ConnectionConfig -> {
+        val connectionConfig = operation.connectionConfig as ConnectionConfig
+        authToken = connectionConfig.authToken
+        api = api<SystemsApi>(connectionConfig = connectionConfig)
+      }
+
+      is HttpConnectionConfig -> {
+        val connectionConfig = operation.connectionConfig as HttpConnectionConfig
+        authToken = connectionConfig.authToken
+        api = api<SystemsApi>(getUrlWithBasePath(connectionConfig), !connectionConfig.rejectUnauthorized)
+      }
+
+      else -> throw UnsupportedOperationException()
+    }
+    val response = api
+      .getSystems(authToken)
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {

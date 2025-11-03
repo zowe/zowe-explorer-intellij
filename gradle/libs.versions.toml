@@ -10,6 +10,7 @@ mockk = "1.13.16"
 kotest = "5.9.1"
 jgrapht = "1.5.2"
 keytar = "1.0.0"
+# TODO: use the version with the API ML token implementation
 zowe-kotlin-sdk = "0.5.0"
 ibm-mq-allclient = "9.4.0.0"
 

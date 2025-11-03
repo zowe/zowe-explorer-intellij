@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.config.connect
@@ -19,6 +20,9 @@ import com.intellij.util.messages.Topic
 import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.utils.runTask
 import okhttp3.Credentials
+import org.zowe.explorer.v3.state.credentials.cache.CredentialsCacheService
+
+import org.zowe.explorer.v3.state.config.ConnectionConfig as ConnectionConfigNew
 
 const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
 
@@ -74,6 +78,7 @@ interface CredentialService {
      * @param connectionConfig connection config instance to get owner from
      * @return owner of the connection config if the owner is present, empty string otherwise
      */
+    @Deprecated("")
     fun getOwner(connectionConfig: ConnectionConfig): String {
       val possibleOwner = connectionConfig.owner
       return if (possibleOwner.isNotEmpty() && possibleOwner.length <= USER_OR_OWNER_SYMBOLS_MAX_SIZE) {
@@ -120,4 +125,10 @@ val ConnectionConfig.authToken: String
     val username = CredentialService.getUsername(this)
     val password = CredentialService.getPassword(this)
     Credentials.basic(username, String(password))
+  }
+
+val ConnectionConfigNew.authToken: String
+  get() = runTask("Retrieving information for auth token") {
+    val credentials = CredentialsCacheService.getService().getCredentialsFromCache(this.uuid) ?: throw RuntimeException()
+    Credentials.basic(credentials.username, String(credentials.password))
   }

@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.v3.operations
@@ -31,6 +32,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.*
 import org.junit.jupiter.api.assertThrows
+import org.zowe.explorer.v3.operations.rename.RenameOperationData
+import org.zowe.explorer.v3.operations.rename.RenameOperationRunner
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Response

@@ -287,7 +287,9 @@ Thank you for considering IBA Group for your mainframe needs.
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
 
-        <operationRunnerV3 implementation="org.zowe.explorer.v3.operations.RenameOperationRunner"/>
+        <operationRunnerV3 implementation="org.zowe.explorer.v3.operations.rename.RenameOperationRunner"/>
+
+        <operationRunnerV3 implementation="org.zowe.explorer.v3.operations.apiml.ApiMlLoginOperationRunner"/>
 
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 

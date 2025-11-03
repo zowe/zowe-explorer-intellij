@@ -1,27 +1,23 @@
 /*
- * Copyright (c) 2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
  *   Dzianis Lisiankou
  */
 
-package org.zowe.explorer.v3.operations
+package org.zowe.explorer.v3.operations.system
 
+import org.zowe.explorer.v3.Requester
+import org.zowe.explorer.v3.operations.UnitOperationData
 import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 
-/**
- * Interface to create operations without expecting any exact result
- */
-interface UnitOperationData<ConnectionConfigType : HttpConnectionConfig> :
-  OperationData<Unit, ConnectionConfigType> {
-  override val resultClass: Class<out Unit>
-    get() = Unit::class.java
-}
+data class GetSystemsOperationData<ConnectionConfigType : HttpConnectionConfig>(
+  override val origin: Requester<ConnectionConfigType>,
+) : UnitOperationData<ConnectionConfigType>

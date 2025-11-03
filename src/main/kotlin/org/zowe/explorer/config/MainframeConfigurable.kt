@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.config
@@ -18,6 +19,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.config.settings.ui.SettingsConfigurable
+import org.zowe.explorer.v3.apiml.ui.tab.ApiMlConnectionSettingsTab
 
 /**
  * Main UI class to build configurables for project and set them to appropriate place
@@ -44,7 +46,10 @@ class MainframeConfigurable : TabbedConfigurable() {
       .mapNotNull { it.getConfigurable() as Configurable? }
       .distinct()
       .toMutableList()
-      .apply { add(SettingsConfigurable()) }
+      .apply {
+        add(ApiMlConnectionSettingsTab())
+        add(SettingsConfigurable())
+      }
   }
 
   /**

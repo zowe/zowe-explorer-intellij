@@ -1,11 +1,29 @@
+/*
+ * Copyright (c) 2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ *   Dzianis Lisiankou
+ */
+
 package org.zowe.explorer.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
+import org.zowe.explorer.v3.state.config.getUrlWithBasePath
 import org.zowe.kotlinsdk.InfoAPI
 import org.zowe.kotlinsdk.InfoResponse
 
@@ -40,10 +58,22 @@ class ZOSInfoOperationRunner : OperationRunner<ZOSInfoOperation, InfoResponse> {
    * @return InfoResponse serialized object
    */
   override fun run(operation: ZOSInfoOperation, progressIndicator: ProgressIndicator): InfoResponse {
-    val response = api<InfoAPI>(connectionConfig = operation.connectionConfig)
-      .getSystemInfo()
-      .cancelByIndicator(progressIndicator)
-      .execute()
+    val api = when(operation.connectionConfig) {
+      is ConnectionConfig -> {
+        api<InfoAPI>(connectionConfig = operation.connectionConfig as ConnectionConfig)
+      }
+
+      is HttpConnectionConfig -> {
+        val httpConnectionConfig = operation.connectionConfig as HttpConnectionConfig
+        api<InfoAPI>(getUrlWithBasePath(httpConnectionConfig), !httpConnectionConfig.rejectUnauthorized)
+      }
+
+      else -> throw UnsupportedOperationException()
+    }
+    val response = api
+          .getSystemInfo()
+          .cancelByIndicator(progressIndicator)
+          .execute()
     if (!response.isSuccessful) {
       throw CallException(response, "An internal error has occurred")
     }

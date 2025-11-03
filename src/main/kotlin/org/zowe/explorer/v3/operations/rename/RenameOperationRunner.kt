@@ -10,33 +10,32 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
-package org.zowe.explorer.v3.operations
+package org.zowe.explorer.v3.operations.rename
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
-import org.zowe.explorer.v3.ConnectionConfigOldStruct
+import org.zowe.explorer.v3.operations.UnitOperationRunner
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
+import org.zowe.explorer.v3.state.config.getUrlWithBasePath
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.MoveUssFile
-import org.zowe.kotlinsdk.RenameData
 import retrofit2.Call
 
 typealias ConnectionConfigOld = org.zowe.explorer.config.connect.ConnectionConfig
 typealias UssRequesterOld = org.zowe.explorer.dataops.attributes.UssRequester
 
 /** [RenameOperationData] runner */
-class RenameOperationRunner<ConnectionConfigType : ConnectionConfigOldStruct> :
+class RenameOperationRunner<ConnectionConfigType : HttpConnectionConfig> :
   UnitOperationRunner<ConnectionConfigType, RenameOperationData<ConnectionConfigType>>() {
 
   override val operationDataClass = RenameOperationData::class.java
@@ -122,10 +121,10 @@ class RenameOperationRunner<ConnectionConfigType : ConnectionConfigOldStruct> :
           ConnectionConfigOld(
             newRequester.connectionConfig.uuid,
             newRequester.connectionConfig.name,
-            newRequester.connectionConfig.url,
-            newRequester.connectionConfig.isAllowSelfSigned,
+            getUrlWithBasePath(newRequester.connectionConfig),
+            !newRequester.connectionConfig.rejectUnauthorized,
             newRequester.connectionConfig.zVersion,
-            newRequester.connectionConfig.owner
+            newRequester.connectionConfig.ussOwner
           )
         )
         val parentDirPath = attributes.parentDirPath

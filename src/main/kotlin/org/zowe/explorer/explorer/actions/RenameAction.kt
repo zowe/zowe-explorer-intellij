@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.actions
@@ -20,18 +21,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.RenameOperation
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
+import org.zowe.explorer.v3.SupportedSchemes
 import org.zowe.explorer.v3.operations.OperationsService
-import org.zowe.explorer.v3.operations.RenameOperationData
+import org.zowe.explorer.v3.operations.rename.RenameOperationData
+import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.vfs.MFVirtualFile
 
-typealias ConnectionConfigNew = org.zowe.explorer.v3.ConnectionConfigOldStruct
-typealias UssRequesterNew = org.zowe.explorer.v3.UssRequester<ConnectionConfigNew>
+typealias UssRequesterNew = org.zowe.explorer.v3.UssRequester<HttpConnectionConfig>
 
 /**
  * Class which represents a "Rename" action.
@@ -88,13 +91,17 @@ class RenameAction : AnAction() {
             )
         } else {
           val oldConnectionConfig = oldRequester.connectionConfig
-          val newConnectionConfig = ConnectionConfigNew(
-            oldConnectionConfig.uuid,
-            oldConnectionConfig.name,
-            oldConnectionConfig.url,
-            oldConnectionConfig.isAllowSelfSigned,
-            oldConnectionConfig.zVersion,
-            oldConnectionConfig.owner
+          val httpUrl = oldConnectionConfig.url.toHttpUrl()
+          val newConnectionConfig = HttpConnectionConfig(
+            uuid = oldConnectionConfig.uuid,
+            name = oldConnectionConfig.name,
+            scheme = SupportedSchemes.invoke(httpUrl.scheme),
+            host = httpUrl.host,
+            port = httpUrl.port,
+            zVersion = oldConnectionConfig.zVersion,
+            ussOwner = oldConnectionConfig.owner,
+            basePath = httpUrl.encodedPath,
+            rejectUnauthorized = !oldConnectionConfig.isAllowSelfSigned
           )
           val newRequester = UssRequesterNew(newConnectionConfig)
           OperationsService.getService()

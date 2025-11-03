@@ -10,14 +10,17 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.v3
+
+import org.zowe.explorer.v3.state.config.ConnectionConfig
 
 /**
  * Interface to track requests origins. Represents the elements that requested a related data
  * @property connectionConfig the related connection config
  */
-interface Requester<ConnectionConfigType : ConnectionConfigOldStruct> {
+interface Requester<ConnectionConfigType : ConnectionConfig> {
   val connectionConfig: ConnectionConfigType
 }
