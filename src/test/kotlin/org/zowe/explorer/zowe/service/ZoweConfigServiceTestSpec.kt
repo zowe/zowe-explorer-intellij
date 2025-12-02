@@ -271,7 +271,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
 
         val localZoweConfig: ZoweConfig = mockk {
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns "TSTUSR"
@@ -332,7 +332,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
             extractSecurePropertiesCalledCount += 1
           }
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns "TSTUSR"
@@ -449,7 +449,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
             extractSecurePropertiesCalledCount += 1
           }
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns "TSTUSR"
@@ -558,7 +558,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
 
         val globalZoweConfig: ZoweConfig = mockk {
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns "TSTUSR"
@@ -687,7 +687,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
             extractSecurePropertiesCalledCount += 1
           }
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns "TSTUSR"
@@ -1396,7 +1396,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
 
         val localZoweConfig: ZoweConfig = mockk {
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns testUsername
@@ -1439,7 +1439,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
 
         val globalZoweConfig: ZoweConfig = mockk {
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns testUsername
@@ -1482,7 +1482,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
 
         val localZoweConfig: ZoweConfig = mockk {
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns testUsername
@@ -1525,7 +1525,7 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
 
         val localZoweConfig: ZoweConfig = mockk {
           every {
-            getListOfZosmfConections()
+            getListOfZosmfConnections()
           } returns listOf(
             mockk {
               every { user } returns testUsername

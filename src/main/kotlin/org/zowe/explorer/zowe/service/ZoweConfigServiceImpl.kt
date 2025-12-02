@@ -169,7 +169,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
    */
   private fun scanForZoweConfig(type: ZoweConfigType): ZoweConfig? {
-    return runTask(title = "Scanning for ${type} zowe config file", project = myProject) {
+    return runTask(title = "Scanning for $type zowe config file", project = myProject) {
       val zoweFile = runReadAction {
         VirtualFileManager.getInstance().findFileByNioPath(Path.of(getZoweConfigLocation(myProject, type)))
       } ?: return@runTask null
@@ -357,7 +357,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         this.globalZoweConfig
       zoweConfig ?: throw Exception("Cannot get $type Zowe config")
 
-      val allConnectionsToTest = zoweConfig.getListOfZosmfConections()
+      val allConnectionsToTest = zoweConfig.getListOfZosmfConnections()
       val uniqueConnectionsToTest = allConnectionsToTest.filterIndexed { _, element ->
         allConnectionsToTest.filter {
           it.host == element.host &&
@@ -414,6 +414,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
           custTitle = "Error with Zowe config file"
         )
       else { /* Nothing to do */
+        // TODO: notification here
       }
     }
   }
@@ -628,7 +629,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
     if (findAllZosmfExistingConnection(type).isEmpty()) return ZoweConfigState.NEED_TO_ADD
 
-    val zoweConfigZosmfConnections = zoweConfig.getListOfZosmfConections()
+    val zoweConfigZosmfConnections = zoweConfig.getListOfZosmfConnections()
 
     return zoweConfigZosmfConnections
       .fold(ZoweConfigState.SYNCHRONIZED) { prevZoweConfigState, zosConnection ->
@@ -642,10 +643,16 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
           updatedConnection.name = existingConnection.name
           val zoweUsername = zosConnection.user
           val zowePassword = zosConnection.password
+          val savedUsername = runCatching {
+            CredentialService.getUsername(updatedConnection)
+          }.getOrNull() ?: ""
+          val savedPassword = runCatching {
+            CredentialService.getPassword(updatedConnection)
+          }.getOrNull() ?: charArrayOf()
           if (
             existingConnection == updatedConnection
-            && CredentialService.getUsername(updatedConnection) == zoweUsername
-            && CredentialService.getPassword(updatedConnection).contentEquals(zowePassword.toCharArray())
+            && savedUsername == zoweUsername
+            && savedPassword.contentEquals(zowePassword.toCharArray())
           ) {
             ZoweConfigState.SYNCHRONIZED
           } else {
