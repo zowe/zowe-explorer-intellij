@@ -6,6 +6,16 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ### Features
 
+* Feature: OWASP Dependency-Checker pipeline setup ([c6e15e52](https://github.com/zowe/zowe-explorer-intellij/commit/c6e15e52), [690ac5fb](https://github.com/zowe/zowe-explorer-intellij/commit/690ac5fb))
+
+### Bugfixes
+
+* Bugfix: Fixed issue with zowe.config.json failing when there is no credentials yet set ([58fefd20](https://github.com/zowe/zowe-explorer-intellij/commit/58fefd20))
+
+## [2.3.0]
+
+### Features
+
 * Feature: Added a Scorecard action ([2efec2ef](https://github.com/zowe/zowe-explorer-intellij/commit/2efec2ef))
 * Feature: Automated regression #2: Allocating data sets with invalid parameters ([2e57ad41](https://github.com/zowe/zowe-explorer-intellij/commit/2e57ad41))
 * Feature: Dataset members filtering ([44fd8043](https://github.com/zowe/zowe-explorer-intellij/commit/44fd8043))
