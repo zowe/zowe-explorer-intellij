@@ -166,7 +166,7 @@ jobs:
 
       - name: SonarCloud scans
         if: ${{ matrix.product == 'IC-243' }}
-        continue-on-error: true
+        continue-on-error: false
         uses: ./.github/actions/sonar
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -235,7 +235,7 @@ jobs:
           key: plugin-verifier-${{ hashFiles('build/productReleases.txt') }}
 
       - name: Verify plugin against IntelliJ IDEA IDE's
-        continue-on-error: true
+        continue-on-error: false
         shell: bash
         run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
         env:
