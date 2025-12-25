@@ -35,10 +35,10 @@ data class PluginDescriptor(
   val getUntil: () -> Provider<String>, // latest version string this is compatible with, can be wildcard like 202.*
   // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
   val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
-  val sourceFolder: String // used as the source root for specifics of this build
+  val sourceFolder: String, // used as the source root for specifics of this build
 )
 
-val plugins = listOf(
+val availableDescriptors = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_17,
     since = properties("pluginSinceBuild").get(),
@@ -63,20 +63,29 @@ val plugins = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_21,
     since = "243.12818",
-    getUntil = { provider { null } },
+    getUntil = { provider { "243.*" } },
     sdkVersion = "2024.3",
     sourceFolder = "IC-243"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_21,
+    since = "251.23774",
+    getUntil = { provider { null } },
+    sdkVersion = "2025.1",
+    sourceFolder = "IC-251"
   )
 )
+
 val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
-val descriptor = plugins.first { it.sourceFolder == productName }
+val descriptor = availableDescriptors.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
 plugins {
   alias(libs.plugins.gradle) // IntelliJ Platform Gradle Plugin
-  alias(libs.plugins.kotlinJvm)
+//  alias(libs.plugins.kotlinJvm)
+  id("org.jetbrains.kotlin.jvm")
   alias(libs.plugins.sonarqube)
   alias(libs.plugins.changelog)
   alias(libs.plugins.kover)
@@ -139,7 +148,6 @@ dependencies {
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
-    zipSigner()
     testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
     zipSigner()
   }

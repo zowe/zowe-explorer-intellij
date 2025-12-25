@@ -49,9 +49,9 @@ class GetFilePropertiesAction : AnAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node ?: return
     val project = e.project
-    if (node is ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>) {
+    if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
       val virtualFile = node.virtualFile
-      val connectionConfig = node.unit.connectionConfig ?: return
+      val connectionConfig = node.unit.connectionConfig as? ConnectionConfig ?: return
       if (virtualFile != null) {
         val dataOpsManager = DataOpsManager.getService()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
