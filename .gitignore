@@ -1,5 +1,6 @@
 .gradle
 **/.idea/*
+.kotlin
 !/.idea/copyright/
 !/.idea/copyright/*
 !/.idea/runConfigurations/

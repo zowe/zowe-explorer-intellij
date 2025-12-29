@@ -17,7 +17,7 @@ rootProject.name = "zowe-explorer"
 
 pluginManagement {
   // https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
-  val kotlinVersion = when (System.getenv("PRODUCT_NAME") ?: "IC-251") {
+  val kotlinVersion = when (System.getenv("PRODUCT_NAME") ?: "IC-231") {
     "IC-231" -> "1.8.0"
     "IC-233" -> "1.9.21"
     "IC-242" -> "1.9.24"
