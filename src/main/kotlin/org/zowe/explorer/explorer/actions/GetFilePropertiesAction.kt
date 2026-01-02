@@ -27,7 +27,6 @@ import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.dataops.operations.UssChangeOwnerOperation
 import org.zowe.explorer.dataops.operations.UssChangeOwnerParams
-import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.changeFileEncodingAction

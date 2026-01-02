@@ -61,7 +61,7 @@ fun putUserDataInFile(file: MFVirtualFile) {
  * @return true if it is or false otherwise.
  */
 fun VirtualFile.isMfVirtualFile(): Boolean {
-  return this.get()?.keys?.find { it.toString() == MF_VIRTUAL_FILE_KEY_NAME } != null
+  return this.getUserData(MF_VIRTUAL_FILE) == true
 }
 
 /**
@@ -69,7 +69,7 @@ fun VirtualFile.isMfVirtualFile(): Boolean {
  * @return true if it is or false otherwise.
  */
 fun VirtualFile.isUssVirtualFile(): Boolean {
-  return this.get()?.keys?.find { it.toString() == USS_VIRTUAL_FILE_KEY_NAME } != null
+  return this.getUserData(USS_VIRTUAL_FILE) == true
 }
 
 /**

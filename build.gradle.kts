@@ -138,9 +138,8 @@ configurations["uiTestImplementation"].extendsFrom(configurations.testImplementa
 
 dependencies {
   intellijPlatform {
-//    intellijIdeaCommunity(descriptor.sdkVersion)
-//    TO TEST EAP:
-    intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
+//  useInstaller - TO TEST EAP:
+    intellijIdea(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Platform)
