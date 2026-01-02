@@ -62,8 +62,8 @@ fun <T : ExplorerTreeNode<*, *>> List<T>.performUnitsDeletionBasedOnSelection(
       icon = AllIcons.General.QuestionDialog
     )
   ) {
-    forEach {
-      when (val node: T = it) {
+    forEach { node: T ->
+      when (node) {
         is FilesWorkingSetNode -> fileExplorerView?.explorer?.disposeUnit(node.unit as FilesWorkingSet)
         is DSMaskNode, is UssDirNode -> {
           (node as FileFetchNode<*,*,*,*,*,*>).cleanCache(
@@ -74,11 +74,11 @@ fun <T : ExplorerTreeNode<*, *>> List<T>.performUnitsDeletionBasedOnSelection(
           )
         }
       }
-      when (val node: T = it) {
-        is DSMaskNode -> node.unit.removeMask(node.value)
-        is UssDirNode -> node.unit.removeUssPath(node.value)
+      when (node) {
+        is DSMaskNode -> node.unit.removeMask(node.getValue())
+        is UssDirNode -> node.unit.removeUssPath(node.getValue())
         is JesWsNode -> jesExplorerView?.explorer?.disposeUnit(node.unit as JesWorkingSetImpl)
-        is JesFilterNode -> node.unit.removeFilter(node.value)
+        is JesFilterNode -> node.unit.removeFilter(node.getValue())
       }
     }
   }

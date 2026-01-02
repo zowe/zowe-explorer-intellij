@@ -21,8 +21,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-//!IMPORTANT!: to refer "libs", use ./gradle/libs.versions.toml
-
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
 fun dateValue(pattern: String): String =
@@ -35,10 +33,10 @@ data class PluginDescriptor(
   val getUntil: () -> Provider<String>, // latest version string this is compatible with, can be wildcard like 202.*
   // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
   val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
-  val sourceFolder: String // used as the source root for specifics of this build
+  val sourceFolder: String, // used as the source root for specifics of this build
 )
 
-val plugins = listOf(
+val availableDescriptors = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_17,
     since = properties("pluginSinceBuild").get(),
@@ -63,20 +61,29 @@ val plugins = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_21,
     since = "243.12818",
-    getUntil = { provider { null } },
+    getUntil = { provider { "243.*" } },
     sdkVersion = "2024.3",
     sourceFolder = "IC-243"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_21,
+    since = "251.23774",
+    getUntil = { provider { null } },
+    sdkVersion = "2025.1",
+    sourceFolder = "IC-251"
   )
 )
+
 val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
-val descriptor = plugins.first { it.sourceFolder == productName }
+val descriptor = availableDescriptors.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
 plugins {
   alias(libs.plugins.gradle) // IntelliJ Platform Gradle Plugin
-  alias(libs.plugins.kotlinJvm)
+//  alias(libs.plugins.kotlinJvm)
+  id("org.jetbrains.kotlin.jvm")
   alias(libs.plugins.sonarqube)
   alias(libs.plugins.changelog)
   alias(libs.plugins.kover)
@@ -107,9 +114,7 @@ java {
 }
 
 kotlin {
-  compilerOptions {
-    jvmToolchain(JavaLanguageVersion.of(descriptor.jvmTargetVersion.toString()).asInt())
-  }
+  jvmToolchain(JavaLanguageVersion.of(descriptor.jvmTargetVersion.toString()).asInt())
 }
 
 /** Source sets configuration */
@@ -133,14 +138,15 @@ configurations["uiTestImplementation"].extendsFrom(configurations.testImplementa
 
 dependencies {
   intellijPlatform {
-//    intellijIdeaCommunity(descriptor.sdkVersion)
-//    TO TEST EAP:
-    intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
+//  useInstaller - TO TEST EAP:
+    intellijIdea(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
+    testFramework(TestFrameworkType.Platform)
     testFramework(TestFrameworkType.Plugin.Java)
-    zipSigner()
-    testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
+    if (productName >= "IC-242") {
+      testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
+    }
     zipSigner()
   }
   implementation(libs.retrofit2)
@@ -150,9 +156,24 @@ dependencies {
   implementation(libs.jgrapht.core)
   implementation(libs.java.keytar)
   implementation(libs.zowe.kotlin.sdk)
-  testImplementation(libs.mockk)
-  testImplementation(libs.kotest.assertions.core)
-  testImplementation(libs.kotest.runner.junit5)
+  if (productName >= "IC-242") {
+    testImplementation(libs.mockk) {
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+    }
+    testImplementation(libs.kotest.assertions.core) {
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+    }
+    testImplementation(libs.kotest.runner.junit5) {
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+    }
+  } else {
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.runner.junit5)
+  }
 }
 
 intellijPlatform {

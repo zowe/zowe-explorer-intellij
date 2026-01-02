@@ -117,7 +117,7 @@ jobs:
       contents: write # required for release
     strategy:
       matrix:
-        product: ["IC-231","IC-233","IC-242","IC-243"]
+        product: ["IC-231","IC-233","IC-242","IC-243","IC-251"]
         include:
           - product: "IC-231"
             distribution: "jetbrains"
@@ -129,6 +129,9 @@ jobs:
             distribution: "jetbrains"
             java: "21"
           - product: "IC-243"
+            distribution: "jetbrains"
+            java: "21"
+          - product: "IC-251"
             distribution: "jetbrains"
             java: "21"
       max-parallel: 10

@@ -19,7 +19,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 import com.intellij.mock.MockFileDocumentManagerImpl
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,6 +40,7 @@ import io.mockk.verify
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.zowe.explorer.testutils.AppInitShouldSpec
+import java.nio.charset.Charset
 
 class DocumentedSyncProviderTest : AppInitShouldSpec("dataops/content/synchronizer/DocumentedSyncProvider", {
   context("DocumentedSyncProvider") {
@@ -59,18 +60,25 @@ class DocumentedSyncProviderTest : AppInitShouldSpec("dataops/content/synchroniz
       } answers {
         isNewTextWritten = true
       }
+      every { putUserData(any<Key<Any>>(), any<Any>()) } answers {}
     }
 
     val mockedVirtualFile = mockk<VirtualFile> {
-      every { fileType } returns UnknownFileType.INSTANCE
+      every { fileType } returns PlainTextFileType.INSTANCE
       every { isDirectory } returns false
       every { getUserData(any<Key<Document>>()) } returns mockedDocument
       every { charset = any() } just Runs
+      every { isCharsetSet } returns true
+      every { charset } returns Charset.defaultCharset()
       every { detectedLineSeparator = any() } just Runs
+      every { contentsToByteArray() } returns "qwerty".toByteArray()
+      every { putUserData(any<Key<Any>>(), any<Any>()) } answers {}
+      every { putUserDataIfAbsent(any<Key<Any>>(), any<Any>()) } answers {}
     }
     every { mockedVirtualFile.hashCode() } returns 13
 
     val mockedEncodingManager = mockk<EncodingManager> {
+      every { getEncoding(any(), any()) } returns Charset.defaultCharset()
       every { setEncoding(any(), any()) } just Runs
     }
     mockkStatic(EncodingManager::getInstance)
@@ -105,11 +113,7 @@ class DocumentedSyncProviderTest : AppInitShouldSpec("dataops/content/synchroniz
     val documentedSyncProvider = spyk(DocumentedSyncProvider(file = mockedVirtualFile))
 
     beforeEach {
-      every {
-        mockedMockFileDocumentManager.getDocument(any())
-      } answers {
-        callOriginal()
-      }
+      every { mockedMockFileDocumentManager.getDocument(any()) } returns mockedDocument
       every {
         documentedSyncProvider.loadNewContent(any())
       } answers {
@@ -144,7 +148,7 @@ class DocumentedSyncProviderTest : AppInitShouldSpec("dataops/content/synchroniz
     }
 
     should("Extracts content from the empty file document") {
-      every { mockedVirtualFile.getUserData(any<Key<Document>>()) } returns null
+      every { mockedMockFileDocumentManager.getDocument(any()) } returns null
       documentedSyncProvider.retrieveCurrentContent() shouldBe "".toByteArray()
       getFileDocumentManager shouldBe true
       every { mockedVirtualFile.getUserData(any<Key<Document>>()) } returns mockedDocument

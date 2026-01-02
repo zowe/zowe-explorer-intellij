@@ -58,7 +58,7 @@ jobs:
       - name: Run tests
         run: ${{ matrix.runTests }}
         env:
-          PRODUCT_NAME: "IC-243"
+          PRODUCT_NAME: "IC-251"
 
       - name: Copy logs
         if: ${{ failure() }}

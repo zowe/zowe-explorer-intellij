@@ -129,6 +129,11 @@ class ChangeEncodingDialogTestSpec : AppInitShouldSpec("explorer/ui/ChangeEncodi
 
       expectedExitCode = 0
       every {
+        changeEncodingDialog.doCancelAction()
+      } answers {
+        expectedExitCode = DialogWrapper.CANCEL_EXIT_CODE
+      }
+      every {
         changeEncodingDialog["close"](any<Int>())
       } answers {
         expectedExitCode = firstArg<Int>()
@@ -392,6 +397,11 @@ class ChangeEncodingDialogTestSpec : AppInitShouldSpec("explorer/ui/ChangeEncodi
       }
 
       every {
+        changeEncodingDialog.doCancelAction()
+      } answers {
+        expectedExitCode = DialogWrapper.CANCEL_EXIT_CODE
+      }
+      every {
         changeEncodingDialog["close"](any<Int>())
       } answers {
         expectedExitCode = firstArg<Int>()
@@ -402,7 +412,10 @@ class ChangeEncodingDialogTestSpec : AppInitShouldSpec("explorer/ui/ChangeEncodi
         createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
-      reloadAction?.actionPerformed(actionEventMock)
+
+      runInEdtAndWait {
+        reloadAction?.actionPerformed(actionEventMock)
+      }
 
       assertSoftly { expectedExitCode shouldBe DialogWrapper.CANCEL_EXIT_CODE }
     }
@@ -474,6 +487,11 @@ class ChangeEncodingDialogTestSpec : AppInitShouldSpec("explorer/ui/ChangeEncodi
       }
 
       every {
+        changeEncodingDialog.doCancelAction()
+      } answers {
+        expectedExitCode = DialogWrapper.CANCEL_EXIT_CODE
+      }
+      every {
         changeEncodingDialog["close"](any<Int>())
       } answers {
         expectedExitCode = firstArg<Int>()
@@ -484,7 +502,9 @@ class ChangeEncodingDialogTestSpec : AppInitShouldSpec("explorer/ui/ChangeEncodi
         createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       }
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
-      convertAction?.actionPerformed(actionEventMock)
+      runInEdtAndWait {
+        convertAction?.actionPerformed(actionEventMock)
+      }
 
       assertSoftly { expectedExitCode shouldBe DialogWrapper.CANCEL_EXIT_CODE }
     }

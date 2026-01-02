@@ -20,7 +20,7 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -33,7 +33,6 @@ import org.zowe.explorer.tso.ui.TSOConsoleView
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.mockk.*
 import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.operations.TsoOperation
@@ -93,12 +92,7 @@ class TSOWindowFactoryTestSpec : AppInitShouldSpec("tso/TSOWindowFactory", {
         }
         every { addContent(any<Content>()) } returns Unit
       }
-      val projectMock = mockk<Project> {
-        every { messageBus } returns ApplicationManager.getApplication().messageBus
-        every { getService(EncodingProjectManager::class.java) } returns mockk {
-          every { defaultCharset } returns mockk()
-        }
-      }
+      val projectMock = spyk(ProjectManager.getInstance().defaultProject)
       val processHandlerMock = mockk<ProcessHandler>(relaxUnitFun = true) {
         every {
           notifyTextAvailable(any<String>(), ProcessOutputType.STDOUT)
