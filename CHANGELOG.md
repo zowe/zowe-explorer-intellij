@@ -2,6 +2,12 @@
 
 All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be documented in this file.
 
+## [Unreleased]
+
+### Features
+
+### Bugfixes
+
 ## [2.4.0]
 
 ### Features
