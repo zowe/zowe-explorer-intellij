@@ -26,7 +26,6 @@ import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
 import tests.utils.uidefinitions.dialogs.AllocateDatasetDialog
 import tests.utils.notification.AddWorkingSetSuccessNotification
-import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
 import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
@@ -191,11 +190,6 @@ class AllocateDatasetTest {
 
   @BeforeEach
   fun prepareTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
-    ideDriver = IdeRunManager.getIdeDriver()
-    filesExplorerPanel = FilesExplorerPanel(ideDriver)
     addConnectionDialog = AddConnectionDialog(ideDriver)
     allocateDatasetDialog = AllocateDatasetDialog(ideDriver)
     addWsNotification = AddWorkingSetSuccessNotification(ideDriver)

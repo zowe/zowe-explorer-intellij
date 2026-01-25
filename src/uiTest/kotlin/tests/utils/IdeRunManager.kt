@@ -53,6 +53,7 @@ class IdeRunManager private constructor() {
     private val createdRunManager by lazy { IdeRunManager() }
 
     private var isIDEAlreadyClosed = false
+    private var isRunManagerPrepared = false
 
     /**
      * Prepare the IDE run manager instance.
@@ -61,7 +62,11 @@ class IdeRunManager private constructor() {
      */
     fun prepareRunManager(): IdeRunManager {
       assert(!isIDEAlreadyClosed) { "IDE is already closed" }
-      createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
+      if (!isRunManagerPrepared) {
+        // First start
+        createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
+        isRunManagerPrepared = true
+      }
       return createdRunManager
     }
 
