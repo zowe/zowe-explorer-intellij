@@ -44,3 +44,4 @@ gradle/wrapper/gradle-wrapper.jar
 .editorconfig
 /out
 /allure-results
+.kotlin
