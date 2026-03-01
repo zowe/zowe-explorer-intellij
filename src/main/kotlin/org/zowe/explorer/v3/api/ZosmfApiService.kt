@@ -15,6 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.util.net.ssl.CertificateManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -40,6 +41,10 @@ class ZosmfApiService {
             prettyPrint = true
           }
         )
+      }
+      install(HttpTimeout) {
+        requestTimeoutMillis = 30000
+        connectTimeoutMillis = 30000
       }
       engine {
         https {

@@ -119,14 +119,12 @@ configurations["uiTestImplementation"].extendsFrom(configurations.testImplementa
 dependencies {
   intellijPlatform {
 //  useInstaller - TO TEST EAP:
-    intellijIdea(descriptor.sdkVersion) { useInstaller = false }
+    intellijIdeaCommunity(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Platform)
     testFramework(TestFrameworkType.Plugin.Java)
-    if (productName >= "IC-242") {
-      testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
-    }
+    testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
     zipSigner()
   }
   implementation(libs.retrofit2)

@@ -18,7 +18,7 @@ kotlinx-serialization = "1.6.3"
 ktor = "2.3.13"
 
 # plugins
-gradle = "2.10.5"
+gradle-platform-plugin = "2.10.5"
 kotlinJvm = "1.9.22"
 sonarqube = "7.2.1.6560"
 changelog = "2.2.1"

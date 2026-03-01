@@ -10,8 +10,12 @@
 
 package org.zowe.explorer.v3.components.jes
 
+import org.zowe.explorer.v3.components.jes.operations.LoadJobFilterNodesOperation
 import org.zowe.explorer.v3.components.formJesBasePathFromHost
 import org.zowe.explorer.v3.components.formJobFilterName
+import org.zowe.explorer.v3.components.jes.operations.LoadJobFilterNodesOperationData
+import org.zowe.explorer.v3.components.jes.operations.RefreshJobFilterNodesOperation
+import org.zowe.explorer.v3.components.jes.operations.RefreshJobFilterNodesOperationData
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService

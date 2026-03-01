@@ -41,6 +41,14 @@ class ZoweExplorerToolWindowFactory : ToolWindowFactory, DumbAware {
       jesExplorerComponent.isLockable
     )
     toolWindow.contentManager.addContent(jesExplorerContent)
+
+    val tsoSessionsComponent = ExplorerTreeComponentService.getService().getTsoSessionsComponent(project)
+    val tsoSessionsContent = contentFactory.createContent(
+      tsoSessionsComponent.initExplorerTreeComponent(),
+      tsoSessionsComponent.explorerName,
+      tsoSessionsComponent.isLockable
+    )
+    toolWindow.contentManager.addContent(tsoSessionsContent)
   }
 
   override fun init(toolWindow: ToolWindow) {

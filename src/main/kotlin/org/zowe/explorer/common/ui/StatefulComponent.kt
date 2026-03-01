@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.common.ui
@@ -19,7 +20,5 @@ package org.zowe.explorer.common.ui
  * that should be tracked over period of time
  */
 interface StatefulComponent<T : Any> {
-
   var state: T
-
 }

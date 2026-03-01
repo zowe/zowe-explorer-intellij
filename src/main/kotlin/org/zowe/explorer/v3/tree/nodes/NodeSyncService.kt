@@ -28,13 +28,27 @@ class NodeSyncService {
   /** A single tree of node paths. Contains node descriptors for each of the loaded paths, as well as path states */
   private val pathTree by lazy { PathTree() }
 
-  /** Map to track filter nodes to load their children as a single node */
+  /**
+   * Registry of [FetcherNodeDescriptor]s, indexed by base path and filter name.
+   * The outer key is the base path (e.g. `["host", "files", "ds"]`),
+   * the inner key is the filter/mask name (e.g. `"SYS1.**"`).
+   * Used to look up related filter descriptors when checking busy state
+   * and to prefill update info on newly created descriptors
+   */
   private val filterNodeDescriptors by lazy { mutableMapOf<List<String>, MutableMap<String, FetcherNodeDescriptor>>() }
 
-  /** Loader for plain filter nodes */
+  /**
+   * Loader for plain filter nodes (e.g. dataset masks, USS path filters).
+   * Handles nodes that represent a filter/mask applied to a flat list of elements.
+   * Uses [PathTree.updatePath] to merge loaded children while preserving existing references
+   */
   private val plainFilterNodesLoader by lazy { PlainFilterNodesLoader(pathTree, filterNodeDescriptors) }
 
-  /** Loader for fetcher nodes. Differs from the plain filter node in terms of associating with real elements */
+  /**
+   * Loader for fetcher nodes (e.g. partitioned datasets, USS folders).
+   * Handles nodes that fetch their own children from the server (members, nested files).
+   * Uses [PathTree.rewritePath] to fully synchronize children with the server response
+   */
   private val fetcherFilterNodesLoader by lazy { FetcherNodesLoader(pathTree, filterNodeDescriptors) }
 
   /**

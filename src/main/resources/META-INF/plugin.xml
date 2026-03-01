@@ -600,8 +600,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <action id="org.zowe.explorer.explorer.actions.AddMemberAction"
                 class="org.zowe.explorer.explorer.actions.AddMemberAction" text="Member"
-                icon="ForMainframeIcons.MemberIcon"
-        />
+                icon="ForMainframeIcons.MemberIcon"/>
 
         <action class="org.zowe.explorer.explorer.actions.SettingAction"
                 id="org.zowe.explorer.explorer.actions.SettingAction"
@@ -708,6 +707,12 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 class="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"
                 text="Submit Job"
                 icon="AllIcons.Actions.Execute"/>
+
+        <action id="org.zowe.explorer.v3.actions.teamconfig.CreateTeamConfigAction"
+                class="org.zowe.explorer.v3.actions.teamconfig.CreateTeamConfigAction"/>
+
+        <action id="org.zowe.explorer.v3.actions.tso.CreateTsoProfileAction"
+                class="org.zowe.explorer.v3.actions.tso.CreateTsoProfileAction"/>
 
         <group id="org.zowe.explorer.explorer.actions.SubmitJobToolbarActionGroup" popup="true">
             <reference id="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"/>
@@ -816,6 +821,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <group id="org.zowe.explorer.actions.AddNewItemFilesExplorerGroup"
                icon="AllIcons.General.Add"
                popup="true">
+            <reference id="org.zowe.explorer.v3.actions.teamconfig.CreateTeamConfigAction"/>
             <reference id="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"/>
         </group>
 
@@ -823,6 +829,12 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                icon="AllIcons.General.Add"
                popup="true">
             <reference id="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.AddNewItemTsoSessionsGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
+            <reference id="org.zowe.explorer.v3.actions.tso.CreateTsoProfileAction"/>
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerActionBarGroup">
@@ -833,6 +845,10 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <reference id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"/>
         </group>
 
+        <group id="org.zowe.explorer.components.tso.TsoSessionsActionBarGroup">
+            <reference id="org.zowe.explorer.actions.AddNewItemTsoSessionsGroup"/>
+        </group>
+
         <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">
             <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
             <separator/>
@@ -841,6 +857,9 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <group id="org.zowe.explorer.components.jes.JesExplorerContextMenuGroup">
             <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.tso.TsoSessionsContextMenuGroup">
         </group>
 
         <group id="org.zowe.explorer.actions.JESActionBarGroup">

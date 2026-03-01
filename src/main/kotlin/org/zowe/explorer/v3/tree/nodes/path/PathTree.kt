@@ -12,8 +12,44 @@ package org.zowe.explorer.v3.tree.nodes.path
 
 import org.zowe.explorer.v3.tree.nodes.Ephemeral
 import org.zowe.explorer.v3.tree.nodes.Traversable
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
-/** Path tree representation. Provides the way of storing [org.zowe.explorer.v3.tree.nodes.Traversable] objects, as well as manipulating them */
+/**
+ * Path tree representation. Provides the way of storing [org.zowe.explorer.v3.tree.nodes.Traversable] objects,
+ * as well as manipulating them.
+ *
+ * The tree is organized as a trie where each path segment forms a level. Each node in the trie
+ * holds a list of [Traversable] elements and a [PathState] that tracks whether the node's content
+ * is being loaded, already loaded, or the path is just initialized.
+ *
+ * Example structure for a connection to `my.host.com` with two dataset masks (`SYS1.**`, `USER.**`)
+ * and a USS path (`/u/user`):
+ * ```
+ * pathTreeNodes
+ * └── "my.host.com"                          (basePath[0] — host)
+ *     └── "files"                            (basePath[1] — system type)
+ *         ├── "ds"                           (basePath[2] — system name)
+ *         │   ├── "SYS1.**"                  [LOADED] elements: [DatasetMaskNodeDescriptor("SYS1.**")]
+ *         │   │   ├── "SYS1.PARMLIB"         elements: [PartitionedDatasetNodeDescriptor("SYS1.PARMLIB")]
+ *         │   │   │   ├── "IEASYS00"         elements: [MemberNodeDescriptor("IEASYS00")]
+ *         │   │   │   └── "IEASYS01"         elements: [MemberNodeDescriptor("IEASYS01")]
+ *         │   │   └── "SYS1.PROCLIB"         elements: [SequentialDatasetNodeDescriptor("SYS1.PROCLIB")]
+ *         │   └── "USER.**"                  [BUSY]   elements: [DatasetMaskNodeDescriptor("USER.**")]
+ *         └── "uss"
+ *             └── "/u/user"                  [LOADED] elements: [UssFilterNodeDescriptor("/u/user")]
+ *                 ├── "file.txt"             elements: [UssFileNodeDescriptor("file.txt")]
+ *                 └── "subdir"               elements: [UssFolderNodeDescriptor("subdir")]
+ * ```
+ *
+ * The base path for datasets is `["host", "files", "ds"]`, for USS — `["host", "files", "uss"]`,
+ * for JES — `["host", "jes", "jobs"]`. Filter names and element names extend the path further.
+ *
+ * Thread safety: all public methods are synchronized via [ReentrantReadWriteLock].
+ * Read operations acquire a read lock, write operations acquire a write lock.
+ * Returned lists are defensive copies that are safe to iterate outside the lock.
+ */
 open class PathTree {
   /**
    * Represents a respective path state.
@@ -26,6 +62,8 @@ open class PathTree {
     BUSY,
     LOADED
   }
+
+  private val lock = ReentrantReadWriteLock()
 
   /** Currently initialized and actual path tree to operate on */
   private val pathTreeNodes = mutableMapOf<String, PathTreeNode>()
@@ -41,7 +79,6 @@ open class PathTree {
     val parent: PathTreeNode?,
     val pathElements: MutableList<Traversable> = mutableListOf(),
     var innerNodes: MutableMap<String, PathTreeNode> = mutableMapOf(),
-    @Volatile
     var pathState: PathState = PathState.INIT,
   )
 
@@ -128,9 +165,9 @@ open class PathTree {
    * @param pathStrings the path strings list to get or initialize the path by
    * @return the path state of the path (stored or initialized)
    */
-  fun getOrInitPathState(pathStrings: List<String>): PathState {
+  fun getOrInitPathState(pathStrings: List<String>): PathState = lock.write {
     val pathNode = formPathTree(pathStrings)
-    return pathNode.pathState
+    pathNode.pathState
   }
 
   /**
@@ -138,7 +175,7 @@ open class PathTree {
    * @param pathStrings the path strings list to set the path state by
    * @param newPathState the path state to set for the path
    */
-  fun setPathState(pathStrings: List<String>, newPathState: PathState) {
+  fun setPathState(pathStrings: List<String>, newPathState: PathState): Unit = lock.write {
     val pathNode = formPathTree(pathStrings)
     pathNode.pathState = newPathState
   }
@@ -148,10 +185,10 @@ open class PathTree {
    * @param pathStrings the path strings list to check children nodes for
    * @return true if there is a child in the [PathState.BUSY] state, false otherwise
    */
-  fun isAnyChildBusy(pathStrings: List<String>): Boolean {
+  fun isAnyChildBusy(pathStrings: List<String>): Boolean = lock.read {
     val pathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
-    return hasAnyChildInState(pathNode, PathState.BUSY)
+    hasAnyChildInState(pathNode, PathState.BUSY)
   }
 
   /**
@@ -159,10 +196,10 @@ open class PathTree {
    * @param pathStrings the path strings list to check parent nodes for
    * @return true if there is a parent in the [PathState.BUSY] state, false otherwise
    */
-  fun isAnyParentBusy(pathStrings: List<String>): Boolean {
+  fun isAnyParentBusy(pathStrings: List<String>): Boolean = lock.read {
     val pathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
-    return hasAnyParentInState(pathNode, PathState.BUSY)
+    hasAnyParentInState(pathNode, PathState.BUSY)
   }
 
   /**
@@ -170,47 +207,49 @@ open class PathTree {
    * @param pathStrings the path strings list to get a path tree node with the path elements
    * @return list of the stored path elements (or empty list if there is no elements under the path)
    */
-  fun getPathElements(pathStrings: List<String>): List<Traversable> {
-    return findPathTreeNodeByPath(pathStrings)?.pathElements ?: listOf()
+  fun getPathElements(pathStrings: List<String>): List<Traversable> = lock.read {
+    findPathTreeNodeByPath(pathStrings)?.pathElements?.toList() ?: listOf()
   }
 
   /**
    * Get the element under the specified [placingPath] by the [elemName]
    * @return the found element or null if it does not exist
    */
-  fun getPathElement(placingPath: List<String>, elemName: String): Traversable? {
-    return getPathElements(placingPath).find { it.elemName == elemName }
+  fun getPathElement(placingPath: List<String>, elemName: String): Traversable? = lock.read {
+    findPathTreeNodeByPath(placingPath)?.pathElements?.find { it.elemName == elemName }
   }
 
   /**
-   * TODO: doc update
-   * Update the specified path with the new path elements.
-   * Will remove all [org.zowe.explorer.v3.tree.nodes.Ephemeral] elements from the existing path,
-   * refresh the stored elements info with the data from [newPathElements],
-   * and store any non-found elements from the [newPathElements] list
+   * Merge-update the specified path with the new path elements.
+   * Removes all [Ephemeral] elements, then adds elements from [newPathElements] that are not yet present.
+   * Existing non-ephemeral elements are preserved (important for keeping references of real fetched elements).
    * @param pathStrings the path strings list to update the respective path
-   * @param newPathElements the new path elements to refresh the existing ones or insert new ones
+   * @param newPathElements the new path elements to merge into the existing ones
    * @return the list of the path elements stored under the path after the update
    */
-  fun updatePath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> {
+  fun updatePath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> = lock.write {
     val pathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
-    pathNode.pathElements.removeIf { oldPathElement -> oldPathElement is Ephemeral }
-    pathNode.pathElements.map { oldPathElement ->
-      newPathElements.find { newPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() }
-        ?: oldPathElement
-    }
-    val newPathElementsToAdd = newPathElements
-      .filter { newPathElement ->
-        pathNode.pathElements
-          .find { oldPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() } == null
-      }
+    pathNode.pathElements.removeIf { it is Ephemeral }
+    val existingPaths = pathNode.pathElements.map { it.getExactPath() }.toSet()
+    val newPathElementsToAdd = newPathElements.filter { it.getExactPath() !in existingPaths }
     pathNode.pathElements.addAll(newPathElementsToAdd)
-    return pathNode.pathElements
+    pathNode.pathElements.toList()
   }
 
-  // TODO: doc
-  fun rewritePath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> {
+  /**
+   * Fully synchronize the specified path with [newPathElements].
+   * Removes all [Ephemeral] elements and any existing elements whose [Traversable.getExactPath]
+   * is not present in [newPathElements]. New elements that don't yet exist are added.
+   * Existing elements that match by path are kept as-is (preserving object references).
+   *
+   * In contrast to [updatePath], this method **removes** stale elements that are no longer
+   * reported by the server, making it suitable for full reload scenarios.
+   * @param pathStrings the path strings list identifying the path to rewrite
+   * @param newPathElements the authoritative list of elements from the server
+   * @return the list of the path elements stored under the path after the rewrite
+   */
+  fun rewritePath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> = lock.write {
     val pathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
     val newPathElementsToAdd = newPathElements
@@ -225,7 +264,7 @@ open class PathTree {
           || newPathElements.find { newPathElement -> newPathElement.getExactPath() == oldPathElement.getExactPath() } == null
       }
     pathNode.pathElements.addAll(newPathElementsToAdd)
-    return pathNode.pathElements
+    pathNode.pathElements.toList()
   }
 
   /**
@@ -238,6 +277,14 @@ open class PathTree {
     pathStrings: List<String>,
     shouldUpdateChildren: Boolean = true,
     applyFn: (Traversable) -> Unit
+  ): Unit = lock.write {
+    applyToPathElementsInternal(pathStrings, shouldUpdateChildren, applyFn)
+  }
+
+  private fun applyToPathElementsInternal(
+    pathStrings: List<String>,
+    shouldUpdateChildren: Boolean,
+    applyFn: (Traversable) -> Unit
   ) {
     val parentPathNode = findPathTreeNodeByPath(pathStrings)
       ?: throw Exception("Path $pathStrings is not yet initialized")
@@ -246,7 +293,7 @@ open class PathTree {
       parentPathNode.innerNodes
         .keys
         .forEach { nextPathStr ->
-          applyToPathElements(pathStrings + listOf(nextPathStr), true, applyFn)
+          applyToPathElementsInternal(pathStrings + listOf(nextPathStr), true, applyFn)
         }
     }
   }
@@ -257,11 +304,11 @@ open class PathTree {
    * @param newPathElements the new path elements to insert
    * @return the list of the path elements stored under the path after the reset
    */
-  fun resetPath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> {
+  fun resetPath(pathStrings: List<String>, newPathElements: List<Traversable>): List<Traversable> = lock.write {
     val pathNode = formPathTree(pathStrings)
     pathNode.pathElements.clear()
     pathNode.pathElements.addAll(newPathElements)
-    return pathNode.pathElements
+    pathNode.pathElements.toList()
   }
 
 //  // TODO: check if it is needed

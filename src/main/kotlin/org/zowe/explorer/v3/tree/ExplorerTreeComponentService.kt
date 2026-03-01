@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.zowe.explorer.v3.components.files.FilesExplorerComponent
 import org.zowe.explorer.v3.components.jes.JesExplorerComponent
+import org.zowe.explorer.v3.components.tso.TsoSessionsComponent
 
 // TODO: doc
 @Service
@@ -30,24 +31,35 @@ class ExplorerTreeComponentService {
 
   private val projectsToFilesExplorerComponents = mutableMapOf<Project, FilesExplorerComponent>()
   private val projectsToJesExplorerComponents = mutableMapOf<Project, JesExplorerComponent>()
+  private val projectsToTsoSessionsComponents = mutableMapOf<Project, TsoSessionsComponent>()
 
   fun getFilesExplorerComponent(project: Project): FilesExplorerComponent {
-    val projectToFilesExplorerComponent = projectsToFilesExplorerComponents[project]
-    return if (projectToFilesExplorerComponent == null) {
+    val savedFilesExplorerComponent = projectsToFilesExplorerComponents[project]
+    return if (savedFilesExplorerComponent == null) {
       val filesExplorerComponent = FilesExplorerComponent(project)
       Disposer.register(project, filesExplorerComponent)
       projectsToFilesExplorerComponents[project] = filesExplorerComponent
       filesExplorerComponent
-    } else projectToFilesExplorerComponent
+    } else savedFilesExplorerComponent
   }
 
   fun getJesExplorerComponent(project: Project): JesExplorerComponent {
-    val projectToJesExplorerComponent = projectsToJesExplorerComponents[project]
-    return if (projectToJesExplorerComponent == null) {
+    val savedJesExplorerComponent = projectsToJesExplorerComponents[project]
+    return if (savedJesExplorerComponent == null) {
       val jesExplorerComponent = JesExplorerComponent(project)
       Disposer.register(project, jesExplorerComponent)
       projectsToJesExplorerComponents[project] = jesExplorerComponent
       jesExplorerComponent
-    } else projectToJesExplorerComponent
+    } else savedJesExplorerComponent
+  }
+
+  fun getTsoSessionsComponent(project: Project): TsoSessionsComponent {
+    val savedTsoSessionsComponent = projectsToTsoSessionsComponents[project]
+    return if (savedTsoSessionsComponent == null) {
+      val tsoSessionsComponent = TsoSessionsComponent(project)
+      Disposer.register(project, tsoSessionsComponent)
+      projectsToTsoSessionsComponents[project] = tsoSessionsComponent
+      tsoSessionsComponent
+    } else savedTsoSessionsComponent
   }
 }
