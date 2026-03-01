@@ -23,11 +23,26 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property rejectUnauthorized whether to reject self-signed TLS certificates.
  */
 data class EbgProfile(
-  var shouldCreate: Boolean = false,
-  val protocol: ProfileField<String?> = ProfileField("https", "The Endevor Bridge for Git SCM protocol"),
-  val host: ProfileField<String?> = ProfileField(null, "The Endevor Bridge for Git hostname"),
-  val port: ProfileField<Int?> = ProfileField(null, "The Endevor Bridge for Git port"),
-  val user: ProfileField<String?> = ProfileField(null, "Endevor Bridge for Git username (your git username)"),
-  val token: ProfileField<CharArray?> = ProfileField(null, "Git personal access token (it can be obtained from your Git Enterprise Server)"),
-  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "Reject self-signed certificates")
-)
+  override var shouldCreate: Boolean = false,
+  val protocol: ProfileField<String?> = ProfileField("https", "Protocol", "protocol", "The Endevor Bridge for Git SCM protocol"),
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The Endevor Bridge for Git hostname"),
+  val port: ProfileField<Int?> = ProfileField(null, "Port", "port", "The Endevor Bridge for Git port"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "Endevor Bridge for Git username (your git username)"),
+  val token: ProfileField<CharArray?> = ProfileField(null, "Token", "token", "Git personal access token (it can be obtained from your Git Enterprise Server)"),
+  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "Reject unauthorized", "rejectUnauthorized", "Reject self-signed certificates")
+) : ConfigProfile {
+  override val profileName: String = "Endevor Bridge for Git profile"
+  override val profileType: String = "ebg"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      protocol.prop,
+      host.prop,
+      port.prop,
+      user.prop,
+      rejectUnauthorized.prop
+    ),
+    listOf(token.nameInConfig)
+  )
+}

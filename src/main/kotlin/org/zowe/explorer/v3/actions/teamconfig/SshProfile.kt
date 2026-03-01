@@ -23,12 +23,27 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property handshakeTimeout maximum time in milliseconds to wait for the SSH handshake.
  */
 data class SshProfile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The z/OS SSH server host name"),
-  val port: ProfileField<Int?> = ProfileField(22, "The z/OS SSH server port"),
-  val user: ProfileField<String?> = ProfileField(null, "Mainframe user name, which can be the same as your TSO login"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "Mainframe password, which can be the same as your TSO password"),
-  val privateKey: ProfileField<String?> = ProfileField(null, "Path to a file containing your private key, that must match a public key stored in the server for authentication"),
-  val keyPassphrase: ProfileField<CharArray?> = ProfileField(null, "Private key passphrase, which unlocks the private key"),
-  val handshakeTimeout: ProfileField<Int?> = ProfileField(null, "How long in milliseconds to wait for the SSH handshake to complete")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The z/OS SSH server host name"),
+  val port: ProfileField<Int?> = ProfileField(22, "Port", "port", "The z/OS SSH server port"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "Mainframe user name, which can be the same as your TSO login"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "Mainframe password, which can be the same as your TSO password"),
+  val privateKey: ProfileField<String?> = ProfileField(null, "Private key", "privateKey", "Path to a file containing your private key, that must match a public key stored in the server for authentication"),
+  val keyPassphrase: ProfileField<CharArray?> = ProfileField(null, "Key passphrase", "keyPassphrase", "Private key passphrase, which unlocks the private key"),
+  val handshakeTimeout: ProfileField<Int?> = ProfileField(null, "Handshake timeout", "handshakeTimeout", "How long in milliseconds to wait for the SSH handshake to complete")
+) : ConfigProfile {
+  override val profileName: String = "SSH profile"
+  override val profileType: String = "ssh"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      privateKey.prop,
+      handshakeTimeout.prop
+    ),
+    listOf(password.nameInConfig, keyPassphrase.nameInConfig)
+  )
+}

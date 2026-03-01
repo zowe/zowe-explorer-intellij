@@ -22,11 +22,27 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property truncate whether to truncate output that exceeds the console width (default `false`).
  */
 data class SysviewFormatProfile(
-  var shouldCreate: Boolean = false,
-  val contextFields: ProfileField<List<String>?> = ProfileField(null, "Context fields to display. Defaults to hiding all context"),
-  val overview: ProfileField<Boolean?> = ProfileField(null, "Display the overview section"),
-  val info: ProfileField<Boolean?> = ProfileField(null, "Display the information area, if any"),
-  val pretty: ProfileField<Boolean?> = ProfileField(null, "Display formatted data"),
-  val blankIfZero: ProfileField<Boolean?> = ProfileField(null, "Show a blank space instead of '0' values"),
-  val truncate: ProfileField<Boolean?> = ProfileField(false, "Truncate displays that are too wide for the console")
-)
+  override var shouldCreate: Boolean = false,
+  val contextFields: ProfileField<List<String>?> = ProfileField(null, "Context fields", "contextFields", "Context fields to display. Defaults to hiding all context"),
+  val overview: ProfileField<Boolean?> = ProfileField(null, "Overview", "overview", "Display the overview section"),
+  val info: ProfileField<Boolean?> = ProfileField(null, "Info", "info", "Display the information area, if any"),
+  val pretty: ProfileField<Boolean?> = ProfileField(null, "Pretty", "pretty", "Display formatted data"),
+  val blankIfZero: ProfileField<Boolean?> = ProfileField(null, "Blank if zero", "blankIfZero", "Show a blank space instead of '0' values"),
+  val truncate: ProfileField<Boolean?> = ProfileField(false, "Truncate", "truncate", "Truncate displays that are too wide for the console")
+) : ConfigProfile {
+  override val profileName: String = "SYSVIEW format profile"
+  override val profileType: String = "sysview-format"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      contextFields.prop,
+      overview.prop,
+      info.prop,
+      pretty.prop,
+      blankIfZero.prop,
+      truncate.prop
+    ),
+    emptyList()
+  )
+}

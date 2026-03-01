@@ -24,13 +24,30 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property reportDir directory where Endevor reports are written (default `"."`).
  */
 data class EndevorProfile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The hostname of the endevor session"),
-  val port: ProfileField<Int?> = ProfileField(null, "The port number of the endevor session"),
-  val user: ProfileField<String?> = ProfileField(null, "The username of the endevor session"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "The password of the user"),
-  val protocol: ProfileField<String?> = ProfileField("https", "The protocol used for connecting to Endevor Rest API"),
-  val basePath: ProfileField<String?> = ProfileField("EndevorService/api/v2", "The base path used for connecting to Endevor Rest API"),
-  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "If set, the server certificate is verified against the list of supplied CAs"),
-  val reportDir: ProfileField<String?> = ProfileField(".", "The default path where any reports will be written to, either absolute or relative to current directory")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The hostname of the endevor session"),
+  val port: ProfileField<Int?> = ProfileField(null, "Port", "port", "The port number of the endevor session"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "The username of the endevor session"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "The password of the user"),
+  val protocol: ProfileField<String?> = ProfileField("https", "Protocol", "protocol", "The protocol used for connecting to Endevor Rest API"),
+  val basePath: ProfileField<String?> = ProfileField("EndevorService/api/v2", "Base path", "basePath", "The base path used for connecting to Endevor Rest API"),
+  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "Reject unauthorized", "rejectUnauthorized", "If set, the server certificate is verified against the list of supplied CAs"),
+  val reportDir: ProfileField<String?> = ProfileField(".", "Report dir", "reportDir", "The default path where any reports will be written to, either absolute or relative to current directory")
+) : ConfigProfile {
+  override val profileName: String = "Endevor\u00ae profile"
+  override val profileType: String = "endevor"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      protocol.prop,
+      basePath.prop,
+      rejectUnauthorized.prop,
+      reportDir.prop
+    ),
+    listOf(password.nameInConfig)
+  )
+}

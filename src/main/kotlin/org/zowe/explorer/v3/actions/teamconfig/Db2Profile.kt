@@ -22,11 +22,26 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property sslFile path to the root CA certificate file for SSL connections.
  */
 data class Db2Profile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The Db2 server host name"),
-  val port: ProfileField<Int?> = ProfileField(null, "The Db2 server port number"),
-  val user: ProfileField<String?> = ProfileField(null, "The Db2 user ID (may be the same as the TSO login)"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "The Db2 password (may be the same as the TSO password)"),
-  val database: ProfileField<String?> = ProfileField(null, "The name of the database"),
-  val sslFile: ProfileField<String?> = ProfileField(null, "Path to the root CA Certificate file")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The Db2 server host name"),
+  val port: ProfileField<Int?> = ProfileField(null, "Port", "port", "The Db2 server port number"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "The Db2 user ID (may be the same as the TSO login)"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "The Db2 password (may be the same as the TSO password)"),
+  val database: ProfileField<String?> = ProfileField(null, "Database", "database", "The name of the database"),
+  val sslFile: ProfileField<String?> = ProfileField(null, "SSL file", "sslFile", "Path to the root CA Certificate file")
+) : ConfigProfile {
+  override val profileName: String = "IBM Db2 profile"
+  override val profileType: String = "db2"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      database.prop,
+      sslFile.prop
+    ),
+    listOf(password.nameInConfig)
+  )
+}

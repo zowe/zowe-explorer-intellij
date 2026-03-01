@@ -57,7 +57,7 @@ import kotlin.reflect.KMutableProperty0
  * - expand an "Additional Profiles" section to configure SYSVIEW, Endevor,
  *   JCLCheck, EBG, zFTP, CICS, Db2, and MQ profiles.
  *
- * On confirmation ([doOKAction]), the dialog:
+ * On confirmation (doOKAction), the dialog:
  * 1. Applies all pending UI bindings to [state].
  * 2. Resolves the target file path via [resolveConfigFile].
  * 3. Serializes [state] to a pretty-printed JSON map via [buildConfigMap].
@@ -130,8 +130,19 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
         return collapsibleGroup
       }
 
-      private fun Panel.stringField(label: String, field: ProfileField<String?>) {
-        row(label) {
+      private fun Panel.profileSection(profile: ConfigProfile, fields: Panel.() -> Unit) {
+        lateinit var checkBox: Cell<JCheckBox>
+        row {
+          checkBox = descriptiveCheckBox(profile.profileName)
+            .bindSelected(profile::shouldCreate)
+        }
+        collapsibleGroupWithSeparator(checkBox) {
+          fields()
+        }
+      }
+
+      private fun Panel.stringField(field: ProfileField<String?>) {
+        row("${field.name}:") {
           textField()
             .bindText(
               getter = { field.value ?: "" },
@@ -144,8 +155,8 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
         }
       }
 
-      private fun Panel.intField(label: String, field: ProfileField<Int?>) {
-        row(label) {
+      private fun Panel.intField(field: ProfileField<Int?>) {
+        row("${field.name}:") {
           textField()
             .bindText(
               getter = { field.value?.toString() ?: "" },
@@ -158,8 +169,8 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
         }
       }
 
-      private fun Panel.charArrayPasswordField(label: String, field: ProfileField<CharArray?>) {
-        row(label) {
+      private fun Panel.charArrayPasswordField(field: ProfileField<CharArray?>) {
+        row("${field.name}:") {
           passwordField()
             .applyToComponent {
               field.value?.let { text = String(it) }
@@ -180,8 +191,8 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
         }
       }
 
-      private fun Panel.checkBoxField(label: String, field: ProfileField<Boolean?>, default: Boolean) {
-        row(label) {
+      private fun Panel.checkBoxField(field: ProfileField<Boolean?>, default: Boolean) {
+        row("${field.name}:") {
           checkBox("")
             .bindSelected(
               getter = { field.value ?: default },
@@ -194,153 +205,153 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
       }
 
       private fun Panel.baseProfileFields() {
-        stringField("Host:", state.baseProfile.host)
-        intField("Port:", state.baseProfile.port)
-        stringField("User:", state.baseProfile.user)
-        charArrayPasswordField("Password:", state.baseProfile.password)
-        checkBoxField("Reject unauthorized:", state.baseProfile.rejectUnauthorized, true)
-        stringField("Token type:", state.baseProfile.tokenType)
-        stringField("Token value:", state.baseProfile.tokenValue)
-        stringField("Cert file:", state.baseProfile.certFile)
-        stringField("Cert key file:", state.baseProfile.certKeyFile)
+        stringField(state.baseProfile.host)
+        intField(state.baseProfile.port)
+        stringField(state.baseProfile.user)
+        charArrayPasswordField(state.baseProfile.password)
+        checkBoxField(state.baseProfile.rejectUnauthorized, true)
+        stringField(state.baseProfile.tokenType)
+        stringField(state.baseProfile.tokenValue)
+        stringField(state.baseProfile.certFile)
+        stringField(state.baseProfile.certKeyFile)
       }
 
       private fun Panel.zosmfProfileFields() {
-        stringField("Host:", state.zosmfProfile.host)
-        intField("Port:", state.zosmfProfile.port)
-        stringField("User:", state.zosmfProfile.user)
-        charArrayPasswordField("Password:", state.zosmfProfile.password)
-        checkBoxField("Reject unauthorized:", state.zosmfProfile.rejectUnauthorized, true)
-        stringField("Cert file:", state.zosmfProfile.certFile)
-        stringField("Cert key file:", state.zosmfProfile.certKeyFile)
-        stringField("Base path:", state.zosmfProfile.basePath)
-        stringField("Protocol:", state.zosmfProfile.protocol)
-        stringField("Encoding:", state.zosmfProfile.encoding)
-        intField("Response timeout:", state.zosmfProfile.responseTimeout)
+        stringField(state.zosmfProfile.host)
+        intField(state.zosmfProfile.port)
+        stringField(state.zosmfProfile.user)
+        charArrayPasswordField(state.zosmfProfile.password)
+        checkBoxField(state.zosmfProfile.rejectUnauthorized, true)
+        stringField(state.zosmfProfile.certFile)
+        stringField(state.zosmfProfile.certKeyFile)
+        stringField(state.zosmfProfile.basePath)
+        stringField(state.zosmfProfile.protocol)
+        stringField(state.zosmfProfile.encoding)
+        intField(state.zosmfProfile.responseTimeout)
       }
 
       private fun Panel.tsoProfileFields() {
-        stringField("Account:", state.tsoProfile.account)
-        stringField("Character set:", state.tsoProfile.characterSet)
-        stringField("Code page:", state.tsoProfile.codePage)
-        intField("Columns:", state.tsoProfile.columns)
-        stringField("Logon procedure:", state.tsoProfile.logonProcedure)
-        intField("Region size:", state.tsoProfile.regionSize)
-        intField("Rows:", state.tsoProfile.rows)
+        stringField(state.tsoProfile.account)
+        stringField(state.tsoProfile.characterSet)
+        stringField(state.tsoProfile.codePage)
+        intField(state.tsoProfile.columns)
+        stringField(state.tsoProfile.logonProcedure)
+        intField(state.tsoProfile.regionSize)
+        intField(state.tsoProfile.rows)
       }
 
       private fun Panel.sshProfileFields() {
-        stringField("Host:", state.sshProfile.host)
-        intField("Port:", state.sshProfile.port)
-        stringField("User:", state.sshProfile.user)
-        charArrayPasswordField("Password:", state.sshProfile.password)
-        stringField("Private key:", state.sshProfile.privateKey)
-        charArrayPasswordField("Key passphrase:", state.sshProfile.keyPassphrase)
-        intField("Handshake timeout:", state.sshProfile.handshakeTimeout)
+        stringField(state.sshProfile.host)
+        intField(state.sshProfile.port)
+        stringField(state.sshProfile.user)
+        charArrayPasswordField(state.sshProfile.password)
+        stringField(state.sshProfile.privateKey)
+        charArrayPasswordField(state.sshProfile.keyPassphrase)
+        intField(state.sshProfile.handshakeTimeout)
       }
 
       private fun Panel.sysviewProfileFields() {
-        stringField("Host:", state.sysviewProfile.host)
-        intField("Port:", state.sysviewProfile.port)
-        stringField("User:", state.sysviewProfile.user)
-        charArrayPasswordField("Password:", state.sysviewProfile.password)
-        checkBoxField("Reject unauthorized:", state.sysviewProfile.rejectUnauthorized, false)
-        stringField("SSID:", state.sysviewProfile.ssid)
-        stringField("Base path:", state.sysviewProfile.basePath)
+        stringField(state.sysviewProfile.host)
+        intField(state.sysviewProfile.port)
+        stringField(state.sysviewProfile.user)
+        charArrayPasswordField(state.sysviewProfile.password)
+        checkBoxField(state.sysviewProfile.rejectUnauthorized, false)
+        stringField(state.sysviewProfile.ssid)
+        stringField(state.sysviewProfile.basePath)
       }
 
       private fun Panel.sysviewFormatProfileFields() {
-        checkBoxField("Overview:", state.sysviewFormatProfile.overview, false)
-        checkBoxField("Info:", state.sysviewFormatProfile.info, false)
-        checkBoxField("Pretty:", state.sysviewFormatProfile.pretty, false)
-        checkBoxField("Blank if zero:", state.sysviewFormatProfile.blankIfZero, false)
-        checkBoxField("Truncate:", state.sysviewFormatProfile.truncate, false)
+        checkBoxField(state.sysviewFormatProfile.overview, false)
+        checkBoxField(state.sysviewFormatProfile.info, false)
+        checkBoxField(state.sysviewFormatProfile.pretty, false)
+        checkBoxField(state.sysviewFormatProfile.blankIfZero, false)
+        checkBoxField(state.sysviewFormatProfile.truncate, false)
       }
 
       private fun Panel.endevorProfileFields() {
-        stringField("Host:", state.endevorProfile.host)
-        intField("Port:", state.endevorProfile.port)
-        stringField("User:", state.endevorProfile.user)
-        charArrayPasswordField("Password:", state.endevorProfile.password)
-        stringField("Protocol:", state.endevorProfile.protocol)
-        stringField("Base path:", state.endevorProfile.basePath)
-        checkBoxField("Reject unauthorized:", state.endevorProfile.rejectUnauthorized, false)
-        stringField("Report dir:", state.endevorProfile.reportDir)
+        stringField(state.endevorProfile.host)
+        intField(state.endevorProfile.port)
+        stringField(state.endevorProfile.user)
+        charArrayPasswordField(state.endevorProfile.password)
+        stringField(state.endevorProfile.protocol)
+        stringField(state.endevorProfile.basePath)
+        checkBoxField(state.endevorProfile.rejectUnauthorized, false)
+        stringField(state.endevorProfile.reportDir)
       }
 
       private fun Panel.endevorLocationProfileFields() {
-        stringField("Instance:", state.endevorLocationProfile.instance)
-        stringField("Environment:", state.endevorLocationProfile.environment)
-        stringField("System:", state.endevorLocationProfile.system)
-        stringField("Subsystem:", state.endevorLocationProfile.subsystem)
-        stringField("Type:", state.endevorLocationProfile.type)
-        stringField("Stage number:", state.endevorLocationProfile.stageNumber)
-        stringField("Comment:", state.endevorLocationProfile.comment)
-        stringField("CCID:", state.endevorLocationProfile.ccid)
-        intField("Max RC:", state.endevorLocationProfile.maxrc)
-        checkBoxField("Override signout:", state.endevorLocationProfile.overrideSignout, false)
-        stringField("File extension:", state.endevorLocationProfile.fileExtension)
+        stringField(state.endevorLocationProfile.instance)
+        stringField(state.endevorLocationProfile.environment)
+        stringField(state.endevorLocationProfile.system)
+        stringField(state.endevorLocationProfile.subsystem)
+        stringField(state.endevorLocationProfile.type)
+        stringField(state.endevorLocationProfile.stageNumber)
+        stringField(state.endevorLocationProfile.comment)
+        stringField(state.endevorLocationProfile.ccid)
+        intField(state.endevorLocationProfile.maxrc)
+        checkBoxField(state.endevorLocationProfile.overrideSignout, false)
+        stringField(state.endevorLocationProfile.fileExtension)
       }
 
       private fun Panel.jclCheckProfileFields() {
-        stringField("Host:", state.jclCheckProfile.host)
-        intField("Port:", state.jclCheckProfile.port)
-        stringField("User:", state.jclCheckProfile.user)
-        charArrayPasswordField("Password:", state.jclCheckProfile.password)
-        stringField("Base path:", state.jclCheckProfile.basePath)
-        checkBoxField("Reject unauthorized:", state.jclCheckProfile.rejectUnauthorized, true)
-        stringField("Protocol:", state.jclCheckProfile.protocol)
-        stringField("JCLCheck options:", state.jclCheckProfile.jclcheckOptions)
+        stringField(state.jclCheckProfile.host)
+        intField(state.jclCheckProfile.port)
+        stringField(state.jclCheckProfile.user)
+        charArrayPasswordField(state.jclCheckProfile.password)
+        stringField(state.jclCheckProfile.basePath)
+        checkBoxField(state.jclCheckProfile.rejectUnauthorized, true)
+        stringField(state.jclCheckProfile.protocol)
+        stringField(state.jclCheckProfile.jclcheckOptions)
       }
 
       private fun Panel.ebgProfileFields() {
-        stringField("Protocol:", state.ebgProfile.protocol)
-        stringField("Host:", state.ebgProfile.host)
-        intField("Port:", state.ebgProfile.port)
-        stringField("User:", state.ebgProfile.user)
-        charArrayPasswordField("Token:", state.ebgProfile.token)
-        checkBoxField("Reject unauthorized:", state.ebgProfile.rejectUnauthorized, false)
+        stringField(state.ebgProfile.protocol)
+        stringField(state.ebgProfile.host)
+        intField(state.ebgProfile.port)
+        stringField(state.ebgProfile.user)
+        charArrayPasswordField(state.ebgProfile.token)
+        checkBoxField(state.ebgProfile.rejectUnauthorized, false)
       }
 
       private fun Panel.zftpProfileFields() {
-        stringField("Host:", state.zftpProfile.host)
-        intField("Port:", state.zftpProfile.port)
-        stringField("User:", state.zftpProfile.user)
-        charArrayPasswordField("Password:", state.zftpProfile.password)
-        checkBoxField("Secure FTP:", state.zftpProfile.secureFtp, true)
-        checkBoxField("Reject unauthorized:", state.zftpProfile.rejectUnauthorized, false)
-        stringField("Server name:", state.zftpProfile.servername)
-        intField("Connection timeout:", state.zftpProfile.connectionTimeout)
-        stringField("Encoding:", state.zftpProfile.encoding)
+        stringField(state.zftpProfile.host)
+        intField(state.zftpProfile.port)
+        stringField(state.zftpProfile.user)
+        charArrayPasswordField(state.zftpProfile.password)
+        checkBoxField(state.zftpProfile.secureFtp, true)
+        checkBoxField(state.zftpProfile.rejectUnauthorized, false)
+        stringField(state.zftpProfile.servername)
+        intField(state.zftpProfile.connectionTimeout)
+        stringField(state.zftpProfile.encoding)
       }
 
       private fun Panel.cicsProfileFields() {
-        stringField("Host:", state.cicsProfile.host)
-        intField("Port:", state.cicsProfile.port)
-        stringField("User:", state.cicsProfile.user)
-        charArrayPasswordField("Password:", state.cicsProfile.password)
-        stringField("Region name:", state.cicsProfile.regionName)
-        stringField("CICSPlex:", state.cicsProfile.cicsPlex)
-        checkBoxField("Reject unauthorized:", state.cicsProfile.rejectUnauthorized, true)
-        stringField("Protocol:", state.cicsProfile.protocol)
+        stringField(state.cicsProfile.host)
+        intField(state.cicsProfile.port)
+        stringField(state.cicsProfile.user)
+        charArrayPasswordField(state.cicsProfile.password)
+        stringField(state.cicsProfile.regionName)
+        stringField(state.cicsProfile.cicsPlex)
+        checkBoxField(state.cicsProfile.rejectUnauthorized, true)
+        stringField(state.cicsProfile.protocol)
       }
 
       private fun Panel.db2ProfileFields() {
-        stringField("Host:", state.db2Profile.host)
-        intField("Port:", state.db2Profile.port)
-        stringField("User:", state.db2Profile.user)
-        charArrayPasswordField("Password:", state.db2Profile.password)
-        stringField("Database:", state.db2Profile.database)
-        stringField("SSL file:", state.db2Profile.sslFile)
+        stringField(state.db2Profile.host)
+        intField(state.db2Profile.port)
+        stringField(state.db2Profile.user)
+        charArrayPasswordField(state.db2Profile.password)
+        stringField(state.db2Profile.database)
+        stringField(state.db2Profile.sslFile)
       }
 
       private fun Panel.mqProfileFields() {
-        stringField("Host:", state.mqProfile.host)
-        intField("Port:", state.mqProfile.port)
-        stringField("User:", state.mqProfile.user)
-        charArrayPasswordField("Password:", state.mqProfile.password)
-        checkBoxField("Reject unauthorized:", state.mqProfile.rejectUnauthorized, false)
-        stringField("Protocol:", state.mqProfile.protocol)
+        stringField(state.mqProfile.host)
+        intField(state.mqProfile.port)
+        stringField(state.mqProfile.user)
+        charArrayPasswordField(state.mqProfile.password)
+        checkBoxField(state.mqProfile.rejectUnauthorized, false)
+        stringField(state.mqProfile.protocol)
       }
 
       override fun doOKAction() {
@@ -376,129 +387,27 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
             }
           }
           row {
-            label("Base profile:")
+            label("${state.baseProfile.profileName}:")
           }
           collapsibleGroupWithSeparator(null) {
             baseProfileFields()
           }.also { it.expanded = true }
 
-          lateinit var zosmfCheckBox: Cell<JCheckBox>
-          row {
-            zosmfCheckBox = descriptiveCheckBox("z/OSMF profile")
-              .bindSelected(state.zosmfProfile::shouldCreate)
-          }
-          collapsibleGroupWithSeparator(zosmfCheckBox) {
-            zosmfProfileFields()
-          }
-
-          lateinit var tsoCheckBox: Cell<JCheckBox>
-          row {
-            tsoCheckBox = descriptiveCheckBox("TSO/E profile")
-              .bindSelected(state.tsoProfile::shouldCreate)
-          }
-          collapsibleGroupWithSeparator(tsoCheckBox) {
-            tsoProfileFields()
-          }
-
-          lateinit var sshCheckBox: Cell<JCheckBox>
-          row {
-            sshCheckBox = descriptiveCheckBox("SSH profile")
-              .bindSelected(state.sshProfile::shouldCreate)
-          }
-          collapsibleGroupWithSeparator(sshCheckBox) {
-            sshProfileFields()
-          }
+          profileSection(state.zosmfProfile) { zosmfProfileFields() }
+          profileSection(state.tsoProfile) { tsoProfileFields() }
+          profileSection(state.sshProfile) { sshProfileFields() }
 
           val additionalProfilesCollapsibleGroup = collapsibleGroup("Additional Profiles") {
-            lateinit var sysviewCheckBox: Cell<JCheckBox>
-            row {
-              sysviewCheckBox = descriptiveCheckBox("SYSVIEW® profile")
-                .bindSelected(state.sysviewProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(sysviewCheckBox) {
-              sysviewProfileFields()
-            }
-
-            lateinit var sysviewFormatCheckBox: Cell<JCheckBox>
-            row {
-              sysviewFormatCheckBox = descriptiveCheckBox("SYSVIEW format profile")
-                .bindSelected(state.sysviewFormatProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(sysviewFormatCheckBox) {
-              sysviewFormatProfileFields()
-            }
-
-            lateinit var endevorCheckBox: Cell<JCheckBox>
-            row {
-              endevorCheckBox = descriptiveCheckBox("Endevor® profile")
-                .bindSelected(state.endevorProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(endevorCheckBox) {
-              endevorProfileFields()
-            }
-
-            lateinit var endevorLocationCheckBox: Cell<JCheckBox>
-            row {
-              endevorLocationCheckBox = descriptiveCheckBox("Endevor location profile")
-                .bindSelected(state.endevorLocationProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(endevorLocationCheckBox) {
-              endevorLocationProfileFields()
-            }
-
-            lateinit var jclCheckCheckBox: Cell<JCheckBox>
-            row {
-              jclCheckCheckBox = descriptiveCheckBox("JCLCheck™ profile")
-                .bindSelected(state.jclCheckProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(jclCheckCheckBox) {
-              jclCheckProfileFields()
-            }
-
-            lateinit var endevorBridgeCheckBox: Cell<JCheckBox>
-            row {
-              endevorBridgeCheckBox = descriptiveCheckBox("Endevor Bridge for Git profile")
-                .bindSelected(state.ebgProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(endevorBridgeCheckBox) {
-              ebgProfileFields()
-            }
-
-            lateinit var zftpCheckBox: Cell<JCheckBox>
-            row {
-              zftpCheckBox = descriptiveCheckBox("zFTP profile")
-                .bindSelected(state.zftpProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(zftpCheckBox) {
-              zftpProfileFields()
-            }
-
-            lateinit var ibmCicsCheckBox: Cell<JCheckBox>
-            row {
-              ibmCicsCheckBox = descriptiveCheckBox("IBM CICS profile")
-                .bindSelected(state.cicsProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(ibmCicsCheckBox) {
-              cicsProfileFields()
-            }
-
-            lateinit var ibmDb2CheckBox: Cell<JCheckBox>
-            row {
-              ibmDb2CheckBox = descriptiveCheckBox("IBM Db2 profile")
-                .bindSelected(state.db2Profile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(ibmDb2CheckBox) {
-              db2ProfileFields()
-            }
-
-            lateinit var ibmMqCheckBox: Cell<JCheckBox>
-            row {
-              ibmMqCheckBox = descriptiveCheckBox("IBM MQ profile")
-                .bindSelected(state.mqProfile::shouldCreate)
-            }
-            collapsibleGroupWithSeparator(ibmMqCheckBox) {
-              mqProfileFields()
-            }
+            profileSection(state.sysviewProfile) { sysviewProfileFields() }
+            profileSection(state.sysviewFormatProfile) { sysviewFormatProfileFields() }
+            profileSection(state.endevorProfile) { endevorProfileFields() }
+            profileSection(state.endevorLocationProfile) { endevorLocationProfileFields() }
+            profileSection(state.jclCheckProfile) { jclCheckProfileFields() }
+            profileSection(state.ebgProfile) { ebgProfileFields() }
+            profileSection(state.zftpProfile) { zftpProfileFields() }
+            profileSection(state.cicsProfile) { cicsProfileFields() }
+            profileSection(state.db2Profile) { db2ProfileFields() }
+            profileSection(state.mqProfile) { mqProfileFields() }
           }
           additionalProfilesCollapsibleGroup.topGap(TopGap.NONE)
         }
@@ -540,215 +449,27 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
     val profiles = linkedMapOf<String, Any>()
     val defaults = linkedMapOf<String, String>()
 
-    fun props(vararg pairs: Pair<String, Any?>): Map<String, Any> =
-      linkedMapOf(*pairs.mapNotNull { (k, v) -> v?.let { k to it } }.toTypedArray())
-
-    fun entry(type: String, properties: Map<String, Any>, secure: List<String>): Map<String, Any> =
-      linkedMapOf("type" to type, "properties" to properties)
-        .also { if (secure.isNotEmpty()) it["secure"] = secure }
-
-    // Base — always included
-    profiles["base"] = entry("base", props(
-      "host" to state.baseProfile.host.value,
-      "port" to state.baseProfile.port.value,
-      "user" to state.baseProfile.user.value,
-      "rejectUnauthorized" to state.baseProfile.rejectUnauthorized.value,
-      "tokenType" to state.baseProfile.tokenType.value,
-      "tokenValue" to state.baseProfile.tokenValue.value,
-      "certFile" to state.baseProfile.certFile.value,
-      "certKeyFile" to state.baseProfile.certKeyFile.value
-    ), buildList {
-      if (state.baseProfile.password.value?.isNotEmpty() == true) add("password")
-    })
-    defaults["base"] = "base"
-
-    if (state.zosmfProfile.shouldCreate) {
-      profiles["zosmf"] = entry("zosmf", props(
-        "host" to state.zosmfProfile.host.value,
-        "port" to state.zosmfProfile.port.value,
-        "user" to state.zosmfProfile.user.value,
-        "rejectUnauthorized" to state.zosmfProfile.rejectUnauthorized.value,
-        "certFile" to state.zosmfProfile.certFile.value,
-        "certKeyFile" to state.zosmfProfile.certKeyFile.value,
-        "basePath" to state.zosmfProfile.basePath.value,
-        "protocol" to state.zosmfProfile.protocol.value,
-        "encoding" to state.zosmfProfile.encoding.value,
-        "responseTimeout" to state.zosmfProfile.responseTimeout.value
-      ), buildList {
-        if (state.zosmfProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["zosmf"] = "zosmf"
-    }
-
-    if (state.tsoProfile.shouldCreate) {
-      profiles["tso"] = entry("tso", props(
-        "account" to state.tsoProfile.account.value,
-        "characterSet" to state.tsoProfile.characterSet.value,
-        "codePage" to state.tsoProfile.codePage.value,
-        "columns" to state.tsoProfile.columns.value,
-        "logonProcedure" to state.tsoProfile.logonProcedure.value,
-        "regionSize" to state.tsoProfile.regionSize.value,
-        "rows" to state.tsoProfile.rows.value
-      ), emptyList())
-      defaults["tso"] = "tso"
-    }
-
-    if (state.sshProfile.shouldCreate) {
-      profiles["ssh"] = entry("ssh", props(
-        "host" to state.sshProfile.host.value,
-        "port" to state.sshProfile.port.value,
-        "user" to state.sshProfile.user.value,
-        "privateKey" to state.sshProfile.privateKey.value,
-        "handshakeTimeout" to state.sshProfile.handshakeTimeout.value
-      ), buildList {
-        if (state.sshProfile.password.value?.isNotEmpty() == true) add("password")
-        if (state.sshProfile.keyPassphrase.value?.isNotEmpty() == true) add("keyPassphrase")
-      })
-      defaults["ssh"] = "ssh"
-    }
-
-    if (state.sysviewProfile.shouldCreate) {
-      profiles["sysview"] = entry("sysview", props(
-        "host" to state.sysviewProfile.host.value,
-        "port" to state.sysviewProfile.port.value,
-        "user" to state.sysviewProfile.user.value,
-        "rejectUnauthorized" to state.sysviewProfile.rejectUnauthorized.value,
-        "ssid" to state.sysviewProfile.ssid.value,
-        "basePath" to state.sysviewProfile.basePath.value
-      ), buildList {
-        if (state.sysviewProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["sysview"] = "sysview"
-    }
-
-    if (state.sysviewFormatProfile.shouldCreate) {
-      profiles["sysview-format"] = entry("sysview-format", props(
-        "contextFields" to state.sysviewFormatProfile.contextFields.value,
-        "overview" to state.sysviewFormatProfile.overview.value,
-        "info" to state.sysviewFormatProfile.info.value,
-        "pretty" to state.sysviewFormatProfile.pretty.value,
-        "blankIfZero" to state.sysviewFormatProfile.blankIfZero.value,
-        "truncate" to state.sysviewFormatProfile.truncate.value
-      ), emptyList())
-      defaults["sysview-format"] = "sysview-format"
-    }
-
-    if (state.endevorProfile.shouldCreate) {
-      profiles["endevor"] = entry("endevor", props(
-        "host" to state.endevorProfile.host.value,
-        "port" to state.endevorProfile.port.value,
-        "user" to state.endevorProfile.user.value,
-        "protocol" to state.endevorProfile.protocol.value,
-        "basePath" to state.endevorProfile.basePath.value,
-        "rejectUnauthorized" to state.endevorProfile.rejectUnauthorized.value,
-        "reportDir" to state.endevorProfile.reportDir.value
-      ), buildList {
-        if (state.endevorProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["endevor"] = "endevor"
-    }
-
-    if (state.endevorLocationProfile.shouldCreate) {
-      profiles["endevor-location"] = entry("endevor-location", props(
-        "instance" to state.endevorLocationProfile.instance.value,
-        "environment" to state.endevorLocationProfile.environment.value,
-        "system" to state.endevorLocationProfile.system.value,
-        "subsystem" to state.endevorLocationProfile.subsystem.value,
-        "type" to state.endevorLocationProfile.type.value,
-        "stageNumber" to state.endevorLocationProfile.stageNumber.value,
-        "comment" to state.endevorLocationProfile.comment.value,
-        "ccid" to state.endevorLocationProfile.ccid.value,
-        "maxrc" to state.endevorLocationProfile.maxrc.value,
-        "override-signout" to state.endevorLocationProfile.overrideSignout.value,
-        "file-extension" to state.endevorLocationProfile.fileExtension.value
-      ), emptyList())
-      defaults["endevor-location"] = "endevor-location"
-    }
-
-    if (state.jclCheckProfile.shouldCreate) {
-      profiles["jclcheck"] = entry("jclcheck", props(
-        "host" to state.jclCheckProfile.host.value,
-        "port" to state.jclCheckProfile.port.value,
-        "user" to state.jclCheckProfile.user.value,
-        "basePath" to state.jclCheckProfile.basePath.value,
-        "rejectUnauthorized" to state.jclCheckProfile.rejectUnauthorized.value,
-        "protocol" to state.jclCheckProfile.protocol.value,
-        "jclcheckOptions" to state.jclCheckProfile.jclcheckOptions.value
-      ), buildList {
-        if (state.jclCheckProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["jclcheck"] = "jclcheck"
-    }
-
-    if (state.ebgProfile.shouldCreate) {
-      profiles["ebg"] = entry("ebg", props(
-        "protocol" to state.ebgProfile.protocol.value,
-        "host" to state.ebgProfile.host.value,
-        "port" to state.ebgProfile.port.value,
-        "user" to state.ebgProfile.user.value,
-        "rejectUnauthorized" to state.ebgProfile.rejectUnauthorized.value
-      ), buildList {
-        if (state.ebgProfile.token.value?.isNotEmpty() == true) add("token")
-      })
-      defaults["ebg"] = "ebg"
-    }
-
-    if (state.zftpProfile.shouldCreate) {
-      profiles["zftp"] = entry("zftp", props(
-        "host" to state.zftpProfile.host.value,
-        "port" to state.zftpProfile.port.value,
-        "user" to state.zftpProfile.user.value,
-        "secureFtp" to state.zftpProfile.secureFtp.value,
-        "rejectUnauthorized" to state.zftpProfile.rejectUnauthorized.value,
-        "servername" to state.zftpProfile.servername.value,
-        "connectionTimeout" to state.zftpProfile.connectionTimeout.value,
-        "encoding" to state.zftpProfile.encoding.value
-      ), buildList {
-        if (state.zftpProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["zftp"] = "zftp"
-    }
-
-    if (state.cicsProfile.shouldCreate) {
-      profiles["cics"] = entry("cics", props(
-        "host" to state.cicsProfile.host.value,
-        "port" to state.cicsProfile.port.value,
-        "user" to state.cicsProfile.user.value,
-        "regionName" to state.cicsProfile.regionName.value,
-        "cicsPlex" to state.cicsProfile.cicsPlex.value,
-        "rejectUnauthorized" to state.cicsProfile.rejectUnauthorized.value,
-        "protocol" to state.cicsProfile.protocol.value
-      ), buildList {
-        if (state.cicsProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["cics"] = "cics"
-    }
-
-    if (state.db2Profile.shouldCreate) {
-      profiles["db2"] = entry("db2", props(
-        "host" to state.db2Profile.host.value,
-        "port" to state.db2Profile.port.value,
-        "user" to state.db2Profile.user.value,
-        "database" to state.db2Profile.database.value,
-        "sslFile" to state.db2Profile.sslFile.value
-      ), buildList {
-        if (state.db2Profile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["db2"] = "db2"
-    }
-
-    if (state.mqProfile.shouldCreate) {
-      profiles["mq"] = entry("mq", props(
-        "host" to state.mqProfile.host.value,
-        "port" to state.mqProfile.port.value,
-        "user" to state.mqProfile.user.value,
-        "rejectUnauthorized" to state.mqProfile.rejectUnauthorized.value,
-        "protocol" to state.mqProfile.protocol.value
-      ), buildList {
-        if (state.mqProfile.password.value?.isNotEmpty() == true) add("password")
-      })
-      defaults["mq"] = "mq"
-    }
+    listOf(
+      state.baseProfile,
+      state.zosmfProfile,
+      state.tsoProfile,
+      state.sshProfile,
+      state.sysviewProfile,
+      state.sysviewFormatProfile,
+      state.endevorProfile,
+      state.endevorLocationProfile,
+      state.jclCheckProfile,
+      state.ebgProfile,
+      state.zftpProfile,
+      state.cicsProfile,
+      state.db2Profile,
+      state.mqProfile
+    )
+      .filter { it.shouldCreate }
+      .forEach { profile ->
+        profiles[profile.profileType] = profile.jsonFriendly()
+        defaults[profile.profileType] = profile.profileType
+      }
 
     return linkedMapOf(
       "\$schema" to "./zowe.schema.json",

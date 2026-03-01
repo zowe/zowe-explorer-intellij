@@ -22,11 +22,26 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property protocol MQ REST API protocol: `"http"` or `"https"` (default `"https"`).
  */
 data class MqProfile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The host name used to access the IBM MQ REST API"),
-  val port: ProfileField<Int?> = ProfileField(null, "The port number used to access the IBM MQ REST API"),
-  val user: ProfileField<String?> = ProfileField(null, "The mainframe (MQ) user name, which can be the same as your TSO login"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "The mainframe (MQ) password, which can be the same as your TSO password"),
-  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(false, "Reject self-signed certificates"),
-  val protocol: ProfileField<String?> = ProfileField("https", "Specifies the MQ protocol (http or https)")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The host name used to access the IBM MQ REST API"),
+  val port: ProfileField<Int?> = ProfileField(null, "Port", "port", "The port number used to access the IBM MQ REST API"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "The mainframe (MQ) user name, which can be the same as your TSO login"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "The mainframe (MQ) password, which can be the same as your TSO password"),
+  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(false, "Reject unauthorized", "rejectUnauthorized", "Reject self-signed certificates"),
+  val protocol: ProfileField<String?> = ProfileField("https", "Protocol", "protocol", "Specifies the MQ protocol (http or https)")
+) : ConfigProfile {
+  override val profileName: String = "IBM MQ profile"
+  override val profileType: String = "mq"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      rejectUnauthorized.prop,
+      protocol.prop
+    ),
+    listOf(password.nameInConfig)
+  )
+}

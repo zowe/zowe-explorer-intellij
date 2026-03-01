@@ -24,13 +24,30 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property protocol CMCI protocol: `"http"` or `"https"` (default `"https"`).
  */
 data class CicsProfile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The CMCI server host name"),
-  val port: ProfileField<Int?> = ProfileField(1490, "The CMCI server port"),
-  val user: ProfileField<String?> = ProfileField(null, "Your username to connect to CICS"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "Your password to connect to CICS"),
-  val regionName: ProfileField<String?> = ProfileField(null, "The name of the CICS region name to interact with"),
-  val cicsPlex: ProfileField<String?> = ProfileField(null, "The name of the CICSPlex to interact with"),
-  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(true, "Reject self-signed certificates"),
-  val protocol: ProfileField<String?> = ProfileField("https", "Specifies CMCI protocol (http or https)")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The CMCI server host name"),
+  val port: ProfileField<Int?> = ProfileField(1490, "Port", "port", "The CMCI server port"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "Your username to connect to CICS"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "Your password to connect to CICS"),
+  val regionName: ProfileField<String?> = ProfileField(null, "Region name", "regionName", "The name of the CICS region name to interact with"),
+  val cicsPlex: ProfileField<String?> = ProfileField(null, "CICSPlex", "cicsPlex", "The name of the CICSPlex to interact with"),
+  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(true, "Reject unauthorized", "rejectUnauthorized", "Reject self-signed certificates"),
+  val protocol: ProfileField<String?> = ProfileField("https", "Protocol", "protocol", "Specifies CMCI protocol (http or https)")
+) : ConfigProfile {
+  override val profileName: String = "IBM CICS profile"
+  override val profileType: String = "cics"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      regionName.prop,
+      cicsPlex.prop,
+      rejectUnauthorized.prop,
+      protocol.prop
+    ),
+    listOf(password.nameInConfig)
+  )
+}

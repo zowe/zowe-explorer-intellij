@@ -33,16 +33,37 @@ package org.zowe.explorer.v3.actions.teamconfig
  *   `"none"`, `"type-name"`, `"file-ext"`, or `"mixed"` (default `"mixed"`).
  */
 data class EndevorLocationProfile(
-  var shouldCreate: Boolean = false,
-  val instance: ProfileField<String?> = ProfileField("ENDEVOR", "The STC/datasource of the session"),
-  val environment: ProfileField<String?> = ProfileField("DEV", "The Endevor environment where your project resides"),
-  val system: ProfileField<String?> = ProfileField(null, "The Endevor system where the element resides"),
-  val subsystem: ProfileField<String?> = ProfileField(null, "The Endevor subsystem where your element resides"),
-  val type: ProfileField<String?> = ProfileField(null, "Name of the Endevor element's type"),
-  val stageNumber: ProfileField<String?> = ProfileField(null, "The Endevor stage where your project resides (1 or 2)"),
-  val comment: ProfileField<String?> = ProfileField(null, "The Endevor comment you want to use when performing an action"),
-  val ccid: ProfileField<String?> = ProfileField(null, "The Endevor CCID you want to use when performing an action"),
-  val maxrc: ProfileField<Int?> = ProfileField(8, "The return code of Endevor that defines a failed action"),
-  val overrideSignout: ProfileField<Boolean?> = ProfileField(false, "Always override element signout, without having to specify the override signout option on each command"),
-  val fileExtension: ProfileField<String?> = ProfileField("mixed", "The strategy for deciding what file extension to use during a bulk retrieve or workspace synchronization (none, type-name, file-ext, mixed)")
-)
+  override var shouldCreate: Boolean = false,
+  val instance: ProfileField<String?> = ProfileField("ENDEVOR", "Instance", "instance", "The STC/datasource of the session"),
+  val environment: ProfileField<String?> = ProfileField("DEV", "Environment", "environment", "The Endevor environment where your project resides"),
+  val system: ProfileField<String?> = ProfileField(null, "System", "system", "The Endevor system where the element resides"),
+  val subsystem: ProfileField<String?> = ProfileField(null, "Subsystem", "subsystem", "The Endevor subsystem where your element resides"),
+  val type: ProfileField<String?> = ProfileField(null, "Type", "type", "Name of the Endevor element's type"),
+  val stageNumber: ProfileField<String?> = ProfileField(null, "Stage number", "stageNumber", "The Endevor stage where your project resides (1 or 2)"),
+  val comment: ProfileField<String?> = ProfileField(null, "Comment", "comment", "The Endevor comment you want to use when performing an action"),
+  val ccid: ProfileField<String?> = ProfileField(null, "CCID", "ccid", "The Endevor CCID you want to use when performing an action"),
+  val maxrc: ProfileField<Int?> = ProfileField(8, "Max RC", "maxrc", "The return code of Endevor that defines a failed action"),
+  val overrideSignout: ProfileField<Boolean?> = ProfileField(false, "Override signout", "override-signout", "Always override element signout, without having to specify the override signout option on each command"),
+  val fileExtension: ProfileField<String?> = ProfileField("mixed", "File extension", "file-extension", "The strategy for deciding what file extension to use during a bulk retrieve or workspace synchronization (none, type-name, file-ext, mixed)")
+) : ConfigProfile {
+  override val profileName: String = "Endevor location profile"
+  override val profileType: String = "endevor-location"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      instance.prop,
+      environment.prop,
+      system.prop,
+      subsystem.prop,
+      type.prop,
+      stageNumber.prop,
+      comment.prop,
+      ccid.prop,
+      maxrc.prop,
+      overrideSignout.prop,
+      fileExtension.prop
+    ),
+    emptyList()
+  )
+}

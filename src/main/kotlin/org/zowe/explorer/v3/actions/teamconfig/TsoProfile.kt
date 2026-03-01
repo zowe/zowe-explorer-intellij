@@ -26,12 +26,29 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property rows number of rows on the virtual screen (default `24`).
  */
 data class TsoProfile(
-  var shouldCreate: Boolean = false,
-  val account: ProfileField<String?> = ProfileField(null, "Your z/OS TSO/E accounting information"),
-  val characterSet: ProfileField<String?> = ProfileField("697", "Character set for address space to convert messages and responses from UTF-8 to EBCDIC"),
-  val codePage: ProfileField<String?> = ProfileField("1047", "Codepage value for TSO/E address space to convert messages and responses from UTF-8 to EBCDIC"),
-  val columns: ProfileField<Int?> = ProfileField(80, "The number of columns on a screen"),
-  val logonProcedure: ProfileField<String?> = ProfileField("IZUFPROC", "The logon procedure to use when creating TSO procedures on your behalf"),
-  val regionSize: ProfileField<Int?> = ProfileField(4096, "Region size for the TSO/E address space"),
-  val rows: ProfileField<Int?> = ProfileField(24, "The number of rows on a screen")
-)
+  override var shouldCreate: Boolean = false,
+  val account: ProfileField<String?> = ProfileField(null, "Account", "account", "Your z/OS TSO/E accounting information"),
+  val characterSet: ProfileField<String?> = ProfileField("697", "Character set", "characterSet", "Character set for address space to convert messages and responses from UTF-8 to EBCDIC"),
+  val codePage: ProfileField<String?> = ProfileField("1047", "Code page", "codePage", "Codepage value for TSO/E address space to convert messages and responses from UTF-8 to EBCDIC"),
+  val columns: ProfileField<Int?> = ProfileField(80, "Columns", "columns", "The number of columns on a screen"),
+  val logonProcedure: ProfileField<String?> = ProfileField("IZUFPROC", "Logon procedure", "logonProcedure", "The logon procedure to use when creating TSO procedures on your behalf"),
+  val regionSize: ProfileField<Int?> = ProfileField(4096, "Region size", "regionSize", "Region size for the TSO/E address space"),
+  val rows: ProfileField<Int?> = ProfileField(24, "Rows", "rows", "The number of rows on a screen")
+) : ConfigProfile {
+  override val profileName: String = "TSO/E profile"
+  override val profileType: String = "tso"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      account.prop,
+      characterSet.prop,
+      codePage.prop,
+      columns.prop,
+      logonProcedure.prop,
+      regionSize.prop,
+      rows.prop
+    ),
+    emptyList()
+  )
+}

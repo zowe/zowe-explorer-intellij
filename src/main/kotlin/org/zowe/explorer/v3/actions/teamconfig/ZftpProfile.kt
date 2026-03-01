@@ -29,14 +29,32 @@ package org.zowe.explorer.v3.actions.teamconfig
  * @property encoding transfer encoding for z/OS datasets and USS files.
  */
 data class ZftpProfile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The hostname or IP address of the z/OS server to connect to"),
-  val port: ProfileField<Int?> = ProfileField(21, "The port of the z/OS FTP server"),
-  val user: ProfileField<String?> = ProfileField(null, "Username for authentication on z/OS"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "Password to authenticate to FTP"),
-  val secureFtp: ProfileField<Boolean?> = ProfileField(true, "Set to true for both control and data connection encryption"),
-  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "Reject self-signed certificates. Only specify this if you are connecting to a secure FTP instance"),
-  val servername: ProfileField<String?> = ProfileField(null, "Server name for the SNI (Server Name Indication) TLS extension. Only specify if you are connecting securely"),
-  val connectionTimeout: ProfileField<Int?> = ProfileField(10000, "How long (in milliseconds) to wait for the control connection to be established"),
-  val encoding: ProfileField<String?> = ProfileField(null, "The encoding for download and upload of z/OS data set")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The hostname or IP address of the z/OS server to connect to"),
+  val port: ProfileField<Int?> = ProfileField(21, "Port", "port", "The port of the z/OS FTP server"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "Username for authentication on z/OS"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "Password to authenticate to FTP"),
+  val secureFtp: ProfileField<Boolean?> = ProfileField(true, "Secure FTP", "secureFtp", "Set to true for both control and data connection encryption"),
+  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "Reject unauthorized", "rejectUnauthorized", "Reject self-signed certificates. Only specify this if you are connecting to a secure FTP instance"),
+  val servername: ProfileField<String?> = ProfileField(null, "Server name", "servername", "Server name for the SNI (Server Name Indication) TLS extension. Only specify if you are connecting securely"),
+  val connectionTimeout: ProfileField<Int?> = ProfileField(10000, "Connection timeout", "connectionTimeout", "How long (in milliseconds) to wait for the control connection to be established"),
+  val encoding: ProfileField<String?> = ProfileField(null, "Encoding", "encoding", "The encoding for download and upload of z/OS data set")
+) : ConfigProfile {
+  override val profileName: String = "zFTP profile"
+  override val profileType: String = "zftp"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      secureFtp.prop,
+      rejectUnauthorized.prop,
+      servername.prop,
+      connectionTimeout.prop,
+      encoding.prop
+    ),
+    listOf(password.nameInConfig)
+  )
+}

@@ -24,12 +24,28 @@ package org.zowe.explorer.v3.actions.teamconfig
  *   omit when not using AML.
  */
 data class SysviewProfile(
-  var shouldCreate: Boolean = false,
-  val host: ProfileField<String?> = ProfileField(null, "The hostname of the SYSVIEW REST API"),
-  val port: ProfileField<Int?> = ProfileField(null, "The port number of the SYSVIEW REST API"),
-  val user: ProfileField<String?> = ProfileField(null, "Your z/OS username used to authenticate to the SYSVIEW REST API"),
-  val password: ProfileField<CharArray?> = ProfileField(null, "Your z/OS password used to authenticate to the SYSVIEW REST API"),
-  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "If set, the server certificate is verified against the list of supplied CAs"),
-  val ssid: ProfileField<String?> = ProfileField("GSVX", "SSID of the SYSVIEW instance"),
-  val basePath: ProfileField<String?> = ProfileField("/api/v1", "The base path for your API mediation layer instance. Do not specify this option if you are not using an API mediation layer")
-)
+  override var shouldCreate: Boolean = false,
+  val host: ProfileField<String?> = ProfileField(null, "Host", "host", "The hostname of the SYSVIEW REST API"),
+  val port: ProfileField<Int?> = ProfileField(null, "Port", "port", "The port number of the SYSVIEW REST API"),
+  val user: ProfileField<String?> = ProfileField(null, "User", "user", "Your z/OS username used to authenticate to the SYSVIEW REST API"),
+  val password: ProfileField<CharArray?> = ProfileField(null, "Password", "password", "Your z/OS password used to authenticate to the SYSVIEW REST API"),
+  val rejectUnauthorized: ProfileField<Boolean?> = ProfileField(null, "Reject unauthorized", "rejectUnauthorized", "If set, the server certificate is verified against the list of supplied CAs"),
+  val ssid: ProfileField<String?> = ProfileField("GSVX", "SSID", "ssid", "SSID of the SYSVIEW instance"),
+  val basePath: ProfileField<String?> = ProfileField("/api/v1", "Base path", "basePath", "The base path for your API mediation layer instance. Do not specify this option if you are not using an API mediation layer")
+) : ConfigProfile {
+  override val profileName: String = "SYSVIEW\u00ae profile"
+  override val profileType: String = "sysview"
+
+  override fun jsonFriendly(): Map<String, Any> = entry(
+    profileType,
+    mapOf(
+      host.prop,
+      port.prop,
+      user.prop,
+      rejectUnauthorized.prop,
+      ssid.prop,
+      basePath.prop
+    ),
+    listOf(password.nameInConfig)
+  )
+}
