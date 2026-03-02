@@ -26,6 +26,7 @@ import java.awt.event.KeyEvent
 enum class ActionMenuPoints(val point: String) {
   CONNECTION("Connection"),
   WORKING_SET("Working Set"),
+  JES_WORKING_SET("JES Working Set"),
 }
 
 /** File explorer panel wrapper. Provides functionalities to work with File Explorer view elements */
@@ -41,6 +42,7 @@ class FilesExplorerPanel(val driver: Driver) {
   val plusButton by lazy { explorerView.actionButton { byAttribute("myicon", "add.svg") } }
 
   init {
+    openFilesExplorerTab(driver)
     driver.ideFrame {
       explorerView = x("//div[@class='SimpleToolWindowPanel' and div[@class='FileExplorerView']]")
       plusDropdownList = popup().list { byClass("MyList") }
@@ -57,7 +59,11 @@ class FilesExplorerPanel(val driver: Driver) {
    */
   fun openDialogByPlusButtonInExplorer(point: ActionMenuPoints) {
     plusButton.click()
-    if (point == ActionMenuPoints.CONNECTION || point == ActionMenuPoints.WORKING_SET) {
+    if (
+      point == ActionMenuPoints.CONNECTION ||
+      point == ActionMenuPoints.WORKING_SET ||
+      point == ActionMenuPoints.JES_WORKING_SET
+    ) {
       plusDropdownList.clickItem(point.point)
     } else {
       throw IllegalArgumentException("Unsupported point: $point")

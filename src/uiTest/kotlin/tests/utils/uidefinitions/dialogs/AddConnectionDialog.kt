@@ -46,7 +46,7 @@ class AddConnectionDialog(val driver: Driver) {
 
   init {
     driver.ideFrame {
-      dialogComponent = dialog(title = "Add Connection")
+      dialogComponent = dialog("//div[@class='MyDialog' and (@title='Add Connection' or @title='Edit Connection')]")
     }
   }
 
@@ -78,5 +78,14 @@ class AddConnectionDialog(val driver: Driver) {
     assert(questionMark.isVisible())
     assert(cancelButton.isVisible())
   }
+
+  /** @return current value from "Connection name" field */
+  fun getConnectionNameValue(): String = connectionNameInput.text
+
+  /** @return current value from "Connection URL" field */
+  fun getConnectionUrlValue(): String = urlInput.text
+
+  /** @return current value from "Username" field */
+  fun getUsernameValue(): String = userNameInput.text
 
 }
