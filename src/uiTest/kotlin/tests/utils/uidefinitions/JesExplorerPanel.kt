@@ -6,11 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   IBA Group
- *   Uladzislau Kalesnikau
  */
 
 package tests.utils.uidefinitions
