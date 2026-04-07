@@ -52,6 +52,39 @@ fun openZoweExplorerPanel(driver: Driver) {
 }
 
 /**
+ * Open a requested explorer tab in Zowe Explorer tool window.
+ * Handles the case when the tab is hidden under the chevron menu.
+ */
+private fun openExplorerTab(driver: Driver, tabName: String) {
+  openZoweExplorerPanel(driver)
+  driver.ideFrame {
+    val zoweExplorerTabs = x("//div[@class='ToolWindowHeader'][.//div[@class='BaseLabel' and @visible_text='Zowe Explorer']]")
+    val requestedTabPotentialElements = zoweExplorerTabs.xx { byText(tabName) }.list()
+    if (requestedTabPotentialElements.isNotEmpty()) {
+      val requestedTab = requestedTabPotentialElements[0]
+      requestedTab.setFocus()
+      requestedTab.click()
+      return@ideFrame
+    }
+
+    val chevronWithOtherTabs = zoweExplorerTabs
+      .actionButtonByXpath("//div[@class='ActionButton' and contains(@myicon,'chevron')]")
+    chevronWithOtherTabs.setFocus()
+    chevronWithOtherTabs.click()
+
+    val explorerTabsPopup = popup()
+    val explorerTabsPopupList = explorerTabsPopup.list("//div[@class='MyList']")
+    explorerTabsPopupList.clickItem(tabName)
+  }
+}
+
+/** Open the "File Explorer" tab in Zowe Explorer tool window */
+fun openFilesExplorerTab(driver: Driver) = openExplorerTab(driver, "File Explorer")
+
+/** Open the "JES Explorer" tab in Zowe Explorer tool window */
+fun openJesExplorerTab(driver: Driver) = openExplorerTab(driver, "JES Explorer")
+
+/**
  * Go to settings from any explorer view available by the [driver].
  * Will open the provided [tabName] or "Connections" as a default if is not provided
  * @return settings tab as a [DialogUiComponent]

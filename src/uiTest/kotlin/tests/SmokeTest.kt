@@ -10,15 +10,18 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package tests
 
 import com.intellij.driver.sdk.ui.components.*
 import io.kotest.core.annotation.Description
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import tests.utils.IdeRunManager
 import tests.utils.openZoweExplorerPanel
 import tests.utils.resetTestEnv
@@ -27,11 +30,22 @@ import java.awt.Point
 @Description("Smoke test case to check basic functionalities of the plug-in")
 class SmokeTest {
 
-  @BeforeEach
-  fun prepareTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
+  companion object {
+    @JvmStatic
+    @BeforeAll
+    fun prepareBeforeAll(testInfo: TestInfo) {
+      IdeRunManager.prepareRunManager()
+        .runningIde
+        .resetTestEnv()
+    }
+
+    @JvmStatic
+    @AfterAll
+    fun afterAll(testInfo: TestInfo) {
+      IdeRunManager.prepareRunManager()
+        .runningIde
+        .resetTestEnv()
+    }
   }
 
   /** Check Add Connection dialog elements are correct **/
