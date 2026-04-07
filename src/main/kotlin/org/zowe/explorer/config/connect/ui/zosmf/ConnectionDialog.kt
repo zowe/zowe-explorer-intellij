@@ -256,7 +256,7 @@ class ConnectionDialog(
   private lateinit var sslCheckbox: JCheckBox
 
   init {
-    isResizable = false
+    isResizable = true
   }
 
   /** Create dialog with the fields */

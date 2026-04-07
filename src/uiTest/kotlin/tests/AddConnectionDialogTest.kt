@@ -17,6 +17,7 @@ package tests
 
 import io.kotest.core.annotation.Description
 import com.intellij.driver.client.Driver
+import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
@@ -58,10 +59,6 @@ class AddConnectionDialogTest {
 
   @BeforeEach
   fun prepareTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
-    ideDriver = IdeRunManager.getIdeDriver()
     filesExplorerPanel = FilesExplorerPanel(ideDriver)
     addConnectionDialog = AddConnectionDialog(ideDriver)
     unsecureConnectionDialog = UnsecureConnectionDialog(ideDriver)
@@ -73,46 +70,105 @@ class AddConnectionDialogTest {
     MockWebServerManager.removeAllEndpoints()
   }
 
+  // Some helping instructions:
+  //    filesExplorerPanel.createInvalidConnection(ideDriver, connectionName)
+  //    addConnectionDialog
+  //      .fillDialog(
+  //        connectionName = "nameInput",
+  //        connectionUrl = "https://${mockServer.hostName}:${mockServer.port}",
+  //        username = "userNameInput",
+  //        password = "passwordInput",
+  //        isAcceptSelfSigned = true
+  //      )
+  //
+  //    unsecureConnectionDialog.proceedButton.click()
+  //    addConnectionDialog.okButton.click()
+  //    unsecureConnectionDialog.proceedButton.click()
+
+  //    assert(errorCreatingConnectionDialog.dialogComponent.isVisible())
+  //
+  //    errorCreatingConnectionDialog.noButton.click()
+
   /**
+   * For Abdelrahman El Banna
    * @see
-   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#add-invalid-connection">
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-add-valid-connection">
+   *   Regression: Add valid connection
+   * </a>
+   */
+  @Test
+  @Tag("New")
+  fun createValidConnectionTest(testInfo: TestInfo) {
+    // Success scenario:
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_info",
+      jsonMock = "infoResponse",
+      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
+    )
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_resttopology",
+      jsonMock = "infoResponse",
+      endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
+    )
+  }
+
+  /**
+   * For Andres Pedreros Castro
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-add-invalid-connection">
    *   Regression: Add invalid connection
    * </a>
    */
-  @Disabled("This testcase needs to be reworked")
   @Test
   @Tag("New")
   fun createInvalidConnectionTest(testInfo: TestInfo) {
-//    TODO: finalize the check (the error dialog should appear)
-//    val mockServer = MockWebServerManager.prepareMockServer()
-//
-//    MockWebServerManager.injectEndpoint(
-//      "${testInfo.displayName}_info",
-//      jsonMock = "infoResponse",
-//      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
-//    )
-//    MockWebServerManager.injectEndpoint(
-//      "${testInfo.displayName}_resttopology",
-//      jsonMock = "infoResponse",
-//      endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
-//    )
-//
-//    filesExplorerPanel.createInvalidConnection(ideDriver, connectionName)
-//    addConnectionDialog
-//      .fillDialog(
-//        connectionName = "nameInput",
-//        connectionUrl = "https://${mockServer.hostName}:${mockServer.port}",
-//        username = "userNameInput",
-//        password = "passwordInput",
-//        isAcceptSelfSigned = true
-//      )
-//
-//    unsecureConnectionDialog.proceedButton.click()
-//    addConnectionDialog.okButton.click()
-//    unsecureConnectionDialog.proceedButton.click()
+    // 401 Unauthorized (for wrong credentials):
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_info",
+      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false },
+      customHandler = {
+        MockResponse().setResponseCode(401)
+      }
+    )
+    // SSL certificate error (for self-signed SSL certificates when unchecked):
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_info",
+      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false },
+      customHandler = {
+        MockResponse().setBody("Unable to find valid certification path to requested target")
+      }
+    )
+  }
 
-//    assert(errorCreatingConnectionDialog.dialogComponent.isVisible())
-//
-//    errorCreatingConnectionDialog.noButton.click()
+  /**
+   * For Kalundi Serumaga
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#-edit-existing-connection">
+   *   Regression: Edit existing connection
+   * </a>
+   */
+  @Test
+  @Tag("New")
+  fun editExistingConnectionTest(testInfo: TestInfo) {
+    // Success scenario:
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_info",
+      jsonMock = "infoResponse",
+      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
+    )
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_resttopology",
+      jsonMock = "infoResponse",
+      endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
+    )
+
+    // SSL certificate error (for self-signed SSL certificates when unchecked):
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_info",
+      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false },
+      customHandler = {
+        MockResponse().setBody("Unable to find valid certification path to requested target")
+      }
+    )
   }
 }
