@@ -74,7 +74,7 @@ val availableDescriptors = listOf(
   )
 )
 
-val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
+val productName = System.getenv("PRODUCT_NAME") ?: "IC-243"
 val descriptor = availableDescriptors.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
@@ -139,7 +139,8 @@ configurations["uiTestImplementation"].extendsFrom(configurations.testImplementa
 dependencies {
   intellijPlatform {
 //  useInstaller - TO TEST EAP:
-    intellijIdea(descriptor.sdkVersion) { useInstaller = false }
+    intellijIdeaCommunity(descriptor.sdkVersion) { useInstaller = false}
+//    intellijIdea(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Platform)
