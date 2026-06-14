@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.actions
@@ -18,12 +14,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.Refreshable
 
-// TODO: doc
+/**
+ * Refresh a [Refreshable] node action.
+ * Will refresh all selected nodes if they could be refreshed and are ready for refresh,
+ * meaning there are no children or parent elements that are busy with some other operation
+ */
 class RefreshNodeAction : DumbAwareEDTAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     ExplorerTreeComponentService.getService()
-      .getFilesExplorerComponent(project)
+      .getActiveExplorerComponent(project)
       .selectedNodes
       .forEach {
         if (
@@ -41,7 +41,7 @@ class RefreshNodeAction : DumbAwareEDTAction() {
       return
     }
     val explorerComponent = ExplorerTreeComponentService.getService()
-      .getFilesExplorerComponent(project)
+      .getActiveExplorerComponent(project)
     e.presentation.isEnabledAndVisible = explorerComponent
       .selectedNodes
       .any { it.nodeDescriptor is Refreshable }

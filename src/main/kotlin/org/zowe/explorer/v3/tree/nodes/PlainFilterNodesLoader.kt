@@ -18,7 +18,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.zowe.explorer.v3.components.files.DatasetMaskNodeDescriptor
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
 import org.zowe.explorer.v3.performWithProgressiveDelay
@@ -41,7 +40,7 @@ class PlainFilterNodesLoader(
   ): List<ExplorerTreeNodeDescriptor> {
     return pathTree.getPathElements(plainFilterNodeDescriptor.basePath)
       .filter { plainFilterNodeDescriptor.checkMatchesFilter(it.elemName) }
-      .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+      .filterIsInstance<ExplorerTreeNodeDescriptor>()
   }
 
   /**
@@ -177,7 +176,7 @@ class PlainFilterNodesLoader(
     }
 
     val explorerComponent = ExplorerTreeComponentService.getService()
-      .getFilesExplorerComponent(parentNode.project)
+      .getExplorerComponentForNode(parentNode)
     val reason = NodeSyncService.getService()
       .runIfPathIsReady(
         parentNode.project,
@@ -207,7 +206,7 @@ class PlainFilterNodesLoader(
     } else {
       pathTree
         .getPathElements(operationData.path)
-        .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+        .filterIsInstance<ExplorerTreeNodeDescriptor>()
         .filter { it !is Ephemeral }
         .ifEmpty { listOf(LoadingNodeDescriptor()) }
         .map { ExplorerTreeNode(it, parentNode.project, parentNode) }
@@ -217,17 +216,17 @@ class PlainFilterNodesLoader(
   // TODO: doc
   override fun getBusyChildren(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData
-    val datasetFilterNode = loadNodesOperationData.node
-    val datasetFilterNodeDescriptor = datasetFilterNode.nodeDescriptor as DatasetMaskNodeDescriptor
-    return if (datasetFilterNodeDescriptor.wasLoadedBefore) {
-      findDirectChildrenNodeDescriptors(datasetFilterNodeDescriptor)
-        .map { ExplorerTreeNode(it, datasetFilterNode.project, datasetFilterNode) }
+    val filterNode = loadNodesOperationData.node
+    val filterNodeDescriptor = filterNode.nodeDescriptor as PlainFilterNodeDescriptor
+    return if (filterNodeDescriptor.wasLoadedBefore) {
+      findDirectChildrenNodeDescriptors(filterNodeDescriptor)
+        .map { ExplorerTreeNode(it, filterNode.project, filterNode) }
         .ifEmpty {
           listOf(
             ExplorerTreeNode(
               LoadingNodeDescriptor(),
-              datasetFilterNode.project,
-              datasetFilterNode
+              filterNode.project,
+              filterNode
             )
           )
         }
@@ -242,36 +241,53 @@ class PlainFilterNodesLoader(
     }
   }
 
-  // TODO: doc
+  /**
+   * Get direct loaded children nodes for the respective operation
+   * @param operation the load nodes operation to return loaded nodes for
+   * @return the loaded nodes list or list with "No items found" node only if there is no loaded nodes for the operation
+   */
   override fun getLoadedChildren(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData
-    val datasetFilterNode = loadNodesOperationData.node
-    val datasetFilterNodeDescriptor = datasetFilterNode.nodeDescriptor as DatasetMaskNodeDescriptor
-    return findDirectChildrenNodeDescriptors(datasetFilterNodeDescriptor)
-      .map { ExplorerTreeNode(it, datasetFilterNode.project, datasetFilterNode) }
+    val filterNode = loadNodesOperationData.node
+    val filterNodeDescriptor = filterNode.nodeDescriptor as PlainFilterNodeDescriptor
+    return findDirectChildrenNodeDescriptors(filterNodeDescriptor)
+      .map { ExplorerTreeNode(it, filterNode.project, filterNode) }
       .ifEmpty {
         listOf(
           ExplorerTreeNode(
             NoItemsFoundNodeDescriptor(),
-            datasetFilterNode.project,
-            datasetFilterNode
+            filterNode.project,
+            filterNode
           )
         )
       }
   }
 
-  // TODO: doc
+  /**
+   * Load nodes operation loop to trigger the next operation step basing on the current operation state.
+   * The current operation triggers the next step with the next rules:
+   * - INIT -> start children loading, return list with the 'loading...' item
+   * - BUSY -> just return the current list of items, blocked by the operation, or the list with 'loading...' item only
+   * - LOADED -> just return the list of loaded items or the list with 'No items found' item only
+   * - ERROR -> just return the list with the 'Error' item only
+   * @param operation the load nodes operation to return the respective list of nodes for
+   * @return one of the lists basing on the state of the node descriptor associated with the operation:
+   * - INIT -> the list of 'loading...' item only
+   * - BUSY -> the current list of items, blocked by the operation, or the list with 'loading...' item only
+   * - LOADED -> the list of loaded items or the list with 'No items found' item only
+   * - ERROR -> the list with the 'Error' item only
+   */
   override fun loadNodes(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val loadNodesOperationData = operation.operationData
     val parentNode = loadNodesOperationData.node
-    val datasetFilterNodeDescriptor = parentNode.nodeDescriptor as DatasetMaskNodeDescriptor
-    return when (datasetFilterNodeDescriptor.filterState) {
+    val filterNodeDescriptor = parentNode.nodeDescriptor as PlainFilterNodeDescriptor
+    return when (filterNodeDescriptor.filterState) {
       PlainFilterNodeDescriptor.FilterState.INIT -> startChildrenLoading(operation)
       PlainFilterNodeDescriptor.FilterState.BUSY -> getBusyChildren(operation)
       PlainFilterNodeDescriptor.FilterState.LOADED -> getLoadedChildren(operation)
       PlainFilterNodeDescriptor.FilterState.ERROR -> listOf(
         ExplorerTreeNode(
-          ErrorNodeDescriptor(datasetFilterNodeDescriptor.filterError),
+          ErrorNodeDescriptor(filterNodeDescriptor.filterError),
           parentNode.project,
           parentNode
         )
@@ -291,11 +307,11 @@ class PlainFilterNodesLoader(
         parentNode.nodeDescriptor.displayName,
       ) {
         pathTree.setPathState(refreshNodesOperationData.path, PathTree.PathState.INIT)
-        val datasetMaskNodeDescriptor = findFilterNodeDescriptor(
+        val filterNodeDescriptor = findFilterNodeDescriptor(
           refreshNodesOperationData.path,
           refreshNodesOperationData.filter
-        ) as? DatasetMaskNodeDescriptor
-        datasetMaskNodeDescriptor?.filterState = PlainFilterNodeDescriptor.FilterState.INIT
+        ) as? PlainFilterNodeDescriptor
+        filterNodeDescriptor?.filterState = PlainFilterNodeDescriptor.FilterState.INIT
         loadNodes(
           (refreshNodesOperationData.node.nodeDescriptor as FetcherNodeDescriptor)
             .generateLoadNodesOperation(refreshNodesOperationData.node)

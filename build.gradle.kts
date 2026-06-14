@@ -40,10 +40,10 @@ data class PluginDescriptor(
 val availableDescriptors = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_21,
-    since = "251.28774",
+    since = "261.25134",
     getUntil = { provider { null } },
-    sdkVersion = "2025.1.6",
-    sourceFolder = "IC-251"
+    sdkVersion = "2026.1.3",
+    sourceFolder = "IC-261"
   )
 // ===== Left as an example: =====
 //  PluginDescriptor(
@@ -54,7 +54,7 @@ val availableDescriptors = listOf(
 //    sourceFolder = "IC-233"
 //  ),
 )
-val productName = System.getenv("PRODUCT_NAME") ?: "IC-251"
+val productName = System.getenv("PRODUCT_NAME") ?: "IC-261"
 val descriptor = availableDescriptors.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
@@ -119,7 +119,7 @@ configurations["uiTestImplementation"].extendsFrom(configurations.testImplementa
 dependencies {
   intellijPlatform {
 //  useInstaller - TO TEST EAP:
-    intellijIdeaCommunity(descriptor.sdkVersion) { useInstaller = false }
+    intellijIdea(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Platform)

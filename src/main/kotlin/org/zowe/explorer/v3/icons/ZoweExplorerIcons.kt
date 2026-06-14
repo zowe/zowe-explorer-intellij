@@ -100,6 +100,38 @@ object ZoweExplorerIcons {
     }
   }
 
+  /**
+   * Create a file with label icon from the provided label text
+   * @param labelText the text of the label to display
+   * @return the [Icon] object like a file with label in the bottom right corner
+   */
+  private fun createLabeledFile(labelText: String): Icon {
+    return object : Icon {
+      val mainIcon = AllIcons.FileTypes.Any_type
+
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        val layeredIcon = LayeredIcon(3)
+          .apply {
+            val label = IconUtil
+              .textToIcon(labelText, c ?: JLabel(), JBUIScale.scale(7f))
+
+            setIcon(mainIcon, 0)
+            setIcon(
+              label,
+              2,
+              mainIcon.iconWidth - label.iconWidth + JBUIScale.scale(2),
+              mainIcon.iconHeight - label.iconHeight + JBUIScale.scale(2)
+            )
+          }
+        layeredIcon.paintIcon(c, g, x, y)
+      }
+
+      override fun getIconWidth(): Int = mainIcon.iconWidth
+
+      override fun getIconHeight(): Int = mainIcon.iconHeight
+    }
+  }
+
   @JvmField
   val zoweExplorerIcon = loadIcon("icons/explorer.svg")
   @JvmField
@@ -109,7 +141,11 @@ object ZoweExplorerIcons {
   @JvmField
   val libraryDataset = createFolderIcon(AllIcons.Modules.TestRoot, "PDS")
   @JvmField
+  val dsMember = createLabeledFile("MEM")
+  @JvmField
   val ussFilter = createFilterIcon(AllIcons.Modules.SourceRoot, "USS")
   @JvmField
-  val jesFilter = createFilterIcon(AllIcons.Modules.ExcludeRoot, "JES")
+  val jobsFilter = createFilterIcon(AllIcons.Modules.ExcludeRoot, "JES")
+  @JvmField
+  val jesJob = createFolderIcon(AllIcons.Modules.ExcludeRoot, "JOB")
 }

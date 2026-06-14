@@ -11,14 +11,21 @@
 package org.zowe.explorer.v3.tree.nodes
 
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
-import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.v3.impl.splitToColoredParts
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
 import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import javax.swing.Icon
 
-// TODO: doc
+/**
+ * Node descriptor for the fetcher node. This type of node fetches and carries other related nodes.
+ * The fetched nodes are children for this node
+ * @property displayName the name of the node to be displayed
+ * @property basePath the base path of the node (basically, the path the fetcher node fetches children by)
+ * @property tooltip the node tooltip
+ * @property icon the node icon
+ */
 abstract class FetcherNodeDescriptor(
   displayName: String,
   val basePath: List<String>,
@@ -30,12 +37,7 @@ abstract class FetcherNodeDescriptor(
 {
   abstract val fetchFilter: String
 
-  override val textToPreserve = listOf(
-    PresentableNodeDescriptor.ColoredFragment(
-      displayName,
-      SimpleTextAttributes.REGULAR_ATTRIBUTES
-    )
-  )
+  override val textToPreserve = splitToColoredParts(displayName)
 
   override var currentUpdateInfo: PresentableNodeDescriptor.ColoredFragment? = null
 
@@ -49,8 +51,7 @@ abstract class FetcherNodeDescriptor(
     if (!wasExpanded) {
       wasExpanded = true
       ExplorerTreeComponentService.getService()
-        .getFilesExplorerComponent(node.project)
-        .invalidateNode(node)
+        .invalidateNodeInProject(node.project, node)
     }
   }
 

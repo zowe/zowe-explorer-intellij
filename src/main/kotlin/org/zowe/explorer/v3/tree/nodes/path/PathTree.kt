@@ -28,9 +28,9 @@ import kotlin.concurrent.write
  * and a USS path (`/u/user`):
  * ```
  * pathTreeNodes
- * └── "my.host.com"                          (basePath[0] — host)
- *     └── "files"                            (basePath[1] — system type)
- *         ├── "ds"                           (basePath[2] — system name)
+ * └── "my.host.com"                          (basePath[0] - host)
+ *     └── "files"                            (basePath[1] - system type)
+ *         ├── "ds"                           (basePath[2] - system name)
  *         │   ├── "SYS1.**"                  [LOADED] elements: [DatasetMaskNodeDescriptor("SYS1.**")]
  *         │   │   ├── "SYS1.PARMLIB"         elements: [PartitionedDatasetNodeDescriptor("SYS1.PARMLIB")]
  *         │   │   │   ├── "IEASYS00"         elements: [MemberNodeDescriptor("IEASYS00")]
@@ -43,8 +43,8 @@ import kotlin.concurrent.write
  *                 └── "subdir"               elements: [UssFolderNodeDescriptor("subdir")]
  * ```
  *
- * The base path for datasets is `["host", "files", "ds"]`, for USS — `["host", "files", "uss"]`,
- * for JES — `["host", "jes", "jobs"]`. Filter names and element names extend the path further.
+ * The base path for datasets is `["host", "files", "ds"]`, for USS - `["host", "files", "uss"]`,
+ * for JES - `["host", "jes", "jobs"]`. Filter names and element names extend the path further.
  *
  * Thread safety: all public methods are synchronized via [ReentrantReadWriteLock].
  * Read operations acquire a read lock, write operations acquire a write lock.

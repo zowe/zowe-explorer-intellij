@@ -14,7 +14,16 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.ui.SimpleTextAttributes
 
-// TODO: doc
+private val EMPTY_UPDATE_INFO = PresentableNodeDescriptor.ColoredFragment(
+  "",
+  SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
+)
+
+/**
+ * The node update info holder (e.g. date and time last refreshed)
+ * @property textToPreserve the text to preserve for the node
+ * @property currentUpdateInfo the current update info to display
+ */
 interface UpdateInfoHolder {
   val textToPreserve: List<PresentableNodeDescriptor.ColoredFragment>
   var currentUpdateInfo: PresentableNodeDescriptor.ColoredFragment?
@@ -32,6 +41,6 @@ interface UpdateInfoHolder {
         " refreshed: ${getCurrentRefreshDateTime()}",
         SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
       )
-    presentationData.addText(currentUpdateInfo)
+    presentationData.addText(currentUpdateInfo ?: EMPTY_UPDATE_INFO)
   }
 }

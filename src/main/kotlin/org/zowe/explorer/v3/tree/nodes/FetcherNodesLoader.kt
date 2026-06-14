@@ -153,7 +153,7 @@ class FetcherNodesLoader(
     }
 
     val explorerComponent = ExplorerTreeComponentService.getService()
-      .getFilesExplorerComponent(parentNode.project)
+      .getExplorerComponentForNode(parentNode)
     val reason = NodeSyncService.getService()
       .runIfPathIsReady(parentNode.project, operationData.path, parentNodeData.displayName) {
         explorerComponent.explorerScope.launch {
@@ -175,7 +175,7 @@ class FetcherNodesLoader(
     }
     return pathTree
       .getPathElements(operationData.path)
-      .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+      .filterIsInstance<ExplorerTreeNodeDescriptor>()
       .filter { it !is Ephemeral }
       .ifEmpty { listOf(LoadingNodeDescriptor()) }
       .map { ExplorerTreeNode(it, parentNode.project, parentNode) }
@@ -186,7 +186,7 @@ class FetcherNodesLoader(
     val parentNode = loadNodesOperationData.node
     return pathTree
       .getPathElements(loadNodesOperationData.path)
-      .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+      .filterIsInstance<ExplorerTreeNodeDescriptor>()
       .filter { it !is Ephemeral }
       .map { ExplorerTreeNode(it, parentNode.project, parentNode) }
       .ifEmpty {
@@ -199,7 +199,7 @@ class FetcherNodesLoader(
     val parentNode = loadNodesOperationData.node
     return pathTree
       .getPathElements(loadNodesOperationData.path)
-      .mapNotNull { it as? ExplorerTreeNodeDescriptor }
+      .filterIsInstance<ExplorerTreeNodeDescriptor>()
       .map { ExplorerTreeNode(it, parentNode.project, parentNode) }
   }
 

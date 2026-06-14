@@ -11,9 +11,9 @@
 package org.zowe.explorer.v3.tree.nodes
 
 import com.intellij.ide.projectView.PresentationData
-import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.v3.impl.splitToColoredParts
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import javax.swing.Icon
 import kotlin.collections.fold
@@ -45,10 +45,13 @@ open class ExplorerTreeNodeDescriptor(
    * Identifies the data to associate with the node as the stable representation in normal conditions
    */
   protected open val genuinePresentationData = PresentationData()
-    .also {
-      it.setIcon(icon)
-      it.addText(displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      it.tooltip = tooltip
+    .also { presentationData ->
+      presentationData.setIcon(icon)
+      splitToColoredParts(displayName)
+        .forEach {
+          presentationData.addText(it)
+        }
+      presentationData.tooltip = tooltip
     }
 
   /** Set the node descriptor icon, updating the [genuinePresentationData]'s icon */
@@ -99,16 +102,9 @@ open class ExplorerTreeNodeDescriptor(
   /** Trigger [ExplorerTreeNode]'s invalidation on the nodes, associated with this descriptor */
   open fun invalidateAssociatedNodes() {
     associatedNodes
-      .fold(mutableMapOf<Project, MutableList<ExplorerTreeNode>>()) { projectsToNodes, node ->
-        projectsToNodes.getOrPut(node.project) { mutableListOf() }.add(node)
-        projectsToNodes
-      }
-      .forEach { (project, nodes) ->
-        val filesExplorerComponent = ExplorerTreeComponentService.getService()
-          .getFilesExplorerComponent(project)
-        nodes.forEach { node ->
-          filesExplorerComponent.invalidateNode(node, true)
-        }
+      .forEach { node ->
+        ExplorerTreeComponentService.getService()
+          .invalidateNode(node)
       }
   }
 }

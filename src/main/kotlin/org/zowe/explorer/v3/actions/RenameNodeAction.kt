@@ -23,7 +23,7 @@ class RenameNodeAction : DumbAwareEDTAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val selectedNodes = ExplorerTreeComponentService.getService()
-      .getFilesExplorerComponent(project)
+      .getActiveExplorerComponent(project)
       .selectedNodes
     if (selectedNodes.size == 1) {
       (selectedNodes[0].nodeDescriptor as? Renameable)?.renameNode()
@@ -37,7 +37,7 @@ class RenameNodeAction : DumbAwareEDTAction() {
       return
     }
     val explorerComponent = ExplorerTreeComponentService.getService()
-      .getFilesExplorerComponent(project)
+      .getActiveExplorerComponent(project)
     val selectedNodes = explorerComponent.selectedNodes
     if (selectedNodes.size == 1) {
       e.presentation.isEnabledAndVisible = (selectedNodes[0].nodeDescriptor as? Renameable) != null

@@ -92,7 +92,7 @@ class NodeSyncService {
     val basePath = path.take(3)
     return filterNodeDescriptors.getOrDefault(basePath, mutableMapOf())
       .values
-      .mapNotNull { it as? PlainFilterNodeDescriptor }
+      .filterIsInstance<PlainFilterNodeDescriptor>()
       .any {
         it.checkMatchesFilter(nodeName) && it.filterState == PlainFilterNodeDescriptor.FilterState.BUSY
       }

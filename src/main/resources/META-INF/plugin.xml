@@ -312,7 +312,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <postStartupActivity implementation="org.zowe.explorer.rateus.RateUsStartupActivity"/>
 
-        <postStartupActivity implementation="org.zowe.explorer.v3.connection.ConnectionStartupActivity"/>
+        <postStartupActivity implementation="org.zowe.explorer.v3.impl.connection.ConnectionStartupActivity"/>
 
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
@@ -347,7 +347,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                     doNotActivateOnStart="true"/>
 
         <toolWindow id="Zowe Explorer (v3)" anchor="right"
-                    factoryClass="org.zowe.explorer.v3.ZoweExplorerToolWindowFactory"
+                    factoryClass="org.zowe.explorer.v3.impl.ZoweExplorerToolWindowFactory"
                     icon="org.zowe.explorer.v3.icons.ZoweExplorerIcons.zoweExplorerIcon"
                     doNotActivateOnStart="true"/>
 
@@ -448,12 +448,12 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 text="Working Set"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
-        <action id="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"
-                class="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"
+        <action id="org.zowe.explorer.v3.impl.files.actions.CreateFilesWorkingSetAction"
+                class="org.zowe.explorer.v3.impl.files.actions.CreateFilesWorkingSetAction"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
-        <action id="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"
-                class="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"
+        <action id="org.zowe.explorer.v3.impl.jes.actions.CreateJesWorkingSetAction"
+                class="org.zowe.explorer.v3.impl.jes.actions.CreateJesWorkingSetAction"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
         <action id="org.zowe.explorer.v3.actions.RefreshNodeAction"
@@ -708,11 +708,11 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 text="Submit Job"
                 icon="AllIcons.Actions.Execute"/>
 
-        <action id="org.zowe.explorer.v3.actions.teamconfig.CreateTeamConfigAction"
-                class="org.zowe.explorer.v3.actions.teamconfig.CreateTeamConfigAction"/>
+        <action id="org.zowe.explorer.v3.impl.teamconfig.actions.CreateTeamConfigAction"
+                class="org.zowe.explorer.v3.impl.teamconfig.actions.CreateTeamConfigAction"/>
 
-        <action id="org.zowe.explorer.v3.actions.tso.CreateTsoProfileAction"
-                class="org.zowe.explorer.v3.actions.tso.CreateTsoProfileAction"/>
+        <action id="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"
+                class="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"/>
 
         <group id="org.zowe.explorer.explorer.actions.SubmitJobToolbarActionGroup" popup="true">
             <reference id="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"/>
@@ -821,20 +821,20 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <group id="org.zowe.explorer.actions.AddNewItemFilesExplorerGroup"
                icon="AllIcons.General.Add"
                popup="true">
-            <reference id="org.zowe.explorer.v3.actions.teamconfig.CreateTeamConfigAction"/>
-            <reference id="org.zowe.explorer.v3.actions.workingset.CreateFilesWorkingSetAction"/>
+            <reference id="org.zowe.explorer.v3.impl.teamconfig.actions.CreateTeamConfigAction"/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.CreateFilesWorkingSetAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"
                icon="AllIcons.General.Add"
                popup="true">
-            <reference id="org.zowe.explorer.v3.actions.workingset.CreateJesWorkingSetAction"/>
+            <reference id="org.zowe.explorer.v3.impl.jes.actions.CreateJesWorkingSetAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.AddNewItemTsoSessionsGroup"
                icon="AllIcons.General.Add"
                popup="true">
-            <reference id="org.zowe.explorer.v3.actions.tso.CreateTsoProfileAction"/>
+            <reference id="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"/>
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerActionBarGroup">
