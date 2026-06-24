@@ -448,12 +448,12 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 text="Working Set"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
-        <action id="org.zowe.explorer.v3.impl.files.actions.CreateFilesWorkingSetAction"
-                class="org.zowe.explorer.v3.impl.files.actions.CreateFilesWorkingSetAction"
+        <action id="org.zowe.explorer.v3.impl.files.actions.CreateFilesProfileAction"
+                class="org.zowe.explorer.v3.impl.files.actions.CreateFilesProfileAction"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
-        <action id="org.zowe.explorer.v3.impl.jes.actions.CreateJesWorkingSetAction"
-                class="org.zowe.explorer.v3.impl.jes.actions.CreateJesWorkingSetAction"
+        <action id="org.zowe.explorer.v3.impl.jes.actions.CreateJesProfileAction"
+                class="org.zowe.explorer.v3.impl.jes.actions.CreateJesProfileAction"
                 icon="AllIcons.Actions.ShowAsTree"/>
 
         <action id="org.zowe.explorer.v3.actions.RefreshNodeAction"
@@ -714,6 +714,13 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <action id="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"
                 class="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"/>
 
+        <action id="org.zowe.explorer.v3.impl.teamconfig.actions.SelectConfigTypeAction"
+                class="org.zowe.explorer.v3.impl.teamconfig.actions.SelectConfigTypeAction"/>
+
+        <action id="org.zowe.explorer.actions.SelectConfigTypePopup"
+                class="org.zowe.explorer.v3.impl.teamconfig.actions.SelectConfigTypePopup"
+                text="Config type"/>
+
         <group id="org.zowe.explorer.explorer.actions.SubmitJobToolbarActionGroup" popup="true">
             <reference id="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"/>
         </group>
@@ -822,13 +829,13 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                icon="AllIcons.General.Add"
                popup="true">
             <reference id="org.zowe.explorer.v3.impl.teamconfig.actions.CreateTeamConfigAction"/>
-            <reference id="org.zowe.explorer.v3.impl.files.actions.CreateFilesWorkingSetAction"/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.CreateFilesProfileAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"
                icon="AllIcons.General.Add"
                popup="true">
-            <reference id="org.zowe.explorer.v3.impl.jes.actions.CreateJesWorkingSetAction"/>
+            <reference id="org.zowe.explorer.v3.impl.jes.actions.CreateJesProfileAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.AddNewItemTsoSessionsGroup"
@@ -837,16 +844,28 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <reference id="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"/>
         </group>
 
-        <group id="org.zowe.explorer.components.files.FilesExplorerActionBarGroup">
+        <group id="org.zowe.explorer.components.files.FilesExplorerLeftActionBarGroup">
             <reference id="org.zowe.explorer.actions.AddNewItemFilesExplorerGroup"/>
         </group>
 
-        <group id="org.zowe.explorer.components.jes.JesExplorerActionBarGroup">
+        <group id="org.zowe.explorer.components.jes.JesExplorerLeftActionBarGroup">
             <reference id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"/>
         </group>
 
-        <group id="org.zowe.explorer.components.tso.TsoSessionsActionBarGroup">
+        <group id="org.zowe.explorer.components.tso.TsoSessionsLeftActionBarGroup">
             <reference id="org.zowe.explorer.actions.AddNewItemTsoSessionsGroup"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.files.FilesExplorerRightActionBarGroup">
+            <reference id="org.zowe.explorer.actions.SelectConfigTypePopup"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.jes.JesExplorerRightActionBarGroup">
+            <reference id="org.zowe.explorer.actions.SelectConfigTypePopup"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.tso.TsoSessionsRightActionBarGroup">
+            <reference id="org.zowe.explorer.actions.SelectConfigTypePopup"/>
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">

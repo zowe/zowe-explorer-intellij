@@ -11,6 +11,7 @@
 package org.zowe.explorer.v3.impl.files.uss.tree.nodes
 
 import com.intellij.icons.AllIcons
+import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
 import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.Traversable
@@ -21,4 +22,4 @@ class UssFileNodeDescriptor(
   override val placingPath: List<String>,
   override var connectionConfigUuid: String
 ) : ExplorerTreeNodeDescriptor(elemName, "USS file", AllIcons.FileTypes.Any_type),
-  ConnectionConfigRelated, Traversable
+  ConnectionConfigRelated, Traversable, FilesExplorerRelated

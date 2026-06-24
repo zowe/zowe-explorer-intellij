@@ -18,12 +18,12 @@ import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 
 // TODO: doc
-abstract class CreateWorkingSetAction(
-  private val workingSetType: String,
+abstract class CreateProfileAction(
+  private val profileType: String,
   private val targetExplorer: String
 ) : DumbAwareEDTAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.text = workingSetType
+    e.presentation.text = profileType
     e.presentation.isEnabledAndVisible = e.place.contains(targetExplorer)
     val isConnectionConfigCreated = !ConfigCacheService.getService()
       .getConfigsFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1)

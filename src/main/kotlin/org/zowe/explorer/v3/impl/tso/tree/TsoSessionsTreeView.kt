@@ -20,9 +20,12 @@ class TsoSessionsTreeView(
   explorerName: String,
   explorerTreeModel: AbstractTreeModel
 ) : ExplorerTreeView(explorerName, explorerTreeModel) {
-  override val actionGroup =
+  override val leftActionGroup =
     ActionManager.getInstance()
-      .getAction("org.zowe.explorer.components.tso.TsoSessionsActionBarGroup") as ActionGroup
+      .getAction("org.zowe.explorer.components.tso.TsoSessionsLeftActionBarGroup") as ActionGroup
+  override val rightActionGroup =
+    ActionManager.getInstance()
+      .getAction("org.zowe.explorer.components.tso.TsoSessionsRightActionBarGroup") as ActionGroup
   override val contextMenuGroup =
     ActionManager.getInstance()
       .getAction("org.zowe.explorer.components.tso.TsoSessionsContextMenuGroup") as ActionGroup

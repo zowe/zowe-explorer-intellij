@@ -133,6 +133,8 @@ dependencies {
   implementation(libs.okhttp3)
   implementation(libs.jgrapht.core)
   implementation(libs.java.keytar)
+  // For Zowe Client Kotlin SDK:
+  implementation(libs.json.schema.validator)
   implementation(libs.zowe.kotlin.sdk) {
     exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
     exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
@@ -149,7 +151,6 @@ dependencies {
     exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
     exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
   }
-  implementation(libs.json.schema.validator) // Needed for Zowe Client Kotlin SDK to be able to validate zowe.schema.json
   implementation(libs.dotenv) // Needed for Zowe Client Kotlin SDK to load environment variables
   testImplementation(libs.mockk) {
       exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")

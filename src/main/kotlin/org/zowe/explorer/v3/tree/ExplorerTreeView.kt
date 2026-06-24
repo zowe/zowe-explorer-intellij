@@ -27,26 +27,44 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.tree.AbstractTreeModel
 import org.zowe.explorer.v3.tree.nodes.LazyExpandable
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
+import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
-// TODO: doc
+/**
+ * Base scroll pane component for explorer tree views (Files, JES, TSO).
+ * Wraps a [DnDAwareTree] with left/right action toolbars, a context menu,
+ * and tree expansion listeners that trigger lazy loading via [LazyExpandable].
+ *
+ * Subclasses define the action groups and are initialized through [initExplorerTreeView],
+ * which assembles the toolbars, registers listeners, and returns a ready-to-use [JComponent].
+ *
+ * @param explorerName identifier used for toolbar action places and the context menu
+ * @param explorerTreeModel the tree model driving the [DnDAwareTree]
+ */
 abstract class ExplorerTreeView(
   protected val explorerName: String,
   protected val explorerTreeModel: AbstractTreeModel
 ) : JBScrollPane(), Disposable {
-  protected abstract val actionGroup: ActionGroup
+  protected abstract val leftActionGroup: ActionGroup
+  protected abstract val rightActionGroup: ActionGroup
   protected abstract val contextMenuGroup: ActionGroup
   private val contextMenuGroupPlace = explorerName
   protected val explorerDnDAwareTree by lazy { DnDAwareTree(explorerTreeModel) }
 
-  fun initActionToolbar(): ActionToolbar {
+  fun initLeftActionToolbar(): ActionToolbar {
     return ActionManager.getInstance()
-      .createActionToolbar(explorerName, actionGroup, true)
+      .createActionToolbar("${explorerName}Left", leftActionGroup, true)
+  }
+
+  fun initRightActionToolbar(): ActionToolbar {
+    return ActionManager.getInstance()
+      .createActionToolbar("${explorerName}Right", rightActionGroup, true)
   }
 
   val selectedNodes: List<ExplorerTreeNode>
@@ -88,13 +106,20 @@ abstract class ExplorerTreeView(
 
   fun initExplorerTreeView(): JComponent {
     return object : SimpleToolWindowPanel(true, true), Disposable {
-      private val actionToolbar: ActionToolbar = initActionToolbar()
-
       override fun dispose() {}
 
       init {
-        actionToolbar.targetComponent = this
-        toolbar = actionToolbar.component
+        val leftActionToolbar = initLeftActionToolbar()
+        val rightActionToolbar = initRightActionToolbar()
+          .apply {
+
+          }
+        leftActionToolbar.targetComponent = this
+        rightActionToolbar.targetComponent = this
+        toolbar = JPanel(BorderLayout()).apply {
+          add(leftActionToolbar.component, BorderLayout.WEST)
+          add(rightActionToolbar.component, BorderLayout.EAST)
+        }
         setContent(this@ExplorerTreeView)
         explorerDnDAwareTree.isRootVisible = false
         explorerDnDAwareTree.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)

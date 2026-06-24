@@ -8,17 +8,19 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.impl.jes.actions
+package org.zowe.explorer.v3.impl.teamconfig.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.actions.CreateWorkingSetAction
-import org.zowe.explorer.v3.impl.jes.tree.JesExplorerComponent
+import org.zowe.explorer.v3.actions.DumbAwareEDTAction
 
 // TODO: doc
-class CreateJesWorkingSetAction : CreateWorkingSetAction(
-  "JES Working Set",
-  JesExplorerComponent.JES_EXPLORER_COMPONENT_NAME
-) {
+class SelectConfigTypeAction(private val configTypeName: String) : DumbAwareEDTAction() {
+  override fun update(e: AnActionEvent) {
+    // TODO: implement
+    e.presentation.text = configTypeName
+    e.presentation.isEnabled = false
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     TODO("Not yet implemented")
   }

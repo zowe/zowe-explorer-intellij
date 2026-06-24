@@ -24,10 +24,10 @@ import org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationParams
 import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import okhttp3.ResponseBody
-import okhttp3.internal.indexOfNonWhitespace
 import org.zowe.kotlinsdk.FileTagList
 import org.zowe.kotlinsdk.TagAction
 import org.zowe.kotlinsdk.UssFileDataType
+import org.zowe.kotlinsdk.gson
 import java.nio.charset.Charset
 import java.nio.charset.UnsupportedCharsetException
 
@@ -62,9 +62,9 @@ fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
   val responseBody = listUssFileTag(attributes)
   val body = responseBody?.string()
   if (body?.isNotEmpty() == true) {
-    val stdout = org.zowe.kotlinsdk.gson.fromJson(body, FileTagList::class.java).stdout[0]
+    val stdout = gson.fromJson(body, FileTagList::class.java).stdout[0]
     if (stdout.indexOf("t ") > -1) {
-      val startPos = stdout.indexOfNonWhitespace(1)
+      val startPos = (1 until stdout.length).firstOrNull { !stdout[it].isWhitespace() } ?: stdout.length
       val endPos = stdout.indexOf(' ', startPos)
       val tagCharset = stdout.substring(startPos, endPos)
       runCatching {

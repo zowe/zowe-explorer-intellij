@@ -51,7 +51,7 @@ abstract class FetcherNodeDescriptor(
     if (!wasExpanded) {
       wasExpanded = true
       ExplorerTreeComponentService.getService()
-        .invalidateNodeInProject(node.project, node)
+        .invalidateNode(node)
     }
   }
 

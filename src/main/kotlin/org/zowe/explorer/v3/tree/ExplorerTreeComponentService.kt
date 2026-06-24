@@ -83,7 +83,7 @@ class ExplorerTreeComponentService {
     return when (node.nodeDescriptor) {
       is FilesExplorerRelated -> getFilesExplorerComponent(node.project)
       is JesExplorerRelated -> getJesExplorerComponent(node.project)
-      else -> throw Exception("Incorrect node to return explorer component for: ${node.javaClass}")
+      else -> throw Exception("Incorrect node to return explorer component for: ${node.javaClass}. Most probably you forgot to associate it with ${FilesExplorerRelated::class.java.simpleName} or ${JesExplorerRelated::class.java.simpleName}")
     }
   }
 

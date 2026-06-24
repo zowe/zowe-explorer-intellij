@@ -11,7 +11,7 @@
 package org.zowe.explorer.v3.impl.jes.tree
 
 import com.intellij.openapi.project.Project
-import org.zowe.explorer.v3.impl.jes.tree.nodes.JesWorkingSetNodeDescriptor
+import org.zowe.explorer.v3.impl.jes.tree.nodes.JesProfileNodeDescriptor
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 import org.zowe.explorer.v3.state.config.jes.JesWorkingSetConfig
@@ -23,17 +23,17 @@ import org.zowe.explorer.v3.tree.nodes.RootNode
 class JesExplorerTreeStructure(private val project: Project) : ExplorerTreeStructure(project) {
   override val rootNode by lazy { RootNode(project) }
 
-  fun addJesWorkingSetsFromConfigs() {
-    // TODO: check that the working set node is not already initialized (by uuid)
+  fun addJesProfilesFromConfigs() {
+    // TODO: check that the profile node is not already initialized (by uuid)
     // TODO: pathStrings forming logic
     ConfigCacheService.getService()
       .getConfigsFromCache(ConfigType.JES_WORKING_SET_CONFIG_V1)
       .toList()
       .forEach { config ->
         config as JesWorkingSetConfig
-        registerWorkingSetNode(
+        registerProfileNode(
           ExplorerTreeNode(
-            JesWorkingSetNodeDescriptor(config.name, config),
+            JesProfileNodeDescriptor(config.name, config),
             project,
             rootNode
           )

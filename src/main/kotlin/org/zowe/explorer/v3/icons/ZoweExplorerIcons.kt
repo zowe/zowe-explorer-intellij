@@ -135,7 +135,7 @@ object ZoweExplorerIcons {
   @JvmField
   val zoweExplorerIcon = loadIcon("icons/explorer.svg")
   @JvmField
-  val workingSetIcon = AllIcons.Actions.ShowAsTree
+  val profileIcon = AllIcons.Actions.ShowAsTree
   @JvmField
   val datasetMask = createFilterIcon(AllIcons.Modules.TestRoot, "DS")
   @JvmField

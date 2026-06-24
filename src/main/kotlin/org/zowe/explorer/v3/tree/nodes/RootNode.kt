@@ -15,15 +15,15 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 
 /**
- * A base root node of an explorer view. Is invisible and holds working set nodes as direct children
+ * A base root node of an explorer view. Is invisible and holds profile nodes as direct children
  * @property project the [Project] where the node is initialized
- * @property workingSetNodes the working set nodes of the explorer tree view
+ * @property profileNodes the profile nodes of the explorer tree view
  */
 class RootNode(project: Project) : ExplorerTreeNode(RootNodeDescriptor(), project) {
-  val workingSetNodes = hashSetOf<ExplorerTreeNode>()
+  val profileNodes = hashSetOf<ExplorerTreeNode>()
 
   override fun getChildren(): Collection<AbstractTreeNode<*>?> {
-    return workingSetNodes
+    return profileNodes
   }
 
   override fun isAlwaysExpand() = true

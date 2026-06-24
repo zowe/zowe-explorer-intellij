@@ -10,5 +10,5 @@
 
 package org.zowe.explorer.v3.tree.nodes
 
-/** Root node descriptor. Is designed for an invisible root nodes that will hold working set nodes */
+/** Root node descriptor. Is designed for an invisible root nodes that will hold profile nodes */
 class RootNodeDescriptor : ExplorerTreeNodeDescriptor(isLeaf=false, hasExpandChevron=true)

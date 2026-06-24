@@ -19,32 +19,32 @@ import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NodeSyncService
-import org.zowe.explorer.v3.tree.nodes.WorkingSetNodeDescriptor
+import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 import org.zowe.explorer.v3.impl.files.ds.tree.nodes.DatasetMaskNodeDescriptor
 import org.zowe.explorer.v3.impl.files.uss.tree.nodes.UssFilterNodeDescriptor
 
 /**
- * A files working set node descriptor.
+ * A files profile node descriptor.
  * Is designed to carry info about data set masks and USS filters, as well as functionality to manipulate them
  */
-class FilesWorkingSetNodeDescriptor(
+class FilesProfileNodeDescriptor(
   displayName: String,
   config: FilesWorkingSetConfig?
-) : WorkingSetNodeDescriptor(displayName, "Files Working Set", config), FilesExplorerRelated {
+) : ProfileNodeDescriptor(displayName, "Files Profile", config), FilesExplorerRelated {
   /**
-   * Get files working set node children elements
+   * Get files profile node children elements
    * @param node the original node, associated with the descriptor
    * @return a list of [org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode]'s, that are basically USS filters and data set masks
    */
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    val filesWorkingSetConfig = config as? FilesWorkingSetConfig
-      ?: throw Exception("Files working set config must not be null")
+    val filesProfileConfig = config as? FilesWorkingSetConfig
+      ?: throw Exception("Files profile config must not be null")
     val connectionConfig = ConfigCacheService.getService()
-      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, filesWorkingSetConfig.connectionConfigUuid)
+      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, filesProfileConfig.connectionConfigUuid)
       ?: throw Exception("Connection config is not found for node descriptor $this")
     val host = (connectionConfig as HttpConnectionConfig).host
 
-    val dsMaskNodeDescriptors = filesWorkingSetConfig
+    val dsMaskNodeDescriptors = filesProfileConfig
       .dsMasks
       .map { dsMask ->
         val dsMaskNodeDescriptor = NodeSyncService.getService()
@@ -52,12 +52,12 @@ class FilesWorkingSetNodeDescriptor(
             formDsBasePathFromHost(host),
             dsMask.mask
           ) {
-            DatasetMaskNodeDescriptor(dsMask.mask, filesWorkingSetConfig.connectionConfigUuid)
+            DatasetMaskNodeDescriptor(dsMask.mask, filesProfileConfig.connectionConfigUuid)
           }
         ExplorerTreeNode(dsMaskNodeDescriptor, node.project, node)
       }
 
-    val ussFilterNodeDescriptors = filesWorkingSetConfig
+    val ussFilterNodeDescriptors = filesProfileConfig
       .ussPaths
       .map { ussPath ->
         val ussFilterNodeDescriptor = NodeSyncService.getService()
@@ -65,7 +65,7 @@ class FilesWorkingSetNodeDescriptor(
             formUssBasePathFromHost(host),
             ussPath.path
           ) {
-            UssFilterNodeDescriptor(ussPath.path, filesWorkingSetConfig.connectionConfigUuid)
+            UssFilterNodeDescriptor(ussPath.path, filesProfileConfig.connectionConfigUuid)
           }
         ExplorerTreeNode(ussFilterNodeDescriptor, node.project, node)
       }

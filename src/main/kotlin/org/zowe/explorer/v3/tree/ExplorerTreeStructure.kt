@@ -15,30 +15,30 @@ import com.intellij.openapi.project.Project
 import org.zowe.explorer.explorer.ExplorerViewSettings
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.RootNode
-import org.zowe.explorer.v3.tree.nodes.WorkingSetNodeDescriptor
+import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 
 // TODO: doc
 abstract class ExplorerTreeStructure(project: Project) : AbstractTreeStructureBase(project), ExplorerViewSettings {
   protected abstract val rootNode: RootNode
 
   /**
-   * Register a working set node as the first-level children to the root node
+   * Register a profile node as the first-level children to the root node
    * @param node the node to register
    */
-  fun registerWorkingSetNode(node: ExplorerTreeNode) {
-    node.nodeDescriptor as? WorkingSetNodeDescriptor ?: throw Exception("Incorrect node to register: $node")
-    rootNode.workingSetNodes.add(node)
+  fun registerProfileNode(node: ExplorerTreeNode) {
+    node.nodeDescriptor as? ProfileNodeDescriptor ?: throw Exception("Incorrect node to register: $node")
+    rootNode.profileNodes.add(node)
     // TODO: notify others
   }
 
   /**
-   * Unregister a working set node as the first-level children to the root node
+   * Unregister a profile node as the first-level children to the root node
    * @param node the node to unregister
    */
-  fun unregisterWorkingSetNode(node: ExplorerTreeNode) {
+  fun unregisterProfileNode(node: ExplorerTreeNode) {
     // TODO: notify others
-    node.nodeDescriptor as? WorkingSetNodeDescriptor ?: throw Exception("Incorrect node to unregister: $node")
-    rootNode.workingSetNodes.remove(node)
+    node.nodeDescriptor as? ProfileNodeDescriptor ?: throw Exception("Incorrect node to unregister: $node")
+    rootNode.profileNodes.remove(node)
   }
 
   override fun getRootElement() = rootNode

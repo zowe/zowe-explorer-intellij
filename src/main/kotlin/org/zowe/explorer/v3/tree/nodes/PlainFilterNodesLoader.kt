@@ -13,14 +13,10 @@ package org.zowe.explorer.v3.tree.nodes
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
-import org.zowe.explorer.v3.performWithProgressiveDelay
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.path.PathTree
 import kotlin.collections.ifEmpty
@@ -61,7 +57,15 @@ class PlainFilterNodesLoader(
     )
   }
 
-  // TODO: doc
+  /**
+   * Starts the children loading process. The filter node becomes busy.
+   * It includes creation of a background task with a progress indicator and a possibility to cancel the task.
+   * During the load process start, updates respective nodes with related info
+   * (like "loading" animated icon, refresh info, etc.)
+   * @param operation the [LoadNodesOperation] to start the loading process by
+   * @return a list of [ExplorerTreeNode]'s formed from related descriptors
+   * @see [NodesLoader.startChildrenLoading]
+   */
   override fun startChildrenLoading(operation: LoadNodesOperation): List<ExplorerTreeNode> {
     val operationData = operation.operationData
     val parentNode = operationData.node
@@ -104,27 +108,7 @@ class PlainFilterNodesLoader(
             .values
             .forEach { it.invalidateAssociatedNodes() }
 
-          val fetchJob = async(Dispatchers.IO) {
-            operation.fetchChildren()
-          }
-
-          performWithProgressiveDelay {
-            if (fetchJob.isActive) {
-              if (indicator.isCanceled || !isActive) {
-                fetchJob.cancel()
-                false
-              } else {
-                true
-              }
-            } else {
-              false
-            }
-          }
-          if (fetchJob.isCancelled) {
-            return@runBlocking
-          }
-
-          newChildren = fetchJob.await()
+          newChildren = fetchChildrenWithCancellation(operation, indicator) ?: return@runBlocking
         }
       }
 

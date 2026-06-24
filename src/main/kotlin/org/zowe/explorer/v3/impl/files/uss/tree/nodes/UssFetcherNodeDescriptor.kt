@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.v3.impl.files.uss.tree.nodes
 
+import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
 import org.zowe.explorer.v3.impl.files.uss.operations.LoadUssNodesOperation
 import org.zowe.explorer.v3.impl.files.uss.operations.RefreshUssNodesOperation
 import org.zowe.explorer.v3.impl.formUssBasePathFromHost
@@ -35,7 +36,7 @@ abstract class UssFetcherNodeDescriptor(
   tooltip,
   icon,
   connectionConfigUuid = connectionConfigUuid
-) {
+), FilesExplorerRelated {
   companion object {
     fun formUssBasePathFromConnectionConfig(connectionConfigUuid: String): List<String> {
       val connectionConfig = ConfigCacheService.getService()

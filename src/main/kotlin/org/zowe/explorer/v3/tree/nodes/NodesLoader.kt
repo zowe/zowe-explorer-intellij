@@ -10,8 +10,14 @@
 
 package org.zowe.explorer.v3.tree.nodes
 
+import com.intellij.openapi.progress.ProgressIndicator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.isActive
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
+import org.zowe.explorer.v3.performWithProgressiveDelay
 import org.zowe.explorer.v3.tree.nodes.path.PathTree
 
 /**
@@ -83,5 +89,32 @@ abstract class NodesLoader(
    */
   fun findFilterNodeDescriptor(basePath: List<String>, filterName: String): FetcherNodeDescriptor? {
     return filterNodeDescriptors.getOrDefault(basePath, mapOf())[filterName]
+  }
+
+  protected suspend fun CoroutineScope.fetchChildrenWithCancellation(
+    operation: LoadNodesOperation,
+    indicator: ProgressIndicator
+  ): List<ExplorerTreeNode>? {
+    val fetchJob = async(Dispatchers.IO) {
+      operation.fetchChildren()
+    }
+
+    performWithProgressiveDelay {
+      if (fetchJob.isActive) {
+        if (indicator.isCanceled || !isActive) {
+          fetchJob.cancel()
+          false
+        } else {
+          true
+        }
+      } else {
+        false
+      }
+    }
+    if (fetchJob.isCancelled) {
+      return null
+    }
+
+    return fetchJob.await()
   }
 }

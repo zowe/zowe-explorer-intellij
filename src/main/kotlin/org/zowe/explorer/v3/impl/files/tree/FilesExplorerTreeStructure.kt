@@ -11,7 +11,7 @@
 package org.zowe.explorer.v3.impl.files.tree
 
 import com.intellij.openapi.project.Project
-import org.zowe.explorer.v3.impl.files.tree.nodes.FilesWorkingSetNodeDescriptor
+import org.zowe.explorer.v3.impl.files.tree.nodes.FilesProfileNodeDescriptor
 import org.zowe.explorer.v3.state.config.ConfigType
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
@@ -24,17 +24,17 @@ import kotlin.collections.forEach
 class FilesExplorerTreeStructure(private val project: Project) : ExplorerTreeStructure(project) {
   override val rootNode by lazy { RootNode(project) }
 
-  fun addFilesWorkingSetsFromConfigs() {
-    // TODO: check that the working set node is not already initialized (by uuid)
+  fun addFilesProfilesFromConfigs() {
+    // TODO: check that the profile node is not already initialized (by uuid)
     // TODO: pathStrings forming logic
     ConfigCacheService.getService()
       .getConfigsFromCache(ConfigType.FILES_WORKING_SET_CONFIG_V1)
       .toList()
       .forEach { config ->
         config as FilesWorkingSetConfig
-        registerWorkingSetNode(
+        registerProfileNode(
           ExplorerTreeNode(
-            FilesWorkingSetNodeDescriptor(config.name, config),
+            FilesProfileNodeDescriptor(config.name, config),
             project,
             rootNode
           )

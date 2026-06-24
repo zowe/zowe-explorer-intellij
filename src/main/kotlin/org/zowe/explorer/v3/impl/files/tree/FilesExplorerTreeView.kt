@@ -20,9 +20,12 @@ class FilesExplorerTreeView(
   explorerName: String,
   explorerTreeModel: AbstractTreeModel
 ) : ExplorerTreeView(explorerName, explorerTreeModel) {
-  override val actionGroup =
+  override val leftActionGroup =
     ActionManager.getInstance()
-      .getAction("org.zowe.explorer.components.files.FilesExplorerActionBarGroup") as ActionGroup
+      .getAction("org.zowe.explorer.components.files.FilesExplorerLeftActionBarGroup") as ActionGroup
+  override val rightActionGroup =
+    ActionManager.getInstance()
+      .getAction("org.zowe.explorer.components.files.FilesExplorerRightActionBarGroup") as ActionGroup
   override val contextMenuGroup =
     ActionManager.getInstance()
       .getAction("org.zowe.explorer.components.files.FilesExplorerContextMenuGroup") as ActionGroup

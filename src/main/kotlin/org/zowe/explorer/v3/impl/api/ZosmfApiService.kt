@@ -26,7 +26,10 @@ import org.zowe.kotlinsdk.core.jes.api.JesAPI
 import org.zowe.kotlinsdk.providers.zowe.HttpRequestRunner
 import org.zowe.kotlinsdk.providers.zowe.ZoweAPIProvider
 
-// TODO: doc
+/**
+ * z/OSMF REST API provider service.
+ * Introduces Zowe Client Kotlin SDK default implementation endpoints to work with mainframe from the plugin's code
+ */
 @Service
 class ZosmfApiService {
   companion object {
@@ -35,7 +38,7 @@ class ZosmfApiService {
 
   private val zosmfClient by lazy {
     HttpClient(CIO) {
-      install(ContentNegotiation.Plugin) {
+      install(ContentNegotiation) {
         json(
           Json {
             ignoreUnknownKeys = true

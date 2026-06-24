@@ -13,18 +13,14 @@ package org.zowe.explorer.v3.tree.nodes
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
-import org.zowe.explorer.v3.performWithProgressiveDelay
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.path.PathTree
 
-// TODO: doc
+/** Fetcher nodes loader. Provides functionality to manage nodes loading for [FetcherNodeDescriptor]'s */
 class FetcherNodesLoader(
   pathTree: PathTree,
   filterNodeDescriptors: MutableMap<List<String>, MutableMap<String, FetcherNodeDescriptor>>
@@ -92,27 +88,7 @@ class FetcherNodesLoader(
             }
           }
 
-          val fetchJob = async(Dispatchers.IO) {
-            operation.fetchChildren()
-          }
-
-          performWithProgressiveDelay {
-            if (fetchJob.isActive) {
-              if (indicator.isCanceled || !isActive) {
-                fetchJob.cancel()
-                false
-              } else {
-                true
-              }
-            } else {
-              false
-            }
-          }
-          if (fetchJob.isCancelled) {
-            return@runBlocking
-          }
-
-          newChildren = fetchJob.await()
+          newChildren = fetchChildrenWithCancellation(operation, indicator) ?: return@runBlocking
         }
       }
 

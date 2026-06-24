@@ -20,9 +20,12 @@ class JesExplorerTreeView(
   explorerName: String,
   explorerTreeModel: AbstractTreeModel
 ) : ExplorerTreeView(explorerName, explorerTreeModel) {
-  override val actionGroup =
+  override val leftActionGroup =
     ActionManager.getInstance()
-      .getAction("org.zowe.explorer.components.jes.JesExplorerActionBarGroup") as ActionGroup
+      .getAction("org.zowe.explorer.components.jes.JesExplorerLeftActionBarGroup") as ActionGroup
+  override val rightActionGroup =
+    ActionManager.getInstance()
+      .getAction("org.zowe.explorer.components.jes.JesExplorerRightActionBarGroup") as ActionGroup
   override val contextMenuGroup =
     ActionManager.getInstance()
       .getAction("org.zowe.explorer.components.jes.JesExplorerContextMenuGroup") as ActionGroup

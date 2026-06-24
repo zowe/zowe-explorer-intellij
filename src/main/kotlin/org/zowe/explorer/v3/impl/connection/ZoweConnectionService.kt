@@ -13,8 +13,8 @@ package org.zowe.explorer.v3.impl.connection
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.zowe.kotlinsdk.core.ZoweProfileManager
-import org.zowe.kotlinsdk.core.connectivity.ZoweConnectionManager
+import org.zowe.kotlinsdk.providers.zowe.config.ZoweConnectionManager
+import org.zowe.kotlinsdk.providers.zowe.config.ZoweProfileManager
 
 /**
  * Application-level service that manages connectivity per project.

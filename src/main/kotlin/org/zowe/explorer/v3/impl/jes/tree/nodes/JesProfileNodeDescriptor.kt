@@ -19,22 +19,22 @@ import org.zowe.explorer.v3.state.config.jes.JesWorkingSetConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.NodeSyncService
-import org.zowe.explorer.v3.tree.nodes.WorkingSetNodeDescriptor
+import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 
 // TODO: doc
-class JesWorkingSetNodeDescriptor(
+class JesProfileNodeDescriptor(
   displayName: String,
   config: JesWorkingSetConfig?
-) : WorkingSetNodeDescriptor(displayName, "JES Working Set", config), JesExplorerRelated {
+) : ProfileNodeDescriptor(displayName, "JES Profile", config), JesExplorerRelated {
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    val jesWorkingSetConfig = config as? JesWorkingSetConfig
-      ?: throw Exception("JES working set config must not be null")
+    val jesProfileConfig = config as? JesWorkingSetConfig
+      ?: throw Exception("JES profile config must not be null")
     val connectionConfig = ConfigCacheService.getService()
-      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, jesWorkingSetConfig.connectionConfigUuid)
+      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, jesProfileConfig.connectionConfigUuid)
       ?: throw Exception("Connection config is not found for node descriptor $this")
     val host = (connectionConfig as HttpConnectionConfig).host
 
-    return jesWorkingSetConfig
+    return jesProfileConfig
       .jobFilters
       .map { jobFilter ->
         val jobFilterNodeDescriptor = NodeSyncService.getService()
@@ -46,7 +46,7 @@ class JesWorkingSetNodeDescriptor(
               jobFilter.prefix,
               jobFilter.owner,
               jobFilter.jobId,
-              jesWorkingSetConfig.connectionConfigUuid
+              jesProfileConfig.connectionConfigUuid
             )
           }
         ExplorerTreeNode(jobFilterNodeDescriptor, node.project, node)

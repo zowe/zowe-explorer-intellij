@@ -11,16 +11,17 @@
 package org.zowe.explorer.v3.impl.files.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.actions.CreateWorkingSetAction
+import org.zowe.explorer.v3.actions.CreateProfileAction
+import org.zowe.explorer.v3.impl.files.dialogs.CreateFilesProfileDialog
 import org.zowe.explorer.v3.impl.files.tree.FilesExplorerComponent
+import org.zowe.explorer.v3.impl.teamconfig.ConfigType
 
-// TODO: doc
-class CreateFilesWorkingSetAction : CreateWorkingSetAction(
-  "Files Working Set",
+class CreateFilesProfileAction : CreateProfileAction(
+  "Files Profile",
   FilesExplorerComponent.FILES_EXPLORER_COMPONENT_NAME
 ) {
   override fun actionPerformed(e: AnActionEvent) {
-    TODO("Not yet implemented")
-    // TODO: CreateFilesWorkingSetDialog
+    // TODO: resolve configType from the active tool window state
+    CreateFilesProfileDialog(e.project, ConfigType.LOCAL_TEAM).show()
   }
 }

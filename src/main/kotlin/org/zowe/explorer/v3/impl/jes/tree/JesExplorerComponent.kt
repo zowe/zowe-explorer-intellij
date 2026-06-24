@@ -31,7 +31,7 @@ class JesExplorerComponent(project: Project) : ExplorerTreeComponent() {
   override val explorerTreeView = JesExplorerTreeView(explorerName, explorerAsyncTreeModel)
 
   init {
-    explorerTreeStructure.addJesWorkingSetsFromConfigs()
+    explorerTreeStructure.addJesProfilesFromConfigs()
     subscribe(
       StorageService.STORAGE_CONFIGS_TOPIC,
       object : ConfigEventListener {
@@ -43,10 +43,10 @@ class JesExplorerComponent(project: Project) : ExplorerTreeComponent() {
 //          if (configType == ConfigType.JES_WORKING_SET_CONFIG_V1) {
 //            reloadedConfigs.forEach { config ->
 //              config as JesWorkingSetConfig
-//              explorerTreeStructure.registerWorkingSetNode(
-//                JesWorkingSetNode(
+//              explorerTreeStructure.registerProfileNode(
+//                JesProfileNode(
 //                  project,
-//                  FilesWorkingSetNodeData(
+//                  JesProfileNodeData(
 //                    config.uuid,
 //                    config.name
 //                  ),
@@ -60,20 +60,20 @@ class JesExplorerComponent(project: Project) : ExplorerTreeComponent() {
 
         override fun added(config: Config) {
 //          if (config is JesWorkingSetConfig) {
-//            explorerTreeStructure.registerWorkingSetNode(
-//              JesWorkingSetNode(
+//            explorerTreeStructure.registerProfileNode(
+//              JesProfileNode(
 //                project,
-//                JesWorkingSetNodeDescriptor(config.name, config),
+//                JesProfileNodeDescriptor(config.name, config),
 //                explorerTreeStructure.rootElement
 //              )
 //            )
 //          }
-//           TODO: any added working sets need to be added to the component
+//           TODO: any added profiles need to be added to the component
         }
 
         override fun updated(oldConfig: Config, newConfig: Config) {
           // TODO: most probably on update we need to update the component (username or IP change, other things, refresh)
-          // TODO: when a related working set is updated, it needs to be refreshed in the view
+          // TODO: when a related profile is updated, it needs to be refreshed in the view
         }
 
         override fun deleted(config: Config) {

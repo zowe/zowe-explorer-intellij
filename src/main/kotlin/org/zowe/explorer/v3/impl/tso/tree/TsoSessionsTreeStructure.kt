@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Copyright Contributors to the Zowe Project.
- *
- * Contributors:
- *   Zowe Community
- *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.impl.tso.tree
@@ -30,9 +26,9 @@ class TsoSessionsTreeStructure(private val project: Project) : ExplorerTreeStruc
 //      .toList()
 //      .forEach { config ->
 //        config as TsoProfileConfig
-//        registerWorkingSetNode(
+//        registerProfileNode(
 //          ExplorerTreeNode(
-//            FilesWorkingSetNodeDescriptor(config.name, config),
+//            FilesProfileNodeDescriptor(config.name, config),
 //            project,
 //            rootNode
 //          )
