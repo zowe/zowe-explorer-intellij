@@ -148,4 +148,12 @@ object ZoweExplorerIcons {
   val jobsFilter = createFilterIcon(AllIcons.Modules.ExcludeRoot, "JES")
   @JvmField
   val jesJob = createFolderIcon(AllIcons.Modules.ExcludeRoot, "JOB")
+  // <a href="https://www.flaticon.com/free-icons/keys" title="keys icons">Keys icons created by Smashicons - Flaticon</a>
+  @JvmField
+  val keyChainIcon = loadIcon("icons/key-chain.svg")
+  // <a href="https://www.flaticon.com/free-icons/password" title="password icons">Password icons created by Freepik - Flaticon</a>
+  @JvmField
+  val keyIcon = loadIcon("icons/key.svg")
+  @JvmField
+  val hidePassword = loadIcon("icons/hide.svg")
 }

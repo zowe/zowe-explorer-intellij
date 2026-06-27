@@ -23,7 +23,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.util.ui.JBUI
 import org.zowe.explorer.v3.impl.teamconfig.ConfigType
-import java.util.Locale.getDefault
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import javax.swing.JComponent
 
 // TODO: doc
@@ -40,15 +40,8 @@ class SelectConfigTypePopup : ToggleAction(), CustomComponentAction, DumbAware {
     val component = e.inputEvent?.component as? JComponent ?: return
     val presentation = e.presentation
     val actionGroup = DefaultActionGroup().apply {
-      ConfigType.entries.forEach { configType ->
-        add(
-          SelectConfigTypeAction(
-            configType.displayName.replaceFirstChar {
-              if (it.isLowerCase()) it.titlecase(getDefault())
-              else it.toString()
-            }
-          )
-        )
+      ConfigType.availableEntries(e.project != null).forEach { configType ->
+        add(SelectConfigTypeAction(configType))
       }
     }
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
@@ -68,9 +61,9 @@ class SelectConfigTypePopup : ToggleAction(), CustomComponentAction, DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    // TODO: implement basing on the actually selected config type
     e.presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
-    e.presentation.text = "Config: local (team)"
+    val selectedConfigType = ZoweConfigService.getService().getSelectedConfigType(e.project)
+    e.presentation.text = "Config: ${selectedConfigType.displayName}"
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

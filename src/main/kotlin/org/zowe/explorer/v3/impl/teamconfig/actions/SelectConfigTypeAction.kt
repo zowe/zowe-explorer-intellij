@@ -12,16 +12,20 @@ package org.zowe.explorer.v3.impl.teamconfig.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.actions.DumbAwareEDTAction
+import org.zowe.explorer.v3.impl.teamconfig.ConfigType
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 
-// TODO: doc
-class SelectConfigTypeAction(private val configTypeName: String) : DumbAwareEDTAction() {
+class SelectConfigTypeAction(
+  private val configType: ConfigType
+) : DumbAwareEDTAction() {
   override fun update(e: AnActionEvent) {
-    // TODO: implement
-    e.presentation.text = configTypeName
-    e.presentation.isEnabled = false
+    e.presentation.text = configType.displayName.replaceFirstChar {
+      if (it.isLowerCase()) it.titlecase() else it.toString()
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    TODO("Not yet implemented")
+    val project = e.project ?: return
+    ZoweConfigService.getService().setSelectedConfigType(project, configType)
   }
 }

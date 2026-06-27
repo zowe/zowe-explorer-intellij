@@ -8,7 +8,7 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.impl.files.tree
+package org.zowe.explorer.v3.impl.vault.tree
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -23,23 +23,23 @@ import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import org.zowe.explorer.v3.tree.ExplorerTreeComponent
 
 /**
- * Files Explorer component that displays `files_ij` profiles
- * from the `explorer_ij` section of the active Zowe Team Config.
- * Automatically syncs profiles on any config file edit or programmatic write
+ * Secure Vault component for viewing credentials stored in the Zowe Team Config.
+ * Displays profiles that have non-empty `secure` arrays and their credential entries.
+ * Automatically syncs with config file edits and programmatic writes
  */
-class FilesExplorerComponent(private val project: Project) : ExplorerTreeComponent() {
+class SecureVaultComponent(private val project: Project) : ExplorerTreeComponent() {
   companion object {
-    const val FILES_EXPLORER_COMPONENT_NAME = "Files Explorer"
+    const val SECURE_VAULT_COMPONENT_NAME = "Secure Vault"
   }
 
-  override val explorerName = FILES_EXPLORER_COMPONENT_NAME
-  override val explorerTreeStructure = FilesExplorerTreeStructure(project)
-  override val explorerTreeView = FilesExplorerTreeView(explorerName, explorerAsyncTreeModel)
+  override val explorerName = SECURE_VAULT_COMPONENT_NAME
+  override val explorerTreeStructure = SecureVaultTreeStructure(project)
+  override val explorerTreeView = SecureVaultTreeView(explorerName, explorerAsyncTreeModel)
 
   private var docListenerDisposable: Disposable = Disposer.newDisposable(this, "docListener")
 
   init {
-    explorerTreeStructure.addFilesProfilesFromConfig()
+    explorerTreeStructure.addProfilesFromConfig()
 
     subscribe(
       ZoweConfigService.CONFIG_CHANGED_TOPIC,
@@ -51,7 +51,7 @@ class FilesExplorerComponent(private val project: Project) : ExplorerTreeCompone
   }
 
   /**
-   * Attaches a [DocumentListener] to the active config file's [com.intellij.openapi.editor.Document].
+   * Attaches a [DocumentListener] to the active config file's document.
    * Disposes the previous listener before re-attaching so the tree tracks
    * the correct config file after a config type change
    */

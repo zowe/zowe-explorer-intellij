@@ -20,6 +20,8 @@ import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
 import org.zowe.explorer.v3.impl.jes.tree.JesExplorerComponent
 import org.zowe.explorer.v3.impl.jes.tree.nodes.JesExplorerRelated
 import org.zowe.explorer.v3.impl.tso.tree.TsoSessionsComponent
+import org.zowe.explorer.v3.impl.vault.tree.SecureVaultComponent
+import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureVaultRelated
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 
 /**
@@ -37,6 +39,7 @@ class ExplorerTreeComponentService {
   private val projectsToFilesExplorerComponents = mutableMapOf<Project, FilesExplorerComponent>()
   private val projectsToJesExplorerComponents = mutableMapOf<Project, JesExplorerComponent>()
   private val projectsToTsoSessionsComponents = mutableMapOf<Project, TsoSessionsComponent>()
+  private val projectsToSecureVaultComponents = mutableMapOf<Project, SecureVaultComponent>()
 
   fun getFilesExplorerComponent(project: Project): FilesExplorerComponent {
     val savedFilesExplorerComponent = projectsToFilesExplorerComponents[project]
@@ -68,6 +71,16 @@ class ExplorerTreeComponentService {
     } else savedTsoSessionsComponent
   }
 
+  fun getSecureVaultComponent(project: Project): SecureVaultComponent {
+    val saved = projectsToSecureVaultComponents[project]
+    return if (saved == null) {
+      val component = SecureVaultComponent(project)
+      Disposer.register(project, component)
+      projectsToSecureVaultComponents[project] = component
+      component
+    } else saved
+  }
+
   fun getActiveExplorerComponent(project: Project): ExplorerTreeComponent {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)
     val selectedDisplayName = toolWindow?.contentManager?.selectedContent?.displayName
@@ -75,6 +88,7 @@ class ExplorerTreeComponentService {
       FilesExplorerComponent.FILES_EXPLORER_COMPONENT_NAME -> getFilesExplorerComponent(project)
       JesExplorerComponent.JES_EXPLORER_COMPONENT_NAME -> getJesExplorerComponent(project)
       TsoSessionsComponent.TSO_SESSIONS_COMPONENT_NAME -> getTsoSessionsComponent(project)
+      SecureVaultComponent.SECURE_VAULT_COMPONENT_NAME -> getSecureVaultComponent(project)
       else -> throw Exception("There is no focused component in '${TOOL_WINDOW_ID}' for project '${project.name}'")
     }
   }
@@ -83,6 +97,7 @@ class ExplorerTreeComponentService {
     return when (node.nodeDescriptor) {
       is FilesExplorerRelated -> getFilesExplorerComponent(node.project)
       is JesExplorerRelated -> getJesExplorerComponent(node.project)
+      is SecureVaultRelated -> getSecureVaultComponent(node.project)
       else -> throw Exception("Incorrect node to return explorer component for: ${node.javaClass}. Most probably you forgot to associate it with ${FilesExplorerRelated::class.java.simpleName} or ${JesExplorerRelated::class.java.simpleName}")
     }
   }
@@ -102,6 +117,11 @@ class ExplorerTreeComponentService {
       is JesExplorerRelated -> {
         val jesExplorerComponent = getJesExplorerComponent(node.project)
         jesExplorerComponent.invalidateNode(node, true)
+      }
+
+      is SecureVaultRelated -> {
+        val secureVaultComponent = getSecureVaultComponent(node.project)
+        secureVaultComponent.invalidateNode(node, true)
       }
 
       else -> throw Exception("Invalid node type ${node.javaClass}, impossible to invalidate")

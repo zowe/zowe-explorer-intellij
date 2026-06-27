@@ -8,8 +8,7 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.impl.files.dialogs
+package org.zowe.explorer.v3.impl.vault.tree.nodes
 
-// TODO: doc
-class CreateFilesWorkingSetDialog {
-}
+/** Marker interface associating node descriptors with the Secure Vault explorer */
+interface SecureVaultRelated

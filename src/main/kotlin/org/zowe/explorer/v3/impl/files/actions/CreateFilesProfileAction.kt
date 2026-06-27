@@ -14,14 +14,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.actions.CreateProfileAction
 import org.zowe.explorer.v3.impl.files.dialogs.CreateFilesProfileDialog
 import org.zowe.explorer.v3.impl.files.tree.FilesExplorerComponent
-import org.zowe.explorer.v3.impl.teamconfig.ConfigType
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 
 class CreateFilesProfileAction : CreateProfileAction(
   "Files Profile",
   FilesExplorerComponent.FILES_EXPLORER_COMPONENT_NAME
 ) {
   override fun actionPerformed(e: AnActionEvent) {
-    // TODO: resolve configType from the active tool window state
-    CreateFilesProfileDialog(e.project, ConfigType.LOCAL_TEAM).show()
+    val project = e.project ?: return
+    val configType = ZoweConfigService.getService().getSelectedConfigType(project)
+    CreateFilesProfileDialog(project, configType).show()
   }
 }

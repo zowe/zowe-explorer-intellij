@@ -11,13 +11,9 @@
 package org.zowe.explorer.v3.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.util.containers.isEmpty
-import org.zowe.explorer.common.message
 import org.zowe.explorer.utils.addTooltip
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 
-// TODO: doc
 abstract class CreateProfileAction(
   private val profileType: String,
   private val targetExplorer: String
@@ -25,12 +21,12 @@ abstract class CreateProfileAction(
   override fun update(e: AnActionEvent) {
     e.presentation.text = profileType
     e.presentation.isEnabledAndVisible = e.place.contains(targetExplorer)
-    val isConnectionConfigCreated = !ConfigCacheService.getService()
-      .getConfigsFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1)
-      .isEmpty()
-    e.presentation.isEnabled = isConnectionConfigCreated
-    if (!isConnectionConfigCreated) {
-      e.presentation.addTooltip(message("create.connection.tooltip"))
+    val project = e.project ?: return
+    val configType = ZoweConfigService.getService().getSelectedConfigType(project)
+    val configFile = ZoweConfigService.getService().resolveConfigFile(configType, project.basePath)
+    if (!configFile.exists()) {
+      e.presentation.isEnabled = false
+      e.presentation.addTooltip("Create Zowe Team Config first or select other config type")
     }
   }
 }

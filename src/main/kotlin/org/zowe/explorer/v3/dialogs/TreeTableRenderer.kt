@@ -397,7 +397,8 @@ class TreeTableRenderer(
           }.visibleIf(contentVisible)
         }
         is RowValue.Nested -> {
-          renderRowModel(value.model, indentLevel + 1, contentVisible, isFirstChild = idx == 0)
+          val prevIsNested = idx > 0 && model.entries[idx - 1].second is RowValue.Nested
+          renderRowModel(value.model, indentLevel + 1, contentVisible, isFirstChild = idx == 0 || prevIsNested)
         }
       }
     }

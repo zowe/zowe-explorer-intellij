@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.CommonBundle
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleListCellRenderer
@@ -30,6 +29,7 @@ import org.zowe.explorer.v3.dialogs.TreeTableRenderer
 import org.zowe.explorer.v3.dialogs.TreeTableRenderer.RowModel
 import org.zowe.explorer.v3.dialogs.TreeTableRenderer.RowValue
 import org.zowe.explorer.v3.impl.teamconfig.ConfigType
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -51,57 +51,64 @@ import javax.swing.ScrollPaneConstants
  *   for local configs and as the parent for dialogs.
  */
 class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateTeamConfigDialogState>(project) {
-  override var state = CreateTeamConfigDialogState()
-  private val handler = CreateTeamConfigHandler(project?.basePath)
+  override var state = CreateTeamConfigDialogState().apply {
+    configType = ZoweConfigService.getService().getSelectedConfigType(project)
+  }
+  private val handler = CreateTeamConfigHandler(ZoweConfigService.getService(), project?.basePath)
 
   private val screen = Toolkit.getDefaultToolkit().screenSize
   private val minHeight = (screen.height * .4).toInt()
   private val minWidth = (screen.width * .35).toInt()
 
-  private fun profileRowModel(name: String, type: String, properties: Map<String, Any>): RowModel {
+  private fun profileRowModel(entry: CreateTeamConfigHandler.ProfileEntry): RowModel {
+    val entries = mutableListOf<Pair<String, RowValue>>(
+      "Name" to RowValue.Text(entry.name),
+      "Type" to RowValue.Text(entry.type)
+    )
+    if (entry.properties.isNotEmpty()) {
+      entries += "Properties" to RowValue.Nested(
+        RowModel(
+          title = "Properties",
+          summaryProvider = { values -> "Properties: ${values.entries.joinToString(", ") { (k, v) -> "$k: $v" }}" },
+          entries = entry.properties.map { (k, v) -> k to RowValue.Text(v.toString()) },
+          defaultExpanded = true
+        )
+      )
+    }
+    if (entry.children.isNotEmpty()) {
+      entries += "Profiles" to RowValue.Nested(
+        RowModel(
+          title = "Profiles",
+          summaryProvider = { _ -> "Profiles: ${entry.children.joinToString(", ") { it.name }}" },
+          entries = entry.children.map { child -> child.name to RowValue.Nested(profileRowModel(child)) },
+          defaultExpanded = true
+        )
+      )
+    }
     return RowModel(
       title = "Profile",
-      summaryProvider = { values ->
-        val main = "Profile: ${values["Name"]}, type: ${values["Type"]}"
-        val props = values.filterKeys { it != "Name" && it != "Type" }
-        if (props.isEmpty()) main
-        else main + ", " + props.entries.joinToString(", ") { (k, v) -> "$k: $v" }
+      summaryProvider = { _ ->
+        val main = "Profile: ${entry.name}, type: ${entry.type}"
+        if (entry.children.isNotEmpty()) "$main, profiles: ${entry.children.joinToString(", ") { it.name }}"
+        else main
       },
-      entries = listOf(
-        "Name" to RowValue.Text(name),
-        "Type" to RowValue.Text(type),
-        "Properties" to if (properties.isNotEmpty()) {
-          RowValue.Nested(
-            RowModel(
-              title = "Properties",
-              summaryProvider = { values -> "Properties: ${values.entries.joinToString(", ") { (k, v) -> "$k: $v" }}" },
-              entries = properties.map { (k, v) -> k to RowValue.Text(v.toString()) },
-              defaultExpanded = true
-            )
-          )
-        } else {
-          RowValue.Text("{}")
-        }
-      )
+      entries = entries
     )
   }
 
   private fun buildConfigTypeHeader(): JPanel {
-    val slash = if (SystemInfo.isWindows) "\\" else "/"
-    val globalBase = if (SystemInfo.isWindows) "C:\\Users\\<user>\\.zowe" else "/home/<user>/.zowe"
-    val configDescriptions = ConfigType.entries.associateWith { configType ->
-      "${if (configType.isGlobal) globalBase else "~"}$slash${configType.fileName}"
-    }
-    val hintLabel = JLabel(configDescriptions[state.configType] ?: "").apply {
+    val configService = ZoweConfigService.getService()
+    val hintLabel = JLabel(configService.configPathDescription(state.configType)).apply {
       foreground = UIUtil.getContextHelpForeground()
     }
-    val combo = JComboBox(DefaultComboBoxModel(ConfigType.entries.toTypedArray())).apply {
+    val availableTypes = ConfigType.availableEntries(project != null)
+    val combo = JComboBox(DefaultComboBoxModel(availableTypes.toTypedArray())).apply {
       renderer = SimpleListCellRenderer.create("") { it?.displayName ?: "" }
       selectedItem = state.configType
       addActionListener {
         val selected = selectedItem as? ConfigType ?: ConfigType.LOCAL_TEAM
         state.configType = selected
-        hintLabel.text = configDescriptions[selected] ?: ""
+        hintLabel.text = configService.configPathDescription(selected)
       }
     }
 
@@ -180,8 +187,8 @@ class CreateTeamConfigDialog(private val project: Project?) : LazyDialog<CreateT
             override val verticalComponentGap = 0
           }) {
             with(renderer) {
-              this@CreateTeamConfigDialog.handler.profileEntries().forEachIndexed { idx, (name, type, properties) ->
-                renderRowModel(this@CreateTeamConfigDialog.profileRowModel(name, type, properties), isFirst = idx == 0)
+              this@CreateTeamConfigDialog.handler.profileEntries().forEachIndexed { idx, entry ->
+                renderRowModel(this@CreateTeamConfigDialog.profileRowModel(entry), isFirst = idx == 0)
               }
             }
           }

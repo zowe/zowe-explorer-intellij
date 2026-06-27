@@ -714,6 +714,16 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <action id="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"
                 class="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"/>
 
+        <action id="org.zowe.explorer.v3.impl.vault.actions.CreateCredentialsAction"
+                class="org.zowe.explorer.v3.impl.vault.actions.CreateCredentialsAction"/>
+
+        <action id="org.zowe.explorer.v3.impl.vault.actions.EditCredentialsAction"
+                class="org.zowe.explorer.v3.impl.vault.actions.EditCredentialsAction"/>
+
+        <action id="org.zowe.explorer.v3.impl.vault.actions.DeleteCredentialAction"
+                class="org.zowe.explorer.v3.impl.vault.actions.DeleteCredentialAction"
+                use-shortcut-of="$Delete"/>
+
         <action id="org.zowe.explorer.v3.impl.teamconfig.actions.SelectConfigTypeAction"
                 class="org.zowe.explorer.v3.impl.teamconfig.actions.SelectConfigTypeAction"/>
 
@@ -844,6 +854,12 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <reference id="org.zowe.explorer.v3.impl.tso.actions.CreateTsoProfileAction"/>
         </group>
 
+        <group id="org.zowe.explorer.actions.AddNewItemSecureVaultGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
+            <reference id="org.zowe.explorer.v3.impl.teamconfig.actions.CreateTeamConfigAction"/>
+        </group>
+
         <group id="org.zowe.explorer.components.files.FilesExplorerLeftActionBarGroup">
             <reference id="org.zowe.explorer.actions.AddNewItemFilesExplorerGroup"/>
         </group>
@@ -854,6 +870,10 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <group id="org.zowe.explorer.components.tso.TsoSessionsLeftActionBarGroup">
             <reference id="org.zowe.explorer.actions.AddNewItemTsoSessionsGroup"/>
+        </group>
+
+        <group id="org.zowe.explorer.components.vault.SecureVaultLeftActionBarGroup">
+            <reference id="org.zowe.explorer.actions.AddNewItemSecureVaultGroup"/>
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerRightActionBarGroup">
@@ -868,6 +888,10 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <reference id="org.zowe.explorer.actions.SelectConfigTypePopup"/>
         </group>
 
+        <group id="org.zowe.explorer.components.vault.SecureVaultRightActionBarGroup">
+            <reference id="org.zowe.explorer.actions.SelectConfigTypePopup"/>
+        </group>
+
         <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">
             <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
             <separator/>
@@ -879,6 +903,13 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         </group>
 
         <group id="org.zowe.explorer.components.tso.TsoSessionsContextMenuGroup">
+        </group>
+
+        <group id="org.zowe.explorer.components.vault.SecureVaultContextMenuGroup">
+            <reference id="org.zowe.explorer.v3.impl.vault.actions.CreateCredentialsAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.v3.impl.vault.actions.EditCredentialsAction"/>
+            <reference id="org.zowe.explorer.v3.impl.vault.actions.DeleteCredentialAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.JESActionBarGroup">

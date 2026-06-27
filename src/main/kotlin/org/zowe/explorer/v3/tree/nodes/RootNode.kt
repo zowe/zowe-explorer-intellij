@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
  * @property profileNodes the profile nodes of the explorer tree view
  */
 class RootNode(project: Project) : ExplorerTreeNode(RootNodeDescriptor(), project) {
-  val profileNodes = hashSetOf<ExplorerTreeNode>()
+  val profileNodes = linkedSetOf<ExplorerTreeNode>()
 
   override fun getChildren(): Collection<AbstractTreeNode<*>?> {
     return profileNodes

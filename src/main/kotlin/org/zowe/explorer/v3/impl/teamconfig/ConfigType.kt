@@ -29,5 +29,11 @@ enum class ConfigType(val displayName: String, val fileName: String, val isGloba
   LOCAL_TEAM("local (team)", "zowe.config.json", false),
   LOCAL_USER("local (user)", "zowe.config.user.json", false),
   GLOBAL_TEAM("global (team)", "zowe.config.json", true),
-  GLOBAL_USER("global (user)", "zowe.config.user.json", true)
+  GLOBAL_USER("global (user)", "zowe.config.user.json", true);
+
+  companion object {
+    fun availableEntries(hasProject: Boolean): List<ConfigType> {
+      return if (hasProject) entries else entries.filter { it.isGlobal }
+    }
+  }
 }

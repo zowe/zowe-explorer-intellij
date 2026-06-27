@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import org.zowe.explorer.explorer.ExplorerViewSettings
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.RootNode
-import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 
 // TODO: doc
 abstract class ExplorerTreeStructure(project: Project) : AbstractTreeStructureBase(project), ExplorerViewSettings {
@@ -26,9 +25,7 @@ abstract class ExplorerTreeStructure(project: Project) : AbstractTreeStructureBa
    * @param node the node to register
    */
   fun registerProfileNode(node: ExplorerTreeNode) {
-    node.nodeDescriptor as? ProfileNodeDescriptor ?: throw Exception("Incorrect node to register: $node")
     rootNode.profileNodes.add(node)
-    // TODO: notify others
   }
 
   /**
@@ -36,8 +33,6 @@ abstract class ExplorerTreeStructure(project: Project) : AbstractTreeStructureBa
    * @param node the node to unregister
    */
   fun unregisterProfileNode(node: ExplorerTreeNode) {
-    // TODO: notify others
-    node.nodeDescriptor as? ProfileNodeDescriptor ?: throw Exception("Incorrect node to unregister: $node")
     rootNode.profileNodes.remove(node)
   }
 

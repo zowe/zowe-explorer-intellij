@@ -12,6 +12,7 @@ package org.zowe.explorer.v3.impl.teamconfig.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.actions.DumbAwareEDTAction
+import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.teamconfig.dialogs.CreateTeamConfigDialog
 
 /**
@@ -26,5 +27,6 @@ class CreateTeamConfigAction : DumbAwareEDTAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.text = "Zowe Team Config"
     e.presentation.description = "Create new Zowe team configuration file"
+    e.presentation.icon = ZoweExplorerIcons.zoweExplorerIcon
   }
 }
