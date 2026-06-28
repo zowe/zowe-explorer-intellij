@@ -13,16 +13,21 @@ package org.zowe.explorer.v3.impl.files.uss.tree.nodes
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.tree.nodes.RealNodeAssociation
 
-// TODO: doc
+/**
+ * Node descriptor for a USS filter (e.g. `/u/USER`).
+ * Fetches matching USS entries from the mainframe when expanded
+ * @param displayName the USS path shown in the tree
+ * @param connectionProfile the connection profile path from the Zowe Team Config
+ */
 class UssFilterNodeDescriptor(
   displayName: String,
-  connectionConfigUuid: String
+  connectionProfile: String
 ) : UssFetcherNodeDescriptor(
   displayName,
   filterPath = formUssFilterPath(displayName),
   "USS filter",
   ZoweExplorerIcons.ussFilter,
-  connectionConfigUuid = connectionConfigUuid
+  connectionProfile = connectionProfile
 ), RealNodeAssociation
 {
   override val fetchFilter = if (filterPath.size > 1) filterPath.joinToString("").dropLast(1) else filterPath[0]

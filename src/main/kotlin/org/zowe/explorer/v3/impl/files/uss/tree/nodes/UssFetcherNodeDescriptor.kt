@@ -13,39 +13,36 @@ package org.zowe.explorer.v3.impl.files.uss.tree.nodes
 import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
 import org.zowe.explorer.v3.impl.files.uss.operations.LoadUssNodesOperation
 import org.zowe.explorer.v3.impl.files.uss.operations.RefreshUssNodesOperation
-import org.zowe.explorer.v3.impl.formUssBasePathFromHost
+import org.zowe.explorer.v3.impl.formUssBasePath
 import org.zowe.explorer.v3.impl.files.uss.operations.LoadUssNodesOperationData
 import org.zowe.explorer.v3.impl.files.uss.operations.RefreshUssNodesOperationData
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 import javax.swing.Icon
 
-// TODO: doc
+/**
+ * Base node descriptor for USS fetcher nodes.
+ * Fetches USS file system entries from the mainframe when expanded
+ * @param displayName the USS path or filter shown in the tree
+ * @param filterPath the parsed path segments derived from [displayName]
+ * @param tooltip the tooltip text
+ * @param icon the node icon
+ * @param connectionProfile the connection profile path from the Zowe Team Config
+ */
 abstract class UssFetcherNodeDescriptor(
   displayName: String,
   protected val filterPath: List<String>,
   tooltip: String,
   icon: Icon,
-  connectionConfigUuid: String
+  connectionProfile: String
 ) : FetcherNodeDescriptor(
   displayName,
-  basePath = formUssBasePathFromConnectionConfig(connectionConfigUuid),
+  basePath = formUssBasePath(connectionProfile),
   tooltip,
   icon,
-  connectionConfigUuid = connectionConfigUuid
+  connectionProfile
 ), FilesExplorerRelated {
   companion object {
-    fun formUssBasePathFromConnectionConfig(connectionConfigUuid: String): List<String> {
-      val connectionConfig = ConfigCacheService.getService()
-        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
-        ?: throw Exception("Connection config is not found for node $this")
-      val host = (connectionConfig as HttpConnectionConfig).host
-      return formUssBasePathFromHost(host)
-    }
-
     fun formUssFilterPath(displayName: String): List<String> {
       return if (displayName == "/") listOf(displayName)
         else displayName.split("/").map { "$it/"}

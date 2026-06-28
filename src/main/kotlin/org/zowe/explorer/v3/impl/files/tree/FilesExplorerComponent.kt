@@ -11,6 +11,7 @@
 package org.zowe.explorer.v3.impl.files.tree
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -62,7 +63,7 @@ class FilesExplorerComponent(private val project: Project) : ExplorerTreeCompone
     val configType = configService.getSelectedConfigType(project)
     val configFile = configService.resolveConfigFile(configType, project.basePath)
     val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(configFile.absolutePath) ?: return
-    val document = FileDocumentManager.getInstance().getDocument(vf) ?: return
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(vf) } ?: return
     document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         syncProfiles()

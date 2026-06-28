@@ -15,6 +15,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -24,6 +25,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.messages.Topic
+import org.zowe.explorer.v3.profiles.ProfileType
+import org.zowe.kotlinsdk.providers.zowe.config.ZoweConfigFile
 import org.zowe.kotlinsdk.providers.zowe.config.ZoweCredentialManager
 import java.io.File
 import java.util.EventListener
@@ -36,6 +39,11 @@ fun interface ZoweConfigChangeListener : EventListener {
   fun onConfigChanged()
 }
 
+data class ConnectionProfiles(
+  val profiles: List<String>,
+  val defaultProfile: String?
+)
+
 /**
  * Application-level service managing Zowe Team Config operations:
  * config type selection per project, config file resolution, read/write,
@@ -44,9 +52,6 @@ fun interface ZoweConfigChangeListener : EventListener {
 @Service
 class ZoweConfigService {
   companion object {
-    const val EXPLORER_IJ_PROFILE = "explorer_ij"
-    const val FILES_IJ_TYPE = "files_ij"
-
     /** Fired after [writeConfigContent] modifies a Zowe config file */
     val CONFIG_CHANGED_TOPIC: Topic<ZoweConfigChangeListener> =
       Topic.create("ZoweConfigChanged", ZoweConfigChangeListener::class.java)
@@ -74,10 +79,35 @@ class ZoweConfigService {
   /** Resolves the [File] for the given [configType], using [projectBasePath] for local configs */
   fun resolveConfigFile(configType: ConfigType, projectBasePath: String?): File {
     return if (!configType.isGlobal) {
-      File(projectBasePath ?: ".", configType.fileName)
+      projectBasePath ?: throw Exception("Project base path is not provided for a local Zowe Config")
+      File(projectBasePath, configType.fileName)
     } else {
       File(System.getProperty("user.home")).resolve(".zowe").resolve(configType.fileName)
     }
+  }
+
+  // TODO: doc
+  fun findConnectionProfiles(configType: ConfigType, projectBasePath: String? = null): ConnectionProfiles {
+    val configFile = resolveConfigFile(configType, projectBasePath)
+    if (!configFile.exists()) return ConnectionProfiles(emptyList(), null)
+
+    val sdkConfigType = if (configType.fileName.contains("user"))
+      org.zowe.kotlinsdk.providers.zowe.config.ConfigType.USER_CONFIG
+    else
+      org.zowe.kotlinsdk.providers.zowe.config.ConfigType.TEAM_CONFIG
+
+    val zoweConfigFile = ZoweConfigFile(
+      type = sdkConfigType,
+      name = configType.fileName.removeSuffix(".json").removeSuffix(".config").removeSuffix(".config.user")
+    )
+    zoweConfigFile.location = configFile.parentFile?.absolutePath
+    zoweConfigFile.initFromFile(shouldValidateSchema = false)
+
+    val allProfiles = zoweConfigFile.getProfilesNameAndType(shouldValidateSchema = false)
+    val zosmfProfiles = allProfiles.filter { it.second == ProfileType.ZOSMF.typeAsString }.map { it.first }
+    val defaultProfile = zoweConfigFile.defaults?.get(ProfileType.ZOSMF.typeAsString)
+
+    return ConnectionProfiles(zosmfProfiles, defaultProfile)
   }
 
   /** Returns a human-readable path description for the given [configType], e.g. `~/zowe.config.json` */
@@ -99,29 +129,105 @@ class ZoweConfigService {
     val file = resolveConfigFile(configType, projectBasePath)
     val vf = LocalFileSystem.getInstance().findFileByPath(file.absolutePath)
     if (vf != null) {
-      val document: Document? = FileDocumentManager.getInstance().getDocument(vf)
-      if (document != null) return document.text
+      val document: Document? = runReadAction { FileDocumentManager.getInstance().getDocument(vf) }
+      if (document != null) return runReadAction { document.text }
     }
     return if (file.exists()) file.readText() else null
   }
 
+  fun getConfigAsJsonObject(configType: ConfigType, projectBasePath: String?): JsonObject? {
+    return readConfigContent(configType, projectBasePath)
+      ?.let { content -> JsonParser.parseString(content).asJsonObject }
+  }
+
+  fun getExplorerProfilePath(config: JsonObject): String {
+    return config
+      .getAsJsonObject("defaults")
+      ?.get(ProfileType.EXPLORER_IJ.typeAsString)
+      ?.asString
+      ?: ProfileType.EXPLORER_IJ.typeAsString
+  }
+
+  fun getExplorerProfile(configType: ConfigType, projectBasePath: String?): JsonObject? {
+    return getConfigAsJsonObject(configType, projectBasePath)
+      ?.let { root ->
+        root.getAsJsonObject("profiles")
+          ?.let { profiles ->
+            val explorerProfilePath = getExplorerProfilePath(root)
+            navigateToProfile(profiles, explorerProfilePath)
+          }
+      }
+  }
+
+  fun getExplorerProfiles(configType: ConfigType, projectBasePath: String?): JsonObject? {
+    return getExplorerProfile(configType, projectBasePath)
+      ?.getAsJsonObject("profiles")
+  }
+
+  fun readProfileNames(profileType: ProfileType, configType: ConfigType, projectBasePath: String?): List<String> {
+    return getExplorerProfiles(configType, projectBasePath)
+      ?.entrySet()
+      ?.filter { (_, value) ->
+        value.isJsonObject && value.asJsonObject.get("type")?.asString == profileType.typeAsString
+      }
+      ?.map { it.key }
+      ?: emptyList()
+  }
+
   /**
-   * Reads the names of `files_ij` profiles nested under the `explorer_ij` profile
-   * in the Zowe config of the given [configType]
+   * Reads the `properties` object of a nested profile under `explorer_ij`
+   * @param configType the active config type
+   * @param projectBasePath the project base path
+   * @param profileName the name of the nested profile (e.g. "my_files" or "my_jes")
+   * @return the `properties` [JsonObject], or `null` if not found
    */
-  fun readFilesProfileNames(configType: ConfigType, projectBasePath: String?): List<String> {
-    val content = readConfigContent(configType, projectBasePath) ?: return emptyList()
-    val root = JsonParser.parseString(content).asJsonObject
-    val profiles = root.getAsJsonObject("profiles") ?: return emptyList()
-    val defaults = root.getAsJsonObject("defaults")
-    val explorerIjPath = defaults?.get(EXPLORER_IJ_PROFILE)?.asString ?: EXPLORER_IJ_PROFILE
+  fun readNestedProfileProperties(configType: ConfigType, projectBasePath: String?, profileName: String): JsonObject? {
+    return getExplorerProfiles(configType, projectBasePath)
+      ?.getAsJsonObject(profileName)
+      ?.getAsJsonObject("properties")
+  }
 
-    val explorerIj = navigateToProfile(profiles, explorerIjPath) ?: return emptyList()
-    val nestedProfiles = explorerIj.getAsJsonObject("profiles") ?: return emptyList()
+  /**
+   * Reads the `connectionProfile` property from a nested profile under `explorer_ij`
+   * @param configType the active config type
+   * @param projectBasePath the project base path
+   * @param profileName the name of the nested profile (e.g. "my_files" or "my_jes")
+   * @return the connection profile path (e.g. "lpar1.zosmf"), or `null` if not found
+   */
+  fun readConnectionProfile(configType: ConfigType, projectBasePath: String?, profileName: String): String? {
+    return readNestedProfileProperties(configType, projectBasePath, profileName)
+      ?.get("connectionProfile")?.asString
+  }
 
-    return nestedProfiles.entrySet()
-      .filter { (_, value) -> value.isJsonObject && value.asJsonObject.get("type")?.asString == FILES_IJ_TYPE }
-      .map { it.key }
+  fun getProfileProperty(propertyName: String, configType: ConfigType, projectBasePath: String?, profileName: String): JsonObject? {
+    return readNestedProfileProperties(configType, projectBasePath, profileName)
+      ?.getAsJsonObject(propertyName)
+  }
+
+  /**
+   * Reads dataset masks from the `dsMasks` property of a `files_ij` profile.
+   * Each entry has a `mask` field (e.g. `"ULADZ.**"`)
+   * @return list of mask strings, empty if none
+   */
+  fun readDsMasks(configType: ConfigType, projectBasePath: String?, profileName: String): List<String> {
+    return getProfileProperty("dsMasks", configType, projectBasePath, profileName)
+      ?.entrySet()
+      ?.filter { it.value.isJsonObject }
+      ?.mapNotNull { it.value.asJsonObject.get("mask")?.asString }
+      ?: emptyList()
+  }
+
+  /**
+   * Reads USS filters from the `ussFilters` property of a `files_ij` profile.
+   * Each entry has a `path` field (e.g. `"/u/USER"`)
+   * @return list of path strings, empty if none
+   */
+  fun readUssFilters(configType: ConfigType, projectBasePath: String?, profileName: String): List<String> {
+    return getProfileProperty("ussFilters", configType, projectBasePath, profileName)
+      ?.entrySet()
+      ?.filter { it.value.isJsonObject }
+      ?.mapNotNull { it.value.asJsonObject.get("path")?.asString }
+      ?: emptyList()
   }
 
   /**
@@ -189,7 +295,7 @@ class ZoweConfigService {
     profile.add("secure", secureArray)
 
     val gson = GsonBuilder().setPrettyPrinting().create()
-    writeConfigContent(configType, projectBasePath, project, gson.toJson(root))
+    writeConfigContent(configType, project, gson.toJson(root))
   }
 
   /**
@@ -213,7 +319,7 @@ class ZoweConfigService {
     profile.add("secure", filtered)
 
     val gson = GsonBuilder().setPrettyPrinting().create()
-    writeConfigContent(configType, projectBasePath, project, gson.toJson(root))
+    writeConfigContent(configType, project, gson.toJson(root))
 
     val configFilePath = resolveConfigFile(configType, projectBasePath).absolutePath
     ZoweCredentialManager.removeSecureFields(configFilePath, profilePath, fields)
@@ -253,13 +359,13 @@ class ZoweConfigService {
   }
 
   /**
-   * Writes [content] to the Zowe config file resolved by [configType] and [projectBasePath].
+   * Writes [content] to the Zowe config file resolved by [configType] and [project]'s base path.
    * Uses IntelliJ Document API when the file is open in an editor to avoid cache conflicts,
    * otherwise writes directly to disk and refreshes VFS.
    * Fires [CONFIG_CHANGED_TOPIC] after a successful write
    */
-  fun writeConfigContent(configType: ConfigType, projectBasePath: String?, project: Project?, content: String) {
-    val file = resolveConfigFile(configType, projectBasePath)
+  fun writeConfigContent(configType: ConfigType, project: Project?, content: String) {
+    val file = resolveConfigFile(configType, project?.basePath)
     val vf = LocalFileSystem.getInstance().findFileByPath(file.absolutePath)
     if (vf != null) {
       val document = FileDocumentManager.getInstance().getDocument(vf)
@@ -274,6 +380,11 @@ class ZoweConfigService {
     file.writeText(content)
     LocalFileSystem.getInstance().refreshAndFindFileByPath(file.absolutePath)
     notifyConfigChanged()
+  }
+
+  fun getOrCreateConfigDefaults(config: JsonObject): JsonObject {
+    return config.getAsJsonObject("defaults")
+      ?: JsonObject().also { config.add("defaults", it) }
   }
 
   private fun notifyConfigChanged() {

@@ -12,14 +12,21 @@ package org.zowe.explorer.v3.impl.jes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.actions.CreateProfileAction
+import org.zowe.explorer.v3.impl.jes.dialogs.CreateJesProfileDialog
 import org.zowe.explorer.v3.impl.jes.tree.JesExplorerComponent
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 
-// TODO: doc
+/**
+ * Toolbar action that opens [CreateJesProfileDialog] to create a new `jes_ij` profile
+ * inside the `explorer_ij` section of the active Zowe Team Config
+ */
 class CreateJesProfileAction : CreateProfileAction(
   "JES Profile",
   JesExplorerComponent.JES_EXPLORER_COMPONENT_NAME
 ) {
   override fun actionPerformed(e: AnActionEvent) {
-    TODO("Not yet implemented")
+    val project = e.project ?: return
+    val configType = ZoweConfigService.getService().getSelectedConfigType(project)
+    CreateJesProfileDialog(project, configType).showAndGet()
   }
 }

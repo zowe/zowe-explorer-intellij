@@ -23,13 +23,13 @@ abstract class PlainFilterNodeDescriptor(
   basePath: List<String>,
   tooltip: String,
   icon: Icon,
-  connectionConfigUuid: String
+  connectionProfile: String
 ) : FetcherNodeDescriptor(
   displayName,
   basePath,
   tooltip,
   icon,
-  connectionConfigUuid
+  connectionProfile
 ) {
   enum class FilterState {
     INIT,

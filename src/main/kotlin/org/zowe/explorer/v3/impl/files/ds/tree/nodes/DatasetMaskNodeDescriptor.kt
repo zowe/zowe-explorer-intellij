@@ -12,37 +12,30 @@ package org.zowe.explorer.v3.impl.files.ds.tree.nodes
 
 import org.zowe.explorer.v3.impl.files.ds.operations.LoadDatasetMaskNodesOperation
 import org.zowe.explorer.v3.impl.files.ds.operations.RefreshDatasetMaskNodesOperation
-import org.zowe.explorer.v3.impl.formDsBasePathFromHost
+import org.zowe.explorer.v3.impl.formDsBasePath
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.files.ds.operations.LoadDatasetMaskNodesOperationData
 import org.zowe.explorer.v3.impl.files.ds.operations.RefreshDatasetMaskNodesOperationData
 import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.PlainFilterNodeDescriptor
 
-// TODO: doc
+/**
+ * Node descriptor for a dataset mask filter (e.g. `ULADZ.**`).
+ * Fetches matching datasets from the mainframe when expanded
+ * @param displayName the mask expression shown in the tree
+ * @param connectionProfile the connection profile path from the Zowe Team Config
+ */
 class DatasetMaskNodeDescriptor(
   displayName: String,
-  connectionConfigUuid: String
+  connectionProfile: String
 ) : PlainFilterNodeDescriptor(
   displayName,
-  basePath = formDsBasePathFromConnectionConfig(connectionConfigUuid),
+  basePath = formDsBasePath(connectionProfile),
   "Data set mask",
   ZoweExplorerIcons.datasetMask,
-  connectionConfigUuid
+  connectionProfile
 ), FilesExplorerRelated {
-  companion object {
-    fun formDsBasePathFromConnectionConfig(connectionConfigUuid: String): List<String> {
-      val connectionConfig = ConfigCacheService.getService()
-        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
-        ?: throw Exception("Connection config is not found for node $this")
-      val host = (connectionConfig as HttpConnectionConfig).host
-      return formDsBasePathFromHost(host)
-    }
-  }
 
   override fun generateLoadNodesOperation(node: ExplorerTreeNode): LoadDatasetMaskNodesOperation {
     return LoadDatasetMaskNodesOperation(

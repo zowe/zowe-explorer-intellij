@@ -12,20 +12,15 @@ package org.zowe.explorer.v3.impl.vault.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.actions.DumbAwareEDTAction
 import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import org.zowe.explorer.v3.impl.vault.dialogs.CredentialsDialog
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureEntryNodeDescriptor
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureProfileNodeDescriptor
-import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 
 /**
  * Context menu action that opens [CredentialsDialog] in edit mode for the selected
  * secure entry node. Visible only when a [SecureEntryNodeDescriptor] is selected,
  * and reads the parent profile path from the parent [SecureProfileNodeDescriptor]
  */
-class EditCredentialsAction : DumbAwareEDTAction() {
+class EditCredentialsAction : CredentialsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val (profilePath, fieldName) = getSelectedEntry(e) ?: return
@@ -39,17 +34,4 @@ class EditCredentialsAction : DumbAwareEDTAction() {
     e.presentation.isEnabledAndVisible = getSelectedEntry(e) != null
   }
 
-  private fun getSelectedEntry(e: AnActionEvent): Pair<String, String>? {
-    val project = e.project ?: return null
-    val selectedNode = ExplorerTreeComponentService.getService()
-      .getActiveExplorerComponent(project)
-      .selectedNodes
-      .firstOrNull { it.nodeDescriptor is SecureEntryNodeDescriptor }
-      ?: return null
-    val parentNode = selectedNode.parent as? ExplorerTreeNode ?: return null
-    if (parentNode.nodeDescriptor !is SecureProfileNodeDescriptor) return null
-    val profilePath = parentNode.nodeDescriptor.displayName
-    val fieldName = selectedNode.nodeDescriptor.displayName
-    return profilePath to fieldName
-  }
 }

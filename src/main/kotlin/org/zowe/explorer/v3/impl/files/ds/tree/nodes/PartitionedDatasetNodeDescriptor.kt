@@ -16,22 +16,28 @@ import org.zowe.explorer.v3.impl.files.ds.operations.LoadMemberNodesOperationDat
 import org.zowe.explorer.v3.impl.files.ds.operations.RefreshMemberNodesOperation
 import org.zowe.explorer.v3.impl.files.ds.operations.RefreshMemberNodesOperationData
 import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
+import org.zowe.explorer.v3.impl.formDsBasePath
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.Traversable
 
-// TODO: doc
+/**
+ * Node descriptor for a partitioned data set (PDS).
+ * Fetches members from the mainframe when expanded
+ * @param displayName the data set name shown in the tree
+ * @param connectionProfile the connection profile path from the Zowe Team Config
+ */
 class PartitionedDatasetNodeDescriptor(
   displayName: String,
-  connectionConfigUuid: String,
+  connectionProfile: String,
 ) : FetcherNodeDescriptor(
   displayName,
-  basePath = DatasetMaskNodeDescriptor.formDsBasePathFromConnectionConfig(connectionConfigUuid),
+  basePath = formDsBasePath(connectionProfile),
   "Partitioned data set",
   ZoweExplorerIcons.libraryDataset,
-  connectionConfigUuid
+  connectionProfile
 ), Traversable, FilesExplorerRelated
 {
   override val fetchFilter = displayName

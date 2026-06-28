@@ -314,6 +314,8 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
         <postStartupActivity implementation="org.zowe.explorer.v3.impl.connection.ConnectionStartupActivity"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.v3.impl.teamconfig.ZoweConfigStartupActivity"/>
+
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
@@ -451,6 +453,16 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <action id="org.zowe.explorer.v3.impl.files.actions.CreateFilesProfileAction"
                 class="org.zowe.explorer.v3.impl.files.actions.CreateFilesProfileAction"
                 icon="AllIcons.Actions.ShowAsTree"/>
+
+        <action id="org.zowe.explorer.v3.impl.files.actions.EditFilesProfileAction"
+                class="org.zowe.explorer.v3.impl.files.actions.EditFilesProfileAction"
+                text="Edit Files Profile"
+                icon="AllIcons.Actions.Edit"/>
+
+        <action id="org.zowe.explorer.v3.impl.files.actions.AddMaskOrFilterAction"
+                class="org.zowe.explorer.v3.impl.files.actions.AddMaskOrFilterAction"
+                text="Add Mask or Filter"
+                icon="AllIcons.General.Add"/>
 
         <action id="org.zowe.explorer.v3.impl.jes.actions.CreateJesProfileAction"
                 class="org.zowe.explorer.v3.impl.jes.actions.CreateJesProfileAction"
@@ -845,6 +857,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         <group id="org.zowe.explorer.actions.AddNewItemJesExplorerGroup"
                icon="AllIcons.General.Add"
                popup="true">
+            <reference id="org.zowe.explorer.v3.impl.teamconfig.actions.CreateTeamConfigAction"/>
             <reference id="org.zowe.explorer.v3.impl.jes.actions.CreateJesProfileAction"/>
         </group>
 
@@ -893,6 +906,9 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">
+            <reference id="org.zowe.explorer.v3.impl.files.actions.AddMaskOrFilterAction"/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.EditFilesProfileAction"/>
+            <separator/>
             <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
             <separator/>
             <reference id="org.zowe.explorer.v3.actions.RenameNodeAction"/>

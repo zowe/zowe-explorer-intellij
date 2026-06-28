@@ -10,47 +10,39 @@
 
 package org.zowe.explorer.v3.impl.jes.tree.nodes
 
-import org.zowe.explorer.v3.impl.formJesBasePathFromHost
-import org.zowe.explorer.v3.impl.formJobFilterName
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.state.config.jes.JesWorkingSetConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
-import org.zowe.explorer.v3.tree.nodes.NodeSyncService
 import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 
-// TODO: doc
+/**
+ * Node descriptor for a `jes_ij` profile from the Zowe Team Config.
+ * Represents a top-level profile entry in the JES Explorer tree.
+ * Displays gray "(no name)" when the profile key is an empty string
+ */
 class JesProfileNodeDescriptor(
   displayName: String,
-  config: JesWorkingSetConfig?
+  config: JesWorkingSetConfig?,
+  private val connectionProfile: String? = null
 ) : ProfileNodeDescriptor(displayName, "JES Profile", config), JesExplorerRelated {
-  override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    val jesProfileConfig = config as? JesWorkingSetConfig
-      ?: throw Exception("JES profile config must not be null")
-    val connectionConfig = ConfigCacheService.getService()
-      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, jesProfileConfig.connectionConfigUuid)
-      ?: throw Exception("Connection config is not found for node descriptor $this")
-    val host = (connectionConfig as HttpConnectionConfig).host
 
-    return jesProfileConfig
-      .jobFilters
-      .map { jobFilter ->
-        val jobFilterNodeDescriptor = NodeSyncService.getService()
-          .getOrPutFilterNodeDescriptor(
-            formJesBasePathFromHost(host),
-            formJobFilterName(jobFilter.prefix, jobFilter.owner, jobFilter.jobId)
-          ) {
-            JobFilterNodeDescriptor(
-              jobFilter.prefix,
-              jobFilter.owner,
-              jobFilter.jobId,
-              jesProfileConfig.connectionConfigUuid
-            )
-          }
-        ExplorerTreeNode(jobFilterNodeDescriptor, node.project, node)
-      }
-      .ifEmpty { listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node)) }
+  override val genuinePresentationData = PresentationData().also {
+    it.setIcon(ZoweExplorerIcons.profileIcon)
+    if (displayName.isEmpty()) {
+      it.addText("(no name)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    } else {
+      it.addText(displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+    if (!connectionProfile.isNullOrBlank()) {
+      it.addText("  $connectionProfile", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES)
+    }
+    it.tooltip = "JES Profile"
+  }
+
+  override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
+    return listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
   }
 }

@@ -13,17 +13,23 @@ package org.zowe.explorer.v3.impl.files.uss.tree.nodes
 import com.intellij.icons.AllIcons
 import org.zowe.explorer.v3.tree.nodes.Traversable
 
-// TODO: doc
+/**
+ * Node descriptor for a USS folder.
+ * Fetches folder contents from the mainframe when expanded
+ * @param displayName the folder name shown in the tree
+ * @param parentFetchFilter the parent's fetch filter path
+ * @param connectionProfile the connection profile path from the Zowe Team Config
+ */
 class UssFolderNodeDescriptor(
   displayName: String,
   parentFetchFilter: String,
-  connectionConfigUuid: String,
+  connectionProfile: String,
 ) : UssFetcherNodeDescriptor(
   displayName,
   filterPath = formUssFilterPath(parentFetchFilter) + "$displayName/",
   "USS folder",
   AllIcons.Modules.SourceRoot,
-  connectionConfigUuid = connectionConfigUuid
+  connectionProfile = connectionProfile
 ), Traversable
 {
   override val fetchFilter = filterPath.joinToString("").dropLast(1)

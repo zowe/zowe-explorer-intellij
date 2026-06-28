@@ -23,6 +23,6 @@ class CreateFilesProfileAction : CreateProfileAction(
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val configType = ZoweConfigService.getService().getSelectedConfigType(project)
-    CreateFilesProfileDialog(project, configType).show()
+    CreateFilesProfileDialog(project, configType).showAndGet()
   }
 }

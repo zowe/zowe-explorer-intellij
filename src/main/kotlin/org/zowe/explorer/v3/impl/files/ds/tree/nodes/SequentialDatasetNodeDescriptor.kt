@@ -11,18 +11,23 @@
 package org.zowe.explorer.v3.impl.files.ds.tree.nodes
 
 import com.intellij.icons.AllIcons
+import org.zowe.explorer.v3.impl.connection.ConnectionProfileRelated
 import org.zowe.explorer.v3.impl.files.tree.nodes.FilesExplorerRelated
-import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.Traversable
 
-// TODO: doc
+/**
+ * Node descriptor for a sequential data set.
+ * @param elemName the data set name shown in the tree
+ * @param placingPath the path segments for placing in the virtual file system
+ * @param connectionProfile the connection profile path from the Zowe Team Config
+ */
 class SequentialDatasetNodeDescriptor(
   override val elemName: String,
   override val placingPath: List<String>,
-  override var connectionConfigUuid: String
+  override val connectionProfile: String
 ) : ExplorerTreeNodeDescriptor(
   elemName,
   "Sequential data set",
   AllIcons.FileTypes.Any_type
-), ConnectionConfigRelated, Traversable, FilesExplorerRelated
+), ConnectionProfileRelated, Traversable, FilesExplorerRelated

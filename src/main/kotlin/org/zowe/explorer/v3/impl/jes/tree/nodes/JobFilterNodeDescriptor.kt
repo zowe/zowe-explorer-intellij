@@ -10,7 +10,7 @@
 
 package org.zowe.explorer.v3.impl.jes.tree.nodes
 
-import org.zowe.explorer.v3.impl.formJesBasePathFromHost
+import org.zowe.explorer.v3.impl.formJesBasePath
 import org.zowe.explorer.v3.impl.formJobFilterName
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.jes.operations.LoadJobFilterNodesOperation
@@ -18,9 +18,6 @@ import org.zowe.explorer.v3.impl.jes.operations.LoadJobFilterNodesOperationData
 import org.zowe.explorer.v3.impl.jes.operations.RefreshJobFilterNodesOperation
 import org.zowe.explorer.v3.impl.jes.operations.RefreshJobFilterNodesOperationData
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.PlainFilterNodeDescriptor
 
@@ -29,30 +26,21 @@ import org.zowe.explorer.v3.tree.nodes.PlainFilterNodeDescriptor
  * @param prefix the job prefix to search jobs by
  * @param owner the job owner to search jobs by
  * @param jobId the job ID to search a job by (is mutually exclusive with job prefix + job owner)
+ * @param connectionProfile the connection profile path from the Zowe Team Config
  */
 class JobFilterNodeDescriptor(
   prefix: String,
   private val owner: String,
   private val jobId: String,
-  connectionConfigUuid: String
+  connectionProfile: String
 ) : PlainFilterNodeDescriptor(
   formJobFilterName(prefix, owner, jobId),
-  basePath = formJesBasePathFromConnectionConfig(connectionConfigUuid),
+  basePath = formJesBasePath(connectionProfile),
   "JES jobs filter",
   ZoweExplorerIcons.jobsFilter,
-  connectionConfigUuid
+  connectionProfile
 ), JesExplorerRelated {
   override val fetchFilter = prefix
-
-  companion object {
-    fun formJesBasePathFromConnectionConfig(connectionConfigUuid: String): List<String> {
-      val connectionConfig = ConfigCacheService.getService()
-        .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, connectionConfigUuid)
-        ?: throw Exception("Connection config is not found for node $this")
-      val host = (connectionConfig as HttpConnectionConfig).host
-      return formJesBasePathFromHost(host)
-    }
-  }
 
   override fun generateLoadNodesOperation(node: ExplorerTreeNode): LoadJobFilterNodesOperation {
     return LoadJobFilterNodesOperation(

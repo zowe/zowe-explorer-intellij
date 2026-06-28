@@ -13,12 +13,7 @@ package org.zowe.explorer.v3.impl.vault.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
-import org.zowe.explorer.v3.actions.DumbAwareEDTAction
 import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureEntryNodeDescriptor
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureProfileNodeDescriptor
-import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 
 /**
  * Context menu action that deletes a secure credential entry from the profile.
@@ -26,7 +21,7 @@ import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
  * in the config file and the OS secure store.
  * Visible only when a [SecureEntryNodeDescriptor] is selected
  */
-class DeleteCredentialAction : DumbAwareEDTAction() {
+class DeleteCredentialAction : CredentialsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val (profilePath, fieldName) = getSelectedEntry(e) ?: return
@@ -50,17 +45,4 @@ class DeleteCredentialAction : DumbAwareEDTAction() {
     e.presentation.isEnabledAndVisible = getSelectedEntry(e) != null
   }
 
-  private fun getSelectedEntry(e: AnActionEvent): Pair<String, String>? {
-    val project = e.project ?: return null
-    val selectedNode = ExplorerTreeComponentService.getService()
-      .getActiveExplorerComponent(project)
-      .selectedNodes
-      .firstOrNull { it.nodeDescriptor is SecureEntryNodeDescriptor }
-      ?: return null
-    val parentNode = selectedNode.parent as? ExplorerTreeNode ?: return null
-    if (parentNode.nodeDescriptor !is SecureProfileNodeDescriptor) return null
-    val profilePath = parentNode.nodeDescriptor.displayName
-    val fieldName = selectedNode.nodeDescriptor.displayName
-    return profilePath to fieldName
-  }
 }

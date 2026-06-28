@@ -11,10 +11,10 @@
 package org.zowe.explorer.v3.tree.nodes
 
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import org.zowe.explorer.v3.impl.connection.ConnectionProfileRelated
 import org.zowe.explorer.v3.impl.splitToColoredParts
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.newoperations.RefreshNodesOperation
-import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import javax.swing.Icon
 
@@ -25,15 +25,16 @@ import javax.swing.Icon
  * @property basePath the base path of the node (basically, the path the fetcher node fetches children by)
  * @property tooltip the node tooltip
  * @property icon the node icon
+ * @property connectionProfile the connection profile path from the Zowe Team Config
  */
 abstract class FetcherNodeDescriptor(
   displayName: String,
   val basePath: List<String>,
   tooltip: String,
   icon: Icon,
-  override val connectionConfigUuid: String
+  override val connectionProfile: String
 ) : ExplorerTreeNodeDescriptor(displayName, tooltip, icon, isLeaf=false, hasExpandChevron=true),
-  LazyExpandable, Refreshable, ConnectionConfigRelated, UpdateInfoHolder
+  LazyExpandable, Refreshable, ConnectionProfileRelated, UpdateInfoHolder
 {
   abstract val fetchFilter: String
 
@@ -58,7 +59,7 @@ abstract class FetcherNodeDescriptor(
   abstract fun generateLoadNodesOperation(node: ExplorerTreeNode): LoadNodesOperation
 
   override fun getNodeChildren(node: ExplorerTreeNode): List<ExplorerTreeNode> {
-    return if (connectionConfigUuid.isEmpty()) {
+    return if (connectionProfile.isEmpty()) {
       listOf(
         ExplorerTreeNode(
           NoItemsFoundNodeDescriptor("connection is not set"),
@@ -76,7 +77,7 @@ abstract class FetcherNodeDescriptor(
   }
 
   override fun isNodeReadyForRefresh(node: ExplorerTreeNode): Boolean {
-    return connectionConfigUuid.isNotEmpty() && wasExpanded
+    return connectionProfile.isNotEmpty() && wasExpanded
   }
 
   abstract fun generateRefreshNodesOperation(node: ExplorerTreeNode): RefreshNodesOperation

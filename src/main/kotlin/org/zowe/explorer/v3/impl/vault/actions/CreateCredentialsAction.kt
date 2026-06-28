@@ -11,14 +11,10 @@
 package org.zowe.explorer.v3.impl.vault.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.zowe.explorer.v3.actions.DumbAwareEDTAction
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import org.zowe.explorer.v3.impl.vault.dialogs.CredentialsDialog
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureEntryNodeDescriptor
 import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureProfileNodeDescriptor
-import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
-import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 
 /**
  * Context menu action that opens [CredentialsDialog] in create mode for the selected
@@ -26,7 +22,7 @@ import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
  * Disabled with a tooltip when all [known secure fields][CredentialsDialog.KNOWN_SECURE_FIELDS]
  * are already present in the profile
  */
-class CreateCredentialsAction : DumbAwareEDTAction() {
+class CreateCredentialsAction : CredentialsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val descriptor = getSelectedProfileDescriptor(e) ?: return
@@ -47,19 +43,4 @@ class CreateCredentialsAction : DumbAwareEDTAction() {
     return CredentialsDialog.KNOWN_SECURE_FIELDS.all { it in secureFields }
   }
 
-  private fun getSelectedProfileDescriptor(e: AnActionEvent): SecureProfileNodeDescriptor? {
-    val project = e.project ?: return null
-    val selectedNode = ExplorerTreeComponentService.getService()
-      .getActiveExplorerComponent(project)
-      .selectedNodes
-      .firstOrNull() ?: return null
-    if (selectedNode.nodeDescriptor is SecureProfileNodeDescriptor) {
-      return selectedNode.nodeDescriptor as SecureProfileNodeDescriptor
-    }
-    if (selectedNode.nodeDescriptor is SecureEntryNodeDescriptor) {
-      return (selectedNode.parent as? ExplorerTreeNode)
-        ?.nodeDescriptor as? SecureProfileNodeDescriptor
-    }
-    return null
-  }
 }

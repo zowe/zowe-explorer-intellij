@@ -10,13 +10,12 @@
 
 package org.zowe.explorer.v3.impl.files.ds.operations
 
-import io.ktor.http.isSuccess
 import org.zowe.explorer.v3.impl.api.ZosmfApiService
+import org.zowe.explorer.v3.impl.connection.ConnectionProfileRelated
 import org.zowe.explorer.v3.impl.files.ds.tree.nodes.MemberNodeDescriptor
 import org.zowe.explorer.v3.impl.connection.ZoweConnectionService
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
 import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.ConnectionConfigRelated
 import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
 import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.ErrorNodeDescriptor
@@ -34,9 +33,9 @@ class LoadMemberNodesOperation(
 ) : LoadNodesOperation {
   override suspend fun fetchChildren(): List<ExplorerTreeNode> {
     val parentNode = operationData.node
-    val parentNodeData = parentNode.nodeDescriptor as ConnectionConfigRelated
+    val parentNodeData = parentNode.nodeDescriptor as ConnectionProfileRelated
     val connectionConfig = ConfigCacheService.getService()
-      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, parentNodeData.connectionConfigUuid)
+      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, parentNodeData.connectionProfile)
       ?: throw Exception("Connection config is not found for node $this")
     val zoweConnectionManager = ZoweConnectionService.getService()
       .getZoweConnectionManager(parentNode.project)
@@ -69,7 +68,7 @@ class LoadMemberNodesOperation(
               MemberNodeDescriptor(
                 memberEntry.memberName,
                 operationData.path,
-                connectionConfigUuid = parentNodeData.connectionConfigUuid
+                connectionProfile = parentNodeData.connectionProfile
               )
             }
           ExplorerTreeNode(memberNodeDescriptor, parentNode.project, parentNode)

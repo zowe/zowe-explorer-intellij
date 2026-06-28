@@ -10,18 +10,25 @@
 
 package org.zowe.explorer.v3.impl.jes.tree
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
 import org.zowe.explorer.utils.subscribe
-import org.zowe.explorer.v3.state.config.Config
-import org.zowe.explorer.v3.state.config.ConfigEventListener
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.storage.StableStorage
-import org.zowe.explorer.v3.state.storage.StorageService
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigChangeListener
+import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import org.zowe.explorer.v3.tree.ExplorerTreeComponent
 
-// TODO: doc
-@OptIn(StableStorage::class)
-class JesExplorerComponent(project: Project) : ExplorerTreeComponent() {
+/**
+ * JES Explorer component that displays `jes_ij` profiles
+ * from the `explorer_ij` section of the active Zowe Team Config.
+ * Automatically syncs profiles on any config file edit or programmatic write
+ */
+class JesExplorerComponent(private val project: Project) : ExplorerTreeComponent() {
   companion object {
     const val JES_EXPLORER_COMPONENT_NAME = "JES Explorer"
   }
@@ -30,56 +37,43 @@ class JesExplorerComponent(project: Project) : ExplorerTreeComponent() {
   override val explorerTreeStructure = JesExplorerTreeStructure(project)
   override val explorerTreeView = JesExplorerTreeView(explorerName, explorerAsyncTreeModel)
 
+  private var docListenerDisposable: Disposable = Disposer.newDisposable(this, "docListener")
+
   init {
-    explorerTreeStructure.addJesProfilesFromConfigs()
+    explorerTreeStructure.addJesProfilesFromConfig()
+
     subscribe(
-      StorageService.STORAGE_CONFIGS_TOPIC,
-      object : ConfigEventListener {
-        override fun registered(configType: ConfigType) {
-          // TODO: do I need to do anything in here?
-        }
-
-        override fun reloaded(configType: ConfigType, reloadedConfigs: List<Config>) {
-//          if (configType == ConfigType.JES_WORKING_SET_CONFIG_V1) {
-//            reloadedConfigs.forEach { config ->
-//              config as JesWorkingSetConfig
-//              explorerTreeStructure.registerProfileNode(
-//                JesProfileNode(
-//                  project,
-//                  JesProfileNodeData(
-//                    config.uuid,
-//                    config.name
-//                  ),
-//                  explorerTreeStructure.rootElement
-//                )
-//              )
-//            }
-//          }
-//           TODO: check if the reloaded config needs to be updated in the component
-        }
-
-        override fun added(config: Config) {
-//          if (config is JesWorkingSetConfig) {
-//            explorerTreeStructure.registerProfileNode(
-//              JesProfileNode(
-//                project,
-//                JesProfileNodeDescriptor(config.name, config),
-//                explorerTreeStructure.rootElement
-//              )
-//            )
-//          }
-//           TODO: any added profiles need to be added to the component
-        }
-
-        override fun updated(oldConfig: Config, newConfig: Config) {
-          // TODO: most probably on update we need to update the component (username or IP change, other things, refresh)
-          // TODO: when a related profile is updated, it needs to be refreshed in the view
-        }
-
-        override fun deleted(config: Config) {
-          // TODO: when a config, related to the component is deleted, the component should be updated as well with the respective message
-        }
-      }
+      ZoweConfigService.CONFIG_CHANGED_TOPIC,
+      ZoweConfigChangeListener { syncProfiles() },
+      this
     )
+
+    attachDocumentListener()
+  }
+
+  /**
+   * Attaches a [DocumentListener] to the active config file's [com.intellij.openapi.editor.Document].
+   * Disposes the previous listener before re-attaching so the tree tracks
+   * the correct config file after a config type change
+   */
+  private fun attachDocumentListener() {
+    Disposer.dispose(docListenerDisposable)
+    docListenerDisposable = Disposer.newDisposable(this, "docListener")
+    val configService = ZoweConfigService.getService()
+    val configType = configService.getSelectedConfigType(project)
+    val configFile = configService.resolveConfigFile(configType, project.basePath)
+    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(configFile.absolutePath) ?: return
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(vf) } ?: return
+    document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        syncProfiles()
+      }
+    }, docListenerDisposable)
+  }
+
+  private fun syncProfiles() {
+    explorerTreeStructure.syncProfilesWithConfig()
+    invalidateNode(explorerTreeStructure.rootElement)
+    attachDocumentListener()
   }
 }

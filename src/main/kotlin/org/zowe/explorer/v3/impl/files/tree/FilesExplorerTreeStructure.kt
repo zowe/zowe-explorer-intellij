@@ -12,6 +12,7 @@ package org.zowe.explorer.v3.impl.files.tree
 
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.impl.files.tree.nodes.FilesProfileNodeDescriptor
+import org.zowe.explorer.v3.profiles.ProfileType
 import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import org.zowe.explorer.v3.tree.ExplorerTreeStructure
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
@@ -29,13 +30,12 @@ class FilesExplorerTreeStructure(private val project: Project) : ExplorerTreeStr
    * and registers them as top-level profile nodes in the tree
    */
   fun addFilesProfilesFromConfig() {
-    val configService = ZoweConfigService.getService()
-    val configType = configService.getSelectedConfigType(project)
-    configService.readFilesProfileNames(configType, project.basePath)
+    val configType = ZoweConfigService.getService().getSelectedConfigType(project)
+    ZoweConfigService.getService().readProfileNames(ProfileType.FILES_IJ, configType, project.basePath)
       .forEach { profileName ->
         registerProfileNode(
           ExplorerTreeNode(
-            FilesProfileNodeDescriptor(profileName, null),
+            buildFilesProfileDescriptor(configType, profileName),
             project,
             rootNode
           )
@@ -51,7 +51,7 @@ class FilesExplorerTreeStructure(private val project: Project) : ExplorerTreeStr
   fun syncProfilesWithConfig() {
     val configService = ZoweConfigService.getService()
     val configType = configService.getSelectedConfigType(project)
-    val configProfileNames = configService.readFilesProfileNames(configType, project.basePath)
+    val configProfileNames = configService.readProfileNames(ProfileType.FILES_IJ, configType, project.basePath)
 
     val existingByName = rootNode.profileNodes.associateBy { it.nodeDescriptor.displayName }
 
@@ -64,16 +64,34 @@ class FilesExplorerTreeStructure(private val project: Project) : ExplorerTreeStr
     toAdd.forEach { name ->
       registerProfileNode(
         ExplorerTreeNode(
-          FilesProfileNodeDescriptor(name, null),
+          buildFilesProfileDescriptor(configType, name),
           project,
           rootNode
         )
       )
     }
 
+    val toUpdate = configProfileNames.filter { it in existingByName && it !in toRemove }
+    toUpdate.forEach { name ->
+      existingByName[name]?.let { node ->
+        node.nodeDescriptor = buildFilesProfileDescriptor(configType, name)
+      }
+    }
+
     val updatedByName = rootNode.profileNodes.associateBy { it.nodeDescriptor.displayName }
     val sorted = configProfileNames.mapNotNull { updatedByName[it] }
     rootNode.profileNodes.clear()
     rootNode.profileNodes.addAll(sorted)
+  }
+
+  private fun buildFilesProfileDescriptor(
+    configType: org.zowe.explorer.v3.impl.teamconfig.ConfigType,
+    profileName: String
+  ): FilesProfileNodeDescriptor {
+    val configService = ZoweConfigService.getService()
+    val connectionProfilePath = configService.readConnectionProfile(configType, project.basePath, profileName)
+    val dsMasks = configService.readDsMasks(configType, project.basePath, profileName)
+    val ussFilters = configService.readUssFilters(configType, project.basePath, profileName)
+    return FilesProfileNodeDescriptor(profileName, null, connectionProfilePath, dsMasks, ussFilters)
   }
 }

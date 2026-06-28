@@ -8,7 +8,7 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.impl.files.dialogs
+package org.zowe.explorer.v3.impl.jes.dialogs
 
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.impl.teamconfig.ConfigType
@@ -16,13 +16,13 @@ import org.zowe.explorer.v3.profiles.CreateProfileDialog
 import org.zowe.explorer.v3.profiles.ProfileType
 
 /**
- * Dialog for creating a new files profile inside an `explorer_ij` profile
+ * Dialog for creating a new JES profile inside an `explorer_ij` profile
  * in the target `zowe.config.json`.
  *
  * @param project the current project (used to resolve local config path)
  * @param configType the config type determining which zowe.config.json to write to
  */
-class CreateFilesProfileDialog(
+class CreateJesProfileDialog(
   private val project: Project,
   private val configType: ConfigType
-) : CreateProfileDialog(project, configType, "Create Files Profile", ProfileType.FILES_IJ)
+) : CreateProfileDialog(project, configType, "Create JES Profile", ProfileType.JES_IJ)

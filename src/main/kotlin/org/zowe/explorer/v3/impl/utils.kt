@@ -75,29 +75,41 @@ private fun validateQualifier(qualifier: String, index: Int): Result<Any> {
 }
 
 /**
- * Form a base path from the provided [host]
- * @param host the host to produce the base path from
+ * Form a base path from the provided [connectionProfile]
+ * @param connectionProfile the connection profile path to produce the base path from
  * @param systemPathType the type of the elements system to produce the base path for
  * @param systemPathName the name of the elements system to produce the base path for
  * @return the formed base path as the list of strings
  */
-fun formBasePathFromHost(host: String, systemPathType: String, systemPathName: String): List<String> {
-  return listOf(host, systemPathType, systemPathName)
+fun formBasePath(connectionProfile: String, systemPathType: String, systemPathName: String): List<String> {
+  return listOf(connectionProfile, systemPathType, systemPathName)
 }
 
-// TODO: doc
-fun formUssBasePathFromHost(host: String): List<String> {
-  return formBasePathFromHost(host, "files", "uss")
+/**
+ * Form a USS base path from the provided [connectionProfile]
+ * @param connectionProfile the connection profile path
+ * @return the formed base path for USS entries
+ */
+fun formUssBasePath(connectionProfile: String): List<String> {
+  return formBasePath(connectionProfile, "files", "uss")
 }
 
-// TODO: doc
-fun formDsBasePathFromHost(host: String): List<String> {
-  return formBasePathFromHost(host, "files", "ds")
+/**
+ * Form a datasets base path from the provided [connectionProfile]
+ * @param connectionProfile the connection profile path
+ * @return the formed base path for dataset entries
+ */
+fun formDsBasePath(connectionProfile: String): List<String> {
+  return formBasePath(connectionProfile, "files", "ds")
 }
 
-// TODO: doc
-fun formJesBasePathFromHost(host: String): List<String> {
-  return formBasePathFromHost(host, "jes", "jobs")
+/**
+ * Form a JES base path from the provided [connectionProfile]
+ * @param connectionProfile the connection profile path
+ * @return the formed base path for JES entries
+ */
+fun formJesBasePath(connectionProfile: String): List<String> {
+  return formBasePath(connectionProfile, "jes", "jobs")
 }
 
 // TODO: doc
@@ -149,4 +161,15 @@ fun splitToColoredParts(textToSplit: String): List<PresentableNodeDescriptor.Col
   }
 
   return parts
+}
+
+/**
+ * If [name] already exists in [existingNames], appends an incrementing suffix
+ * (e.g. `profile_1`, `profile_2`) until a unique key is found
+ */
+fun resolveUniqueName(name: String, existingNames: Set<String>): String {
+  if (name !in existingNames) return name
+  var counter = 1
+  while ("${name}_$counter" in existingNames) counter++
+  return "${name}_$counter"
 }
