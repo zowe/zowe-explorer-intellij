@@ -14,7 +14,14 @@ import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.impl.teamconfig.ConfigType
 import org.zowe.explorer.v3.profiles.EditProfileDialog
 
-// TODO: doc
+/**
+ * Dialog for editing an existing JES profile inside an `explorer_ij` profile
+ * in the target `zowe.config.json`.
+ *
+ * @param project the current project (used to resolve local config path)
+ * @param configType the config type determining which zowe.config.json to write to
+ * @param profileName the name of the profile being edited
+ */
 class EditJesProfileDialog(
   project: Project,
   configType: ConfigType,

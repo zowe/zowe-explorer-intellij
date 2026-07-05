@@ -10,38 +10,27 @@
 
 package org.zowe.explorer.v3.impl.files.dialogs
 
-import com.google.gson.JsonObject
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.impl.teamconfig.ConfigType
 import org.zowe.explorer.v3.profiles.ProfileService
 
 /**
- * Handles adding a dataset mask or USS filter entry to an existing files profile
- * inside the `explorer_ij` section of `zowe.config.json`.
- *
- * A dataset mask entry is written as:
- * ```
- * profiles.explorer_ij.profiles.<profileName>.properties.dsMasks.<maskValue> = { "mask": "<value>" }
- * ```
- *
- * A USS filter entry is written as:
- * ```
- * profiles.explorer_ij.profiles.<profileName>.properties.ussFilters.<filterValue> = { "path": "<value>" }
- * ```
+ * Handles removing a dataset mask or USS filter entry from an existing files profile
+ * inside the `explorer_ij` section of `zowe.config.json`
  */
-class AddMaskOrFilterHandler(
+class DeleteMaskOrFilterHandler(
   private val projectBasePath: String?,
   private val project: Project? = null
 ) {
 
   /**
-   * Adds a dataset mask or USS filter entry to the given [profileName]
+   * Removes a dataset mask or USS filter entry from the given profile
    * @param configType the active config type
-   * @param profileName the files profile to add the entry to
-   * @param entryType whether to add a dataset mask or USS filter
-   * @param value the mask or filter value
+   * @param profileName the files profile containing the entry
+   * @param entryType the type of the entry to remove
+   * @param value the value of the mask or filter to remove
    */
-  fun addEntry(
+  fun deleteEntry(
     configType: ConfigType,
     profileName: String,
     entryType: EntryType,
@@ -53,10 +42,12 @@ class AddMaskOrFilterHandler(
         EntryType.USS_FILTER -> "ussFilters" to "path"
       }
       val container = properties.getAsJsonObject(containerName)
-        ?: JsonObject().also { properties.add(containerName, it) }
-      val entry = JsonObject()
-      entry.addProperty(fieldName, value)
-      container.add(value, entry)
+        ?: throw IllegalStateException("No $containerName in profile '$profileName'")
+
+      val key = container.entrySet()
+        .firstOrNull { it.value.isJsonObject && it.value.asJsonObject.get(fieldName)?.asString == value }
+        ?.key ?: throw IllegalStateException("Entry with value '$value' not found")
+      container.remove(key)
     }
   }
 }

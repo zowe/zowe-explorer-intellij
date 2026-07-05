@@ -125,6 +125,7 @@ class FetcherNodesLoader(
             invalidatePathByNodeDescriptor(it)
           }
         }
+        ExplorerTreeComponentService.getService().invalidateNode(parentNode)
       }
     }
 

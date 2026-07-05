@@ -11,19 +11,16 @@
 package org.zowe.explorer.v3.tree.nodes
 
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
-import org.zowe.explorer.v3.state.config.WorkingSetConfig
 
 /**
  * Base node descriptor for profile nodes in the explorer tree.
  * Subclasses represent specific profile types (e.g., files, JES) and provide
- * children resolution logic by reading masks/filters from the associated [config].
+ * children resolution logic by reading masks/filters from the Zowe Config.
  *
  * @param displayName the display name shown in the tree
  * @param tooltip the tooltip text shown on hover
- * @param config the profile configuration backing this node, or `null` if not yet loaded
  */
 open class ProfileNodeDescriptor(
   displayName: String,
-  tooltip: String,
-  var config: WorkingSetConfig?
+  tooltip: String
 ) : ExplorerTreeNodeDescriptor(displayName, tooltip, ZoweExplorerIcons.profileIcon, false)

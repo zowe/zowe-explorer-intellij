@@ -24,30 +24,34 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 
 /**
- * Dialog for adding a dataset mask or USS filter to an existing files profile.
+ * Dialog for editing an existing dataset mask or USS filter in a files profile.
  * The type combo box auto-detects the entry type based on the value input:
  * if the value starts with `/`, the type switches to USS Filter automatically.
  * Once the user manually selects a type, auto-detection stops
  * @param project the current project
  * @param configType the active config type
- * @param profileName the name of the files profile to add the entry to
+ * @param profileName the name of the files profile containing the entry
+ * @param initialType the current type of the entry being edited
+ * @param initialValue the current value of the mask or filter
  */
-class AddMaskOrFilterDialog(
+class EditMaskOrFilterDialog(
   private val project: Project,
   private val configType: ConfigType,
-  private val profileName: String
+  private val profileName: String,
+  private val initialType: EntryType,
+  private val initialValue: String
 ) : DialogWrapper(project) {
 
   private val configService = ZoweConfigService.getService()
 
-  private var selectedType = EntryType.DS_MASK
+  private var selectedType = initialType
   private var isTypeSelectedManually = false
   private var isTypeSelectedAutomatically = false
   private lateinit var valueField: JTextField
   private lateinit var typeComboBox: ComboBox<EntryType>
 
   init {
-    title = "Add Mask or Filter"
+    title = "Edit Mask or Filter"
     init()
   }
 
@@ -82,10 +86,15 @@ class AddMaskOrFilterDialog(
           .focused()
           .applyToComponent {
             valueField = this
+            text = initialValue
           }
           .validationOnInput {
             if (!isTypeSelectedManually) {
-              selectedType = if (it.text.contains("/")) EntryType.USS_FILTER else EntryType.DS_MASK
+              selectedType = if (it.text.contains("/")) {
+                EntryType.USS_FILTER
+              } else {
+                EntryType.DS_MASK
+              }
               isTypeSelectedAutomatically = true
               typeComboBox.selectedItem = selectedType
             }
@@ -101,13 +110,13 @@ class AddMaskOrFilterDialog(
 
   override fun doOKAction() {
     try {
-      val entryValue = valueField.text.trim()
+      val newValue = valueField.text.trim()
       val actualType = typeComboBox.selectedItem as EntryType
-      AddMaskOrFilterHandler(project.basePath, project)
-        .addEntry(configType, profileName, actualType, entryValue)
+      EditMaskOrFilterHandler(project.basePath, project)
+        .editEntry(configType, profileName, initialType, initialValue, actualType, newValue)
       super.doOKAction()
     } catch (e: Exception) {
-      Messages.showErrorDialog(project, e.message ?: "Unknown error", "Failed to Add Entry")
+      Messages.showErrorDialog(project, e.message ?: "Unknown error", "Failed to Edit Entry")
     }
   }
 }

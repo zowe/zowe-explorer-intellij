@@ -11,28 +11,19 @@
 package org.zowe.explorer.v3.impl.tso.tree
 
 import com.intellij.openapi.project.Project
-import org.zowe.explorer.v3.tree.ExplorerTreeStructure
+import org.zowe.explorer.v3.impl.teamconfig.ConfigType
+import org.zowe.explorer.v3.profiles.ProfileType
+import org.zowe.explorer.v3.profiles.tree.ProfileTreeStructure
+import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.RootNode
 
 // TODO: doc
-class TsoSessionsTreeStructure(private val project: Project) : ExplorerTreeStructure(project) {
+class TsoSessionsTreeStructure(private val project: Project) : ProfileTreeStructure(project) {
   override val rootNode by lazy { RootNode(project) }
+  override val profileType = ProfileType.TSO_IJ
 
-  fun addTsoProfilesFromConfigs() {
-    TODO("Not yet implemented")
-    // TODO: implement when needed
-//    ConfigCacheService.getService()
-//      .getConfigsFromCache(ConfigType.TSO_SESSION_CONFIG_V1)
-//      .toList()
-//      .forEach { config ->
-//        config as TsoProfileConfig
-//        registerProfileNode(
-//          ExplorerTreeNode(
-//            FilesProfileNodeDescriptor(config.name, config),
-//            project,
-//            rootNode
-//          )
-//        )
-//      }
+  // TODO: implement
+  override fun buildProfileDescriptor(configType: ConfigType, profileName: String): ProfileNodeDescriptor {
+    return ProfileNodeDescriptor("Not implemented", "Not yet implemented")
   }
 }

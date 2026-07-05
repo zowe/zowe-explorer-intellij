@@ -156,6 +156,7 @@ class PlainFilterNodesLoader(
         filterNodeDescriptors.getOrDefault(operationData.path, mapOf())
           .values
           .forEach { it.invalidateAssociatedNodes() }
+        ExplorerTreeComponentService.getService().invalidateNode(parentNode)
       }
     }
 

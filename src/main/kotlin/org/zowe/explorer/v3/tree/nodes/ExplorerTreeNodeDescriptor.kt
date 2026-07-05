@@ -16,7 +16,6 @@ import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.v3.impl.splitToColoredParts
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import javax.swing.Icon
-import kotlin.collections.fold
 
 /**
  * Base class of the tree node descriptors. Node descriptors contain all the necessary data and functionalities

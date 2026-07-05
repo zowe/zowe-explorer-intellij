@@ -13,35 +13,35 @@ package org.zowe.explorer.v3.impl.vault.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.actions.DumbAwareEDTAction
 import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureEntryNodeDescriptor
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureProfileNodeDescriptor
+import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureSetNodeDescriptor
 import org.zowe.explorer.v3.tree.ExplorerTreeComponentService
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 
 /**
  * Base class for credential-related context menu actions.
- * Provides shared helpers to resolve the selected [SecureProfileNodeDescriptor]
+ * Provides shared helpers to resolve the selected [SecureSetNodeDescriptor]
  * or a profile-path / field-name pair from the explorer tree
  */
 abstract class CredentialsAction : DumbAwareEDTAction() {
 
   /**
-   * Resolve the [SecureProfileNodeDescriptor] for the currently selected tree node.
+   * Resolve the [SecureSetNodeDescriptor] for the currently selected tree node.
    * Works whether the user selected a profile node directly or one of its entry children
    * @param e the action event providing the project and selection context
    * @return the descriptor, or `null` if the selection does not point to a secure profile
    */
-  protected fun getSelectedProfileDescriptor(e: AnActionEvent): SecureProfileNodeDescriptor? {
+  protected fun getSelectedProfileDescriptor(e: AnActionEvent): SecureSetNodeDescriptor? {
     val project = e.project ?: return null
     val selectedNode = ExplorerTreeComponentService.getService()
       .getActiveExplorerComponent(project)
       .selectedNodes
       .firstOrNull() ?: return null
-    if (selectedNode.nodeDescriptor is SecureProfileNodeDescriptor) {
-      return selectedNode.nodeDescriptor as SecureProfileNodeDescriptor
+    if (selectedNode.nodeDescriptor is SecureSetNodeDescriptor) {
+      return selectedNode.nodeDescriptor as SecureSetNodeDescriptor
     }
     if (selectedNode.nodeDescriptor is SecureEntryNodeDescriptor) {
       return (selectedNode.parent as? ExplorerTreeNode)
-        ?.nodeDescriptor as? SecureProfileNodeDescriptor
+        ?.nodeDescriptor as? SecureSetNodeDescriptor
     }
     return null
   }

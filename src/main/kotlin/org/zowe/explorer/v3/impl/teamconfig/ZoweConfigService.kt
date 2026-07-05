@@ -199,10 +199,21 @@ class ZoweConfigService {
       ?.get("connectionProfile")?.asString
   }
 
+  /**
+   * Reads the `type` field of a profile at the given [profilePath] (e.g. "lpar1.zosmf" → "zosmf")
+   */
+  fun readProfileType(configType: ConfigType, projectBasePath: String?, profilePath: String): String? {
+    val root = getConfigAsJsonObject(configType, projectBasePath) ?: return null
+    val profiles = root.getAsJsonObject("profiles") ?: return null
+    val profile = navigateToProfile(profiles, profilePath) ?: return null
+    return profile.get("type")?.asString
+  }
+
   fun getProfileProperty(propertyName: String, configType: ConfigType, projectBasePath: String?, profileName: String): JsonObject? {
     return readNestedProfileProperties(configType, projectBasePath, profileName)
       ?.getAsJsonObject(propertyName)
   }
+
 
   /**
    * Reads dataset masks from the `dsMasks` property of a `files_ij` profile.
@@ -227,6 +238,38 @@ class ZoweConfigService {
       ?.entrySet()
       ?.filter { it.value.isJsonObject }
       ?.mapNotNull { it.value.asJsonObject.get("path")?.asString }
+      ?: emptyList()
+  }
+
+  /**
+   * A single JES job filter entry from the Zowe config
+   * @property prefix the job name prefix to search by
+   * @property owner the job owner to search by
+   * @property id the job ID to search by (mutually exclusive with prefix + owner)
+   */
+  data class JobFilter(
+    val prefix: String,
+    val owner: String,
+    val id: String
+  )
+
+  /**
+   * Reads job filters from the `jobFilters` property of a `jes_ij` profile.
+   * Each entry has `prefix`, `owner`, and `id` fields
+   * @return list of [JobFilter] entries, empty if none
+   */
+  fun readJobFilters(configType: ConfigType, projectBasePath: String?, profileName: String): List<JobFilter> {
+    return getProfileProperty("jobFilters", configType, projectBasePath, profileName)
+      ?.entrySet()
+      ?.filter { it.value.isJsonObject }
+      ?.map { entry ->
+        val obj = entry.value.asJsonObject
+        JobFilter(
+          prefix = obj.get("prefix")?.asString ?: "",
+          owner = obj.get("owner")?.asString ?: "",
+          id = obj.get("id")?.asString ?: ""
+        )
+      }
       ?: emptyList()
   }
 

@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.tree.ExplorerTreeComponent
 
 // TODO: doc
-class TsoSessionsComponent(project: Project) : ExplorerTreeComponent() {
+class TsoSessionsComponent(project: Project) : ExplorerTreeComponent(project) {
   companion object {
     const val TSO_SESSIONS_COMPONENT_NAME = "TSO Sessions"
   }

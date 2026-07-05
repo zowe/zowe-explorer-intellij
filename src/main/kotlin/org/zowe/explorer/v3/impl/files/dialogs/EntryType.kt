@@ -8,13 +8,12 @@
  * Copyright Contributors to the Zowe Project.
  */
 
-package org.zowe.explorer.v3.profiles
+package org.zowe.explorer.v3.impl.files.dialogs
 
 // TODO: doc
-enum class ProfileType(val typeAsString: String) {
-  EXPLORER_IJ("explorer_ij"),
-  FILES_IJ("files_ij"),
-  JES_IJ("jes_ij"),
-  TSO_IJ("tso_ij"),
-  ZOSMF("zosmf")
+enum class EntryType(val displayName: String) {
+  DS_MASK("Data Set Mask"),
+  USS_FILTER("USS Filter");
+
+  override fun toString() = displayName
 }

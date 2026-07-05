@@ -12,7 +12,7 @@ package org.zowe.explorer.v3.impl.vault.tree
 
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureProfileNodeDescriptor
+import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureSetNodeDescriptor
 import org.zowe.explorer.v3.tree.ExplorerTreeStructure
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.RootNode
@@ -29,14 +29,14 @@ class SecureVaultTreeStructure(private val project: Project) : ExplorerTreeStruc
    * Reads all profiles from the active Zowe config
    * and registers them as top-level nodes in the tree
    */
-  fun addProfilesFromConfig() {
+  override fun addEntriesFromConfig() {
     val configService = ZoweConfigService.getService()
     val configType = configService.getSelectedConfigType(project)
     configService.readAllProfiles(configType, project.basePath)
       .forEach { entry ->
-        registerProfileNode(
+        registerNode(
           ExplorerTreeNode(
-            SecureProfileNodeDescriptor(entry.profilePath, entry.secureFields),
+            SecureSetNodeDescriptor(entry.profilePath, entry.secureFields),
             project,
             rootNode
           )
@@ -50,27 +50,27 @@ class SecureVaultTreeStructure(private val project: Project) : ExplorerTreeStruc
    * Replaces nodes whose `secure` fields have changed.
    * Maintains the same order as in the config file
    */
-  fun syncProfilesWithConfig() {
+  override fun syncEntriesWithConfig() {
     val configService = ZoweConfigService.getService()
     val configType = configService.getSelectedConfigType(project)
     val configEntries = configService.readAllProfiles(configType, project.basePath)
     val configPaths = configEntries.map { it.profilePath }
     val entriesByPath = configEntries.associateBy { it.profilePath }
 
-    val existingByPath = rootNode.profileNodes.associateBy { it.nodeDescriptor.displayName }
+    val existingByPath = rootNode.treeNodes.associateBy { it.nodeDescriptor.displayName }
 
     val toRemove = existingByPath.keys - configPaths.toSet()
     toRemove.forEach { path ->
-      existingByPath[path]?.let { unregisterProfileNode(it) }
+      existingByPath[path]?.let { unregisterNode(it) }
     }
 
     val toUpdate = existingByPath.keys.intersect(configPaths.toSet()).filter { path ->
-      val existing = existingByPath[path]?.nodeDescriptor as? SecureProfileNodeDescriptor
+      val existing = existingByPath[path]?.nodeDescriptor as? SecureSetNodeDescriptor
       val updated = entriesByPath[path]
       existing != null && updated != null && existing.secureFields != updated.secureFields
     }
     toUpdate.forEach { path ->
-      val descriptor = existingByPath[path]?.nodeDescriptor as? SecureProfileNodeDescriptor ?: return@forEach
+      val descriptor = existingByPath[path]?.nodeDescriptor as? SecureSetNodeDescriptor ?: return@forEach
       val entry = entriesByPath[path] ?: return@forEach
       descriptor.updateSecureFields(entry.secureFields)
     }
@@ -78,18 +78,18 @@ class SecureVaultTreeStructure(private val project: Project) : ExplorerTreeStruc
     val toAdd = configPaths.toSet() - existingByPath.keys
     toAdd.forEach { path ->
       val entry = entriesByPath[path] ?: return@forEach
-      registerProfileNode(
+      registerNode(
         ExplorerTreeNode(
-          SecureProfileNodeDescriptor(entry.profilePath, entry.secureFields),
+          SecureSetNodeDescriptor(entry.profilePath, entry.secureFields),
           project,
           rootNode
         )
       )
     }
 
-    val updatedByPath = rootNode.profileNodes.associateBy { it.nodeDescriptor.displayName }
+    val updatedByPath = rootNode.treeNodes.associateBy { it.nodeDescriptor.displayName }
     val sorted = configPaths.mapNotNull { updatedByPath[it] }
-    rootNode.profileNodes.clear()
-    rootNode.profileNodes.addAll(sorted)
+    rootNode.treeNodes.clear()
+    rootNode.treeNodes.addAll(sorted)
   }
 }

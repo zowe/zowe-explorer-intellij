@@ -10,7 +10,8 @@
 
 package org.zowe.explorer.v3.impl.jes.tree.nodes
 
-import org.zowe.explorer.v3.impl.formJesBasePath
+import org.zowe.explorer.v3.impl.formJesFilterBasePath
+import org.zowe.explorer.v3.impl.formJobFilterKey
 import org.zowe.explorer.v3.impl.formJobFilterName
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.jes.operations.LoadJobFilterNodesOperation
@@ -29,28 +30,28 @@ import org.zowe.explorer.v3.tree.nodes.PlainFilterNodeDescriptor
  * @param connectionProfile the connection profile path from the Zowe Team Config
  */
 class JobFilterNodeDescriptor(
-  prefix: String,
-  private val owner: String,
-  private val jobId: String,
+  val prefix: String,
+  val owner: String,
+  val jobId: String,
   connectionProfile: String
 ) : PlainFilterNodeDescriptor(
   formJobFilterName(prefix, owner, jobId),
-  basePath = formJesBasePath(connectionProfile),
+  basePath = formJesFilterBasePath(connectionProfile, owner, prefix, jobId),
   "JES jobs filter",
   ZoweExplorerIcons.jobsFilter,
   connectionProfile
 ), JesExplorerRelated {
-  override val fetchFilter = prefix
+  override val fetchFilter = formJobFilterKey(owner, prefix, jobId)
 
   override fun generateLoadNodesOperation(node: ExplorerTreeNode): LoadJobFilterNodesOperation {
     return LoadJobFilterNodesOperation(
-      LoadJobFilterNodesOperationData(node, basePath, fetchFilter, owner, jobId)
+      LoadJobFilterNodesOperationData(node, basePath, prefix, owner, jobId)
     )
   }
 
   override fun generateRefreshNodesOperation(node: ExplorerTreeNode): RefreshNodesOperation {
     return RefreshJobFilterNodesOperation(
-      RefreshJobFilterNodesOperationData(node, basePath, formJobFilterName(fetchFilter, owner, jobId))
+      RefreshJobFilterNodesOperationData(node, basePath, fetchFilter)
     )
   }
 
@@ -62,8 +63,8 @@ class JobFilterNodeDescriptor(
    * @return true if the combination matches the filter, false otherwise
    */
   override fun checkMatchesFilter(elemName: String): Boolean {
-    val regexPattern = if (jobId != "") "^.*(${jobId})$"
-      else "^${fetchFilter.replace("*", ".*").replace("%", ".")}(.*)$"
+    val regexPattern = if (jobId != "") "^.*\\(${jobId}\\)$"
+      else "^${prefix.replace("*", ".*").replace("%", ".")}(.*)$"
     return Regex(regexPattern, RegexOption.IGNORE_CASE).matches(elemName)
   }
 }

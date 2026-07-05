@@ -17,13 +17,13 @@ import com.intellij.openapi.project.Project
 /**
  * A base root node of an explorer view. Is invisible and holds profile nodes as direct children
  * @property project the [Project] where the node is initialized
- * @property profileNodes the profile nodes of the explorer tree view
+ * @property treeNodes the child nodes of the explorer tree view
  */
 class RootNode(project: Project) : ExplorerTreeNode(RootNodeDescriptor(), project) {
-  val profileNodes = linkedSetOf<ExplorerTreeNode>()
+  val treeNodes = linkedSetOf<ExplorerTreeNode>()
 
   override fun getChildren(): Collection<AbstractTreeNode<*>?> {
-    return profileNodes
+    return treeNodes
   }
 
   override fun isAlwaysExpand() = true

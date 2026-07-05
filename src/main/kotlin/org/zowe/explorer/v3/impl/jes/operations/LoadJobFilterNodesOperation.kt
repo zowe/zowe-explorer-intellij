@@ -15,9 +15,6 @@ import org.zowe.explorer.v3.impl.connection.ConnectionProfileRelated
 import org.zowe.explorer.v3.impl.connection.ZoweConnectionService
 import org.zowe.explorer.v3.impl.jes.tree.nodes.JobNodeDescriptor
 import org.zowe.explorer.v3.newoperations.LoadNodesOperation
-import org.zowe.explorer.v3.state.config.ConfigType
-import org.zowe.explorer.v3.state.config.cache.ConfigCacheService
-import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.tree.nodes.ErrorNodeDescriptor
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.FetcherNodeDescriptor
@@ -33,13 +30,9 @@ class LoadJobFilterNodesOperation(
   override suspend fun fetchChildren(): List<ExplorerTreeNode> {
     val parentNode = operationData.node
     val parentNodeData = parentNode.nodeDescriptor as ConnectionProfileRelated
-    val connectionConfig = ConfigCacheService.getService()
-      .getConfigFromCache(ConfigType.HTTP_CONNECTION_CONFIG_V1, parentNodeData.connectionProfile)
-      ?: throw Exception("Connection config is not found for node $this")
     val zoweConnectionManager = ZoweConnectionService.getService()
       .getZoweConnectionManager(parentNode.project)
-    val httpConnection = zoweConnectionManager.produceHttpConnection("zosmf", shouldOverrideWithEnv = true)
-    connectionConfig as HttpConnectionConfig
+    val httpConnection = zoweConnectionManager.produceHttpConnection(parentNodeData.connectionProfile, shouldOverrideWithEnv = true)
     val listJobsRequest = ZosmfListJobsRequest(
       httpConnection,
       jobPrefix = operationData.filter,
@@ -65,6 +58,7 @@ class LoadJobFilterNodesOperation(
             .getOrPutRealNodeDescriptor(operationData.path, "${jobEntity.name}(${jobEntity.id})") {
               JobNodeDescriptor(
                 "${jobEntity.name}(${jobEntity.id})",
+                jobEntity.owner,
                 operationData.path,
                 connectionProfile = parentNodeData.connectionProfile
               )

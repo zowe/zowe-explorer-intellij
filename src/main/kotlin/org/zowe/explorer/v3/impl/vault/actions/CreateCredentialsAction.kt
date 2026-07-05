@@ -14,11 +14,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.teamconfig.ZoweConfigService
 import org.zowe.explorer.v3.impl.vault.dialogs.CredentialsDialog
-import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureProfileNodeDescriptor
+import org.zowe.explorer.v3.impl.vault.tree.nodes.SecureSetNodeDescriptor
 
 /**
  * Context menu action that opens [CredentialsDialog] in create mode for the selected
- * secure profile node. Visible only when a [SecureProfileNodeDescriptor] is selected.
+ * secure profile node. Visible only when a [SecureSetNodeDescriptor] is selected.
  * Disabled with a tooltip when all [known secure fields][CredentialsDialog.KNOWN_SECURE_FIELDS]
  * are already present in the profile
  */
@@ -39,7 +39,7 @@ class CreateCredentialsAction : CredentialsAction() {
     e.presentation.isEnabled = descriptor != null && !allPresent
   }
 
-  private fun SecureProfileNodeDescriptor.hasAllKnownFields(): Boolean {
+  private fun SecureSetNodeDescriptor.hasAllKnownFields(): Boolean {
     return CredentialsDialog.KNOWN_SECURE_FIELDS.all { it in secureFields }
   }
 

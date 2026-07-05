@@ -20,21 +20,17 @@ import org.zowe.explorer.v3.tree.nodes.RootNode
 abstract class ExplorerTreeStructure(project: Project) : AbstractTreeStructureBase(project), ExplorerViewSettings {
   protected abstract val rootNode: RootNode
 
-  /**
-   * Register a profile node as the first-level children to the root node
-   * @param node the node to register
-   */
-  fun registerProfileNode(node: ExplorerTreeNode) {
-    rootNode.profileNodes.add(node)
+  fun registerNode(node: ExplorerTreeNode) {
+    rootNode.treeNodes.add(node)
   }
 
-  /**
-   * Unregister a profile node as the first-level children to the root node
-   * @param node the node to unregister
-   */
-  fun unregisterProfileNode(node: ExplorerTreeNode) {
-    rootNode.profileNodes.remove(node)
+  fun unregisterNode(node: ExplorerTreeNode) {
+    rootNode.treeNodes.remove(node)
   }
+
+  abstract fun addEntriesFromConfig()
+
+  abstract fun syncEntriesWithConfig()
 
   override fun getRootElement() = rootNode
 
@@ -43,5 +39,4 @@ abstract class ExplorerTreeStructure(project: Project) : AbstractTreeStructureBa
   override fun commit() {}
 
   override fun hasSomethingToCommit() = false
-
 }

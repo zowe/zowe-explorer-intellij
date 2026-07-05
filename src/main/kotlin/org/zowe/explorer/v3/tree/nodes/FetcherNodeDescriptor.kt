@@ -71,7 +71,7 @@ abstract class FetcherNodeDescriptor(
       if (wasExpanded) {
         generateLoadNodesOperation(node).run().loadedNodes
       } else {
-        listOf(ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node))
+        listOf(ExplorerTreeNode(LoadingNodeDescriptor(), node.project, node))
       }
     }
   }

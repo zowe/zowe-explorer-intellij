@@ -31,11 +31,11 @@ abstract class ProfileDialog(
   private val project: Project,
   private val configType: ConfigType,
   private val customTitle: String,
-  profileName: String
+  private val initialProfileName: String
 ) : LazyDialog<ProfileDialogState>(project) {
   private val zoweConfigService: ZoweConfigService = ZoweConfigService.getService()
 
-  override var state: ProfileDialogState = ProfileDialogState(profileName, "")
+  override var state: ProfileDialogState = ProfileDialogState(initialProfileName, "")
 
   /**
    * Initializes [state] with connection profile selection.
@@ -79,7 +79,10 @@ abstract class ProfileDialog(
               .validationOnInput { input ->
                 zoweConfigService.getExplorerProfiles(configType, project.basePath)
                   ?.let { explorerNestedProfiles ->
-                    val resolvedName = resolveUniqueName(input.text, explorerNestedProfiles.keySet())
+                    val otherNames = explorerNestedProfiles.keySet()
+                      .filter { it != initialProfileName }
+                      .toSet()
+                    val resolvedName = resolveUniqueName(input.text, otherNames)
                     if (input.text.isNotBlank() && resolvedName != input.text) {
                       warning("Profile with the same name already exists. It will be saved as '$resolvedName'")
                     } else null

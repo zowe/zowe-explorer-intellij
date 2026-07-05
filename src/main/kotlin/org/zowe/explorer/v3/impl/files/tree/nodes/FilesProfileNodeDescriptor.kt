@@ -15,9 +15,11 @@ import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.impl.files.ds.tree.nodes.DatasetMaskNodeDescriptor
 import org.zowe.explorer.v3.impl.files.uss.tree.nodes.UssFilterNodeDescriptor
-import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
+import org.zowe.explorer.v3.impl.formDsBasePath
+import org.zowe.explorer.v3.impl.formUssBasePath
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.NoItemsFoundNodeDescriptor
+import org.zowe.explorer.v3.tree.nodes.NodeSyncService
 import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
 
 /**
@@ -29,11 +31,11 @@ import org.zowe.explorer.v3.tree.nodes.ProfileNodeDescriptor
  */
 class FilesProfileNodeDescriptor(
   displayName: String,
-  config: FilesWorkingSetConfig?,
   private val connectionProfile: String? = null,
+  private val connectionProfileType: String? = null,
   private val dsMasks: List<String> = emptyList(),
   private val ussFilters: List<String> = emptyList()
-) : ProfileNodeDescriptor(displayName, "Files Profile", config), FilesExplorerRelated {
+) : ProfileNodeDescriptor(displayName, "Files Profile"), FilesExplorerRelated {
 
   override val genuinePresentationData = PresentationData().also {
     it.setIcon(ZoweExplorerIcons.profileIcon)
@@ -43,7 +45,8 @@ class FilesProfileNodeDescriptor(
       it.addText(displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
     if (!connectionProfile.isNullOrBlank()) {
-      it.addText("  $connectionProfile", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES)
+      val typeLabel = if (!connectionProfileType.isNullOrBlank()) " ($connectionProfileType)" else ""
+      it.addText("  $connectionProfile$typeLabel", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES)
     } else {
       it.addText("  *no connection profile*", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
     }
@@ -55,12 +58,21 @@ class FilesProfileNodeDescriptor(
       ExplorerTreeNode(NoItemsFoundNodeDescriptor(), node.project, node)
     )
 
+    val nodeSyncService = NodeSyncService.getService()
     val children = mutableListOf<ExplorerTreeNode>()
     dsMasks.forEach { mask ->
-      children.add(ExplorerTreeNode(DatasetMaskNodeDescriptor(mask, resolvedConnectionProfile), node.project, node))
+      val descriptor = nodeSyncService
+        .getOrPutFilterNodeDescriptor(formDsBasePath(resolvedConnectionProfile), mask) {
+          DatasetMaskNodeDescriptor(mask, resolvedConnectionProfile)
+        }
+      children.add(ExplorerTreeNode(descriptor, node.project, node))
     }
     ussFilters.forEach { path ->
-      children.add(ExplorerTreeNode(UssFilterNodeDescriptor(path, resolvedConnectionProfile), node.project, node))
+      val descriptor = nodeSyncService
+        .getOrPutFilterNodeDescriptor(formUssBasePath(resolvedConnectionProfile), path) {
+          UssFilterNodeDescriptor(path, resolvedConnectionProfile)
+        }
+      children.add(ExplorerTreeNode(descriptor, node.project, node))
     }
 
     return children.ifEmpty {

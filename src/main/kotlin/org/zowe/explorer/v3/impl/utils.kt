@@ -112,13 +112,68 @@ fun formJesBasePath(connectionProfile: String): List<String> {
   return formBasePath(connectionProfile, "jes", "jobs")
 }
 
-// TODO: doc
+/**
+ * Form a human-readable display label for a JES job filter.
+ * When a job ID is present it takes precedence and is shown alone,
+ * otherwise the prefix and owner are shown. The result is a display label only;
+ * use [formJobFilterKey] for the filter's unique identity
+ * @param prefix the job name prefix to search jobs by
+ * @param owner the job owner to search jobs by
+ * @param jobId the job ID to search a job by (mutually exclusive with prefix + owner)
+ * @return the formed display label with HTML `b` markup
+ */
 fun formJobFilterName(prefix: String, owner: String, jobId: String): String {
   return if (jobId.isNotEmpty()) {
     "Job ID: <b>$jobId</b>"
   } else {
     "Prefix: <b>$prefix</b> | Owner: <b>$owner</b>"
   }
+}
+
+/**
+ * Form a unique key for a JES job filter within a profile.
+ * The key is assembled as `"owner.prefix(id)"`, matching the entry key used in the
+ * `jobFilters` map of a `jes_ij` profile in the Zowe Team Config. Unlike
+ * [formJobFilterName], it identifies a filter by all three of its fields, so filters
+ * that share only some of them (e.g. the same job ID) remain distinct
+ * @param owner the job owner to search jobs by
+ * @param prefix the job name prefix to search jobs by
+ * @param jobId the job ID to search a job by
+ * @return the unique job filter key
+ */
+fun formJobFilterKey(owner: String, prefix: String, jobId: String): String {
+  return "$owner.$prefix($jobId)"
+}
+
+/**
+ * Form the base path under which a single JES job filter stores its fetched jobs.
+ * Each filter gets its own path — the JES base path extended with the unique
+ * [formJobFilterKey] — so that jobs fetched by one filter never leak into another
+ * filter that shares the same connection profile (e.g. two `Prefix: *` filters with
+ * different owners must not display each other's jobs)
+ * @param connectionProfile the connection profile path
+ * @param owner the job owner to search jobs by
+ * @param prefix the job name prefix to search jobs by
+ * @param jobId the job ID to search a job by
+ * @return the formed, filter-specific base path for the filter's job entries
+ */
+fun formJesFilterBasePath(connectionProfile: String, owner: String, prefix: String, jobId: String): List<String> {
+  return formJesBasePath(connectionProfile) + formJobFilterKey(owner, prefix, jobId)
+}
+
+/**
+ * Form a tooltip for a JES job node from the combined job name+ID string and owner.
+ * The [elemName] is expected in the `"JOBNAME(JOBID)"` format
+ * @param elemName the combined job name and ID
+ * @param owner the job owner
+ * @return the formatted tooltip string
+ */
+fun formJobTooltip(elemName: String, owner: String): String {
+  val openParen = elemName.indexOf('(')
+  val closeParen = elemName.indexOf(')')
+  val jobName = if (openParen > 0) elemName.substring(0, openParen) else elemName
+  val jobId = if (openParen > 0 && closeParen > openParen) elemName.substring(openParen + 1, closeParen) else ""
+  return "Job name: $jobName, ID: $jobId, owner: $owner"
 }
 
 /**

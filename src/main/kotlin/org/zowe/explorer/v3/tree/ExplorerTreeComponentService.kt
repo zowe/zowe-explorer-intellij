@@ -41,44 +41,45 @@ class ExplorerTreeComponentService {
   private val projectsToTsoSessionsComponents = mutableMapOf<Project, TsoSessionsComponent>()
   private val projectsToSecureVaultComponents = mutableMapOf<Project, SecureVaultComponent>()
 
+  /**
+   * Returns the cached component for the [project] or, on first access, constructs it
+   * via [factory], registers it for disposal, runs its post-construction initialization
+   * and caches it.
+   *
+   * [ExplorerTreeComponent.postConstruct] is deliberately invoked here rather than from
+   * the component's constructor: it relies on abstract members that subclass property
+   * initializers only assign after the base constructor has completed
+   * @param project the project the component belongs to
+   * @param cache the per-component-type cache to look up and store the component in
+   * @param factory creates a new component instance when none is cached yet
+   */
+  private fun <T : ExplorerTreeComponent> getOrCreateComponent(
+    project: Project,
+    cache: MutableMap<Project, T>,
+    factory: (Project) -> T
+  ): T {
+    return cache.getOrPut(project) {
+      val component = factory(project)
+      Disposer.register(project, component)
+      component.postConstruct()
+      component
+    }
+  }
+
   fun getFilesExplorerComponent(project: Project): FilesExplorerComponent {
-    val savedFilesExplorerComponent = projectsToFilesExplorerComponents[project]
-    return if (savedFilesExplorerComponent == null) {
-      val filesExplorerComponent = FilesExplorerComponent(project)
-      Disposer.register(project, filesExplorerComponent)
-      projectsToFilesExplorerComponents[project] = filesExplorerComponent
-      filesExplorerComponent
-    } else savedFilesExplorerComponent
+    return getOrCreateComponent(project, projectsToFilesExplorerComponents, ::FilesExplorerComponent)
   }
 
   fun getJesExplorerComponent(project: Project): JesExplorerComponent {
-    val savedJesExplorerComponent = projectsToJesExplorerComponents[project]
-    return if (savedJesExplorerComponent == null) {
-      val jesExplorerComponent = JesExplorerComponent(project)
-      Disposer.register(project, jesExplorerComponent)
-      projectsToJesExplorerComponents[project] = jesExplorerComponent
-      jesExplorerComponent
-    } else savedJesExplorerComponent
+    return getOrCreateComponent(project, projectsToJesExplorerComponents, ::JesExplorerComponent)
   }
 
   fun getTsoSessionsComponent(project: Project): TsoSessionsComponent {
-    val savedTsoSessionsComponent = projectsToTsoSessionsComponents[project]
-    return if (savedTsoSessionsComponent == null) {
-      val tsoSessionsComponent = TsoSessionsComponent(project)
-      Disposer.register(project, tsoSessionsComponent)
-      projectsToTsoSessionsComponents[project] = tsoSessionsComponent
-      tsoSessionsComponent
-    } else savedTsoSessionsComponent
+    return getOrCreateComponent(project, projectsToTsoSessionsComponents, ::TsoSessionsComponent)
   }
 
   fun getSecureVaultComponent(project: Project): SecureVaultComponent {
-    val saved = projectsToSecureVaultComponents[project]
-    return if (saved == null) {
-      val component = SecureVaultComponent(project)
-      Disposer.register(project, component)
-      projectsToSecureVaultComponents[project] = component
-      component
-    } else saved
+    return getOrCreateComponent(project, projectsToSecureVaultComponents, ::SecureVaultComponent)
   }
 
   fun getActiveExplorerComponent(project: Project): ExplorerTreeComponent {

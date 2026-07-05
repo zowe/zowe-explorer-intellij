@@ -14,12 +14,8 @@ import org.zowe.explorer.v3.icons.ZoweExplorerIcons
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNode
 import org.zowe.explorer.v3.tree.nodes.ExplorerTreeNodeDescriptor
 
-/**
- * Node descriptor representing a Zowe config profile in the Secure Vault tree.
- * Expandable only when [secureFields] is non-empty; expands to reveal
- * [SecureEntryNodeDescriptor] children. Leaf node otherwise
- */
-class SecureProfileNodeDescriptor(
+// TODO: doc
+class SecureSetNodeDescriptor(
   profilePath: String,
   secureFields: List<String>
 ) : ExplorerTreeNodeDescriptor(
@@ -33,9 +29,9 @@ class SecureProfileNodeDescriptor(
   companion object {
     private fun profileTooltip(profilePath: String, secureFields: List<String>): String {
       return if (secureFields.isEmpty()) {
-        "Secure profile (without credentials): $profilePath"
+        "Storing profile (without credentials): $profilePath"
       } else {
-        "Secure profile: $profilePath"
+        "Storing profile: $profilePath"
       }
     }
   }
