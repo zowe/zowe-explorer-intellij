@@ -516,6 +516,13 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
             <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
         </action>
 
+        <action id="org.zowe.explorer.v3.actions.OpenFileAction"
+                class="org.zowe.explorer.v3.actions.OpenFileAction"
+                text="Open"
+                icon="AllIcons.Actions.MenuOpen">
+            <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+        </action>
+
         <action id="org.zowe.explorer.v3.actions.RefreshNodeAction"
                 class="org.zowe.explorer.v3.actions.RefreshNodeAction"
                 text="Refresh"
@@ -528,6 +535,11 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
                 text="Rename">
             <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
         </action>
+
+        <action id="org.zowe.explorer.v3.impl.files.actions.MemberPropertiesAction"
+                class="org.zowe.explorer.v3.impl.files.actions.MemberPropertiesAction"
+                text="Properties"
+                icon="AllIcons.Actions.Properties"/>
 
 
         <action id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
@@ -954,27 +966,31 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
         </group>
 
         <group id="org.zowe.explorer.components.files.FilesExplorerContextMenuGroup">
-            <reference id="org.zowe.explorer.v3.impl.files.actions.EditFilesProfileAction"/>
-            <reference id="org.zowe.explorer.v3.impl.files.actions.EditMaskOrFilterAction"/>
-            <reference id="org.zowe.explorer.v3.impl.files.actions.DeleteFilesProfileAction"/>
-            <reference id="org.zowe.explorer.v3.impl.files.actions.DeleteMaskOrFilterAction"/>
+            <reference id="org.zowe.explorer.v3.actions.OpenFileAction"/>
             <separator/>
             <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
             <separator/>
             <reference id="org.zowe.explorer.v3.actions.RenameNodeAction"/>
             <separator/>
             <reference id="org.zowe.explorer.v3.impl.files.actions.AddMaskOrFilterAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.EditFilesProfileAction"/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.EditMaskOrFilterAction"/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.DeleteFilesProfileAction"/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.DeleteMaskOrFilterAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.v3.impl.files.actions.MemberPropertiesAction"/>
         </group>
 
         <group id="org.zowe.explorer.components.jes.JesExplorerContextMenuGroup">
+            <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.v3.impl.jes.actions.AddJobFilterAction"/>
+            <separator/>
             <reference id="org.zowe.explorer.v3.impl.jes.actions.EditJobFilterAction"/>
             <reference id="org.zowe.explorer.v3.impl.jes.actions.EditJesProfileAction"/>
             <reference id="org.zowe.explorer.v3.impl.jes.actions.DeleteJobFilterAction"/>
             <reference id="org.zowe.explorer.v3.impl.jes.actions.DeleteJesProfileAction"/>
-            <separator/>
-            <reference id="org.zowe.explorer.v3.actions.RefreshNodeAction"/>
-            <separator/>
-            <reference id="org.zowe.explorer.v3.impl.jes.actions.AddJobFilterAction"/>
         </group>
 
         <group id="org.zowe.explorer.components.tso.TsoSessionsContextMenuGroup">

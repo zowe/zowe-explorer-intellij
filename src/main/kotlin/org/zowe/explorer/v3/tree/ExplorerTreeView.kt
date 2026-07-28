@@ -89,6 +89,20 @@ abstract class ExplorerTreeView(
 
     explorerDnDAwareTree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
 
+    explorerDnDAwareTree.addMouseListener(object : java.awt.event.MouseAdapter() {
+      override fun mouseClicked(e: java.awt.event.MouseEvent) {
+        if (e.clickCount == 2 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+          val row = explorerDnDAwareTree.getClosestRowForLocation(e.x, e.y)
+          if (row < 0) return
+          val path = explorerDnDAwareTree.getPathForRow(row) ?: return
+          val node = (path.lastPathComponent as? DefaultMutableTreeNode)?.userObject as? ExplorerTreeNode ?: return
+          if (node.canNavigate()) {
+            node.navigate(true)
+          }
+        }
+      }
+    })
+
     explorerDnDAwareTree.addTreeWillExpandListener(object : TreeWillExpandListener {
       override fun treeWillExpand(event: TreeExpansionEvent) {
         val defaultMutableTreeNode = event.path.lastPathComponent as? DefaultMutableTreeNode

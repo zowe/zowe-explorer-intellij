@@ -61,7 +61,8 @@ class LoadMemberNodesOperation(
               MemberNodeDescriptor(
                 memberEntry.memberName,
                 operationData.path,
-                connectionProfile = parentNodeData.connectionProfile
+                connectionProfile = parentNodeData.connectionProfile,
+                memberItem = memberEntry
               )
             }
           ExplorerTreeNode(memberNodeDescriptor, parentNode.project, parentNode)
