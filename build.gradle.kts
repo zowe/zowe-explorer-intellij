@@ -140,6 +140,8 @@ dependencies {
   intellijPlatform {
 //  useInstaller - TO TEST EAP:
     intellijIdea(descriptor.sdkVersion) { useInstaller = false }
+//  Legacy (until 2026.1):
+//    intellijIdeaCommunity(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Platform)
