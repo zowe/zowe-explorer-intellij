@@ -255,6 +255,8 @@ class ConnectionDialog(
 
   private lateinit var sslCheckbox: JCheckBox
 
+  private lateinit var cleartextCheckbox: JCheckBox
+
   init {
     isResizable = false
   }
@@ -295,7 +297,9 @@ class ConnectionDialog(
           .bindText(state::connectionUrl)
           .validationOnApply {
             it.text = it.text.trim()
-            validateForBlank(it) ?: validateZosmfUrl(it)
+            validateForBlank(it)
+              ?: validateZosmfUrl(it)
+              ?: validateCleartextUsage(it, cleartextCheckbox.isSelected)
           }
           .also { urlTextField = it.component }
           .align(AlignX.FILL)
@@ -348,6 +352,28 @@ class ConnectionDialog(
                 """Select this checkbox if your organization uses self-signed certificates (not recommended)."""
                   .trimMargin()
               HelpTooltip().setDescription(sslHelpText).installOn(it.component)
+            }
+        }
+        row {
+          checkBox("Allow unencrypted HTTP connection")
+            .bindSelected(state::isAllowCleartext)
+            .also {
+              it.component.apply {
+                addActionListener {
+                  if (this.isSelected) {
+                    showSelfSignedUsageWarningDialog(this)
+                  }
+                }
+                cleartextCheckbox = this
+              }
+            }
+          icon(AllIcons.General.ContextHelp)
+            .also {
+              val cleartextHelpText =
+                """Select this checkbox to connect over plain HTTP (not recommended).
+                  |The username and the password are sent with every request, so anyone on the network can read them."""
+                  .trimMargin()
+              HelpTooltip().setDescription(cleartextHelpText).installOn(it.component)
             }
         }
       }

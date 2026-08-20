@@ -515,6 +515,38 @@ class UtilsTestSpec : AppInitShouldSpec("utils/utils", {
         }
       }
     }
+    context("validateCleartextUsage") {
+      val component = JTextField()
+
+      should("validate an HTTPS URL regardless of the cleartext usage option") {
+        component.text = "https://some.url"
+
+        assertSoftly {
+          validateCleartextUsage(component, false) shouldBe null
+        }
+        assertSoftly {
+          validateCleartextUsage(component, true) shouldBe null
+        }
+      }
+      should("validate an HTTP URL when the cleartext usage is allowed") {
+        component.text = "http://some.url"
+
+        assertSoftly {
+          validateCleartextUsage(component, true) shouldBe null
+        }
+      }
+      should("return the validation info for an HTTP URL when the cleartext usage is not allowed") {
+        component.text = "http://some.url"
+        val expected = ValidationInfo(
+          "The URL is unencrypted. Select \"Allow unencrypted HTTP connection\" to use it, or provide an HTTPS URL.",
+          component
+        )
+
+        assertSoftly {
+          validateCleartextUsage(component, false) shouldBe expected
+        }
+      }
+    }
     context("validateFieldWithLengthRestriction") {
       val component = JTextField()
 

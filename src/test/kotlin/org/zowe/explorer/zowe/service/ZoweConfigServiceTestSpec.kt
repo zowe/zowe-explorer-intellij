@@ -366,7 +366,64 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
           .addOrUpdateZoweConfig(scanProject = false, checkConnection = false, ZoweConfigType.LOCAL)
 
         assertSoftly { addedConnection?.isAllowSelfSigned shouldBe false }
+        assertSoftly { addedConnection?.isAllowCleartext shouldBe false }
         assertSoftly { unsecureWarningCount shouldBe 0 }
+      }
+
+      should("add a connection with the cleartext transport allowed cause the profile protocol is 'http'") {
+        var addedConnection: ConnectionConfig? = null
+
+        every {
+          dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (firstArg<Operation<*>>()) {
+            is InfoOperation -> mockk<SystemsResponse>()
+            is ZOSInfoOperation -> mockk<InfoResponse> { every { zosVersion } returns "04.28.00" }
+            else -> mockk<Any>()
+          }
+        }
+
+        every {
+          configServiceCrudableMock.addOrUpdate(any<ConnectionConfig>())
+        } answers {
+          addedConnection = firstArg<ConnectionConfig>()
+          firstArg<ConnectionConfig>().optional
+        }
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          emptyList<ConnectionConfig>().stream()
+        }
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns "test_profile"
+              every { basePath } returns "/test/base/path"
+              every { host } returns "test.com"
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "http"
+              every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        val zoweConfigService = ZoweConfigServiceImpl(projectMock)
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        zoweConfigService
+          .addOrUpdateZoweConfig(scanProject = false, checkConnection = false, ZoweConfigType.LOCAL)
+
+        assertSoftly { addedConnection?.isAllowCleartext shouldBe true }
+        assertSoftly { addedConnection?.url shouldBe "http://test.com:1234/test/base/path" }
+        assertSoftly { unsecureWarningCount shouldBe 1 }
       }
 
       should("not add any connection cause the user declined the unsecure Zowe config profiles usage") {
