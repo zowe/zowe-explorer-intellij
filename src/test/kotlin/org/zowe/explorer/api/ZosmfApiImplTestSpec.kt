@@ -34,6 +34,7 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
     var sslFactoryActual: SSLSocketFactory? = null
     var trustManagerActual: TrustManager? = null
     var hostnameVerifierActual: HostnameVerifier? = null
+    var interceptorActual: Interceptor? = null
 
     val safeTrustManagerMock = mockk<ConfirmingTrustManager>()
     val safeSslContextMock = mockk<SSLContext> {
@@ -53,7 +54,10 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       every { connectTimeout(any(), TimeUnit.MINUTES) } returns this
       every { connectionPool(any<ConnectionPool>()) } returns this
       every { dispatcher(any<Dispatcher>()) } returns this
-      every { addInterceptor(any<Interceptor>()) } returns this
+      every { addInterceptor(any<Interceptor>()) } answers {
+        interceptorActual = firstArg()
+        this@mockk
+      }
       every { connectionSpecs(any<List<ConnectionSpec>>()) } returns this
       every { hostnameVerifier(any()) } answers {
         hostnameVerifierActual = firstArg()
@@ -234,6 +238,23 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       assertSoftly { buildApiWithBytesConverterFunResultMockk shouldBe resultActual }
       assertSoftly { sslFactoryActual shouldBe null }
       assertSoftly { trustManagerActual shouldBe null }
+    }
+
+    should("the registered interceptor adds the CSRF header to the request") {
+      var requestActual: Request? = null
+      val responseMock = mockk<Response>()
+      val chainMock = mockk<Interceptor.Chain> {
+        every { request() } returns Request.Builder().url("https://test.com").build()
+        every { proceed(any<Request>()) } answers {
+          requestActual = firstArg()
+          responseMock
+        }
+      }
+
+      val resultActual = interceptorActual?.intercept(chainMock)
+
+      assertSoftly { resultActual shouldBe responseMock }
+      assertSoftly { requestActual?.header("X-CSRF-ZOSMF-HEADER") shouldBe "" }
     }
   }
 
