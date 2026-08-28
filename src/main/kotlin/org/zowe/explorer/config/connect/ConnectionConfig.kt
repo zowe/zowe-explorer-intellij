@@ -36,6 +36,9 @@ class ConnectionConfig : ConnectionConfigBase {
   var isHostnameVerified = false
 
   @Column
+  var isAllowCleartext = false
+
+  @Column
   var zVersion = ZVersion.ZOS_2_1
 
   @Column
@@ -53,12 +56,14 @@ class ConnectionConfig : ConnectionConfigBase {
     zVersion: ZVersion,
     zoweConfigPath: String? = null,
     owner: String = "",
-    isHostnameVerified: Boolean = false
+    isHostnameVerified: Boolean = false,
+    isAllowCleartext: Boolean = false
   ) : super(uuid) {
     this.name = name
     this.url = url
     this.isAllowSelfSigned = isAllowSelfSigned
     this.isHostnameVerified = isHostnameVerified
+    this.isAllowCleartext = isAllowCleartext
     this.zVersion = zVersion
     this.zoweConfigPath = zoweConfigPath
     this.owner = owner
@@ -75,6 +80,7 @@ class ConnectionConfig : ConnectionConfigBase {
     if (url != other.url) return false
     if (isAllowSelfSigned != other.isAllowSelfSigned) return false
     if (isHostnameVerified != other.isHostnameVerified) return false
+    if (isAllowCleartext != other.isAllowCleartext) return false
     if (zoweConfigPath != other.zoweConfigPath) return false
     if (zVersion != other.zVersion) return false
     if (owner != other.owner) return false
@@ -88,6 +94,7 @@ class ConnectionConfig : ConnectionConfigBase {
     result = 31 * result + url.hashCode()
     result = 31 * result + isAllowSelfSigned.hashCode()
     result = 31 * result + isHostnameVerified.hashCode()
+    result = 31 * result + isAllowCleartext.hashCode()
     result = 31 * result + zVersion.hashCode()
     result = 31 * result + zoweConfigPath.hashCode()
     result = 31 * result + owner.hashCode()
@@ -95,7 +102,7 @@ class ConnectionConfig : ConnectionConfigBase {
   }
 
   override fun toString(): String {
-    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, isHostnameVerified=$isHostnameVerified, zVersion=$zVersion, zoweConfigPath=$zoweConfigPath, owner=$owner)"
+    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, isHostnameVerified=$isHostnameVerified, isAllowCleartext=$isAllowCleartext, zVersion=$zVersion, zoweConfigPath=$zoweConfigPath, owner=$owner)"
   }
 
 }

@@ -629,6 +629,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * Converts ZoweConfig to ConnectionConfig.
    * An absent "rejectUnauthorized" property is treated as "true", the same way as Zowe CLI does,
    * so that the certificates validation is not silently disabled for the imported profiles.
+   * The unencrypted HTTP transport is permitted only for the profiles that explicitly specify the "http" protocol,
+   * the usage of such profiles is confirmed by the user beforehand.
    * @param uuid - uuid returned connection.
    * @return converted ConnectionConfig.
    */
@@ -650,7 +652,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       isAllowSelfSigned,
       zVersion,
       getZoweConfigLocation(myProject, type),
-      owner
+      owner,
+      isAllowCleartext = protocol.equals("http", true)
     )
   }
 

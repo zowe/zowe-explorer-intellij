@@ -74,7 +74,8 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
     }
     val response = api<DataAPI>(
       url = connectionConfig.url,
-      isAllowSelfSigned = connectionConfig.isAllowSelfSigned
+      isAllowSelfSigned = connectionConfig.isAllowSelfSigned,
+      isAllowCleartext = connectionConfig.isAllowCleartext
     ).copyToDatasetMember(
       authorizationToken = connectionConfig.authToken,
       body = CopyDataZOS.CopyFromDataset(
@@ -92,7 +93,8 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
       if (operation.isMove) {
         val deleteResponse = api<DataAPI>(
           url = connectionConfig.url,
-          isAllowSelfSigned = connectionConfig.isAllowSelfSigned
+          isAllowSelfSigned = connectionConfig.isAllowSelfSigned,
+          isAllowCleartext = connectionConfig.isAllowCleartext
         ).deleteDataset(
           authorizationToken = connectionConfig.authToken,
           datasetName = dataset.name
