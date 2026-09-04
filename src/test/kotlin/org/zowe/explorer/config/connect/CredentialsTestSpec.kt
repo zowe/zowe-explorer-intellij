@@ -17,10 +17,24 @@ package org.zowe.explorer.config.connect
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldNotContain
 
 class CredentialsTestSpec : ShouldSpec({
   context("connect/Credentials") {
+    context("toString") {
+      should("not expose the password") {
+        val credentials = Credentials("uuid", "username", "secret".toCharArray())
+
+        val actual = credentials.toString()
+
+        assertSoftly {
+          actual shouldBe "Credentials{connectionConfigUuid='uuid', username='username', password='***'}"
+          actual shouldNotContain "secret"
+        }
+      }
+    }
     context("hashCode") {
       should("check hashcode for uniqueness") {
         val credentials = Credentials("uuid", "username", "password".toCharArray())
