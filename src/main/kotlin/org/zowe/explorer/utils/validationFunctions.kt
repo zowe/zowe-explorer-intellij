@@ -176,6 +176,24 @@ fun validateZosmfUrl(component: JTextField): ValidationInfo? {
 }
 
 /**
+ * Validate that the unencrypted HTTP transport is explicitly allowed for the connection with an "http" URL.
+ * The credentials are sent in a Basic authorization header with every z/OSMF request,
+ * so the plain HTTP transport is permitted only when the user opted in for it for the particular connection.
+ * @param component the component to check the URL
+ * @param isAllowCleartext whether the connection is explicitly allowed to use unencrypted HTTP transport
+ */
+fun validateCleartextUsage(component: JTextField, isAllowCleartext: Boolean): ValidationInfo? {
+  return if (component.text.startsWith("http://", true) && !isAllowCleartext) {
+    ValidationInfo(
+      "The URL is unencrypted. Select \"Allow unencrypted HTTP connection\" to use it, or provide an HTTPS URL.",
+      component
+    )
+  } else {
+    null
+  }
+}
+
+/**
  * Validate field with specified length restriction
  * @param component the component to validate the text
  * @param length the specified length to check whether the text exceeds it

@@ -29,6 +29,7 @@ import org.zowe.kotlinsdk.annotations.ZVersion
  * @param isAllowSelfSigned to indicate whether it is allowed to use self-signed certificates during a connection
  * @param zVersion the version of the z/OS being used for the connection
  * @param owner the actual USS user related to the USS user provided in the connection to work with in the USS part
+ * @param isAllowCleartext to indicate whether the connection is explicitly allowed to use unencrypted HTTP transport
  */
 open class ConnectionConfigOldStruct(
   uuid: String = EMPTY_ID,
@@ -36,5 +37,6 @@ open class ConnectionConfigOldStruct(
   @Column var url: String = "",
   @Column var isAllowSelfSigned: Boolean = true,
   @Column var zVersion: ZVersion = ZVersion.ZOS_2_3,
-  @Column var owner: String = ""
+  @Column var owner: String = "",
+  @Column var isAllowCleartext: Boolean = false
 ) : Config(uuid, configType = ConfigType.HTTP_CONNECTION_CONFIG_V1)

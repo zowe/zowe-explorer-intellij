@@ -120,12 +120,13 @@ class RenameOperationRunner<ConnectionConfigType : ConnectionConfigOldStruct> :
         val newRequester = operationData.origin
         val oldRequester = UssRequesterOld(
           ConnectionConfigOld(
-            newRequester.connectionConfig.uuid,
-            newRequester.connectionConfig.name,
-            newRequester.connectionConfig.url,
-            newRequester.connectionConfig.isAllowSelfSigned,
-            newRequester.connectionConfig.zVersion,
-            newRequester.connectionConfig.owner
+            uuid = newRequester.connectionConfig.uuid,
+            name = newRequester.connectionConfig.name,
+            url = newRequester.connectionConfig.url,
+            isAllowSelfSigned = newRequester.connectionConfig.isAllowSelfSigned,
+            zVersion = newRequester.connectionConfig.zVersion,
+            owner = newRequester.connectionConfig.owner,
+            isAllowCleartext = newRequester.connectionConfig.isAllowCleartext
           )
         )
         val parentDirPath = attributes.parentDirPath
