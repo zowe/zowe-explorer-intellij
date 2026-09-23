@@ -14,7 +14,9 @@
  */
 
 import org.jetbrains.changelog.Changelog
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Duration
 import java.time.LocalDate
@@ -188,7 +190,12 @@ intellijPlatform {
   }
   pluginVerification {
     ides {
-      recommended()
+      select {
+        channels = listOf(ProductRelease.Channel.RELEASE)
+      }
+      create(IntelliJPlatformType.IntellijIdea, "LATEST-EAP-SNAPSHOT") {
+        useInstaller = false
+      }
     }
   }
 }

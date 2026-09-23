@@ -11,12 +11,15 @@
          <trust group="com.jetbrains" name="jbr" file=".*" regex="true"/>
          <trust group="com.jetbrains" name="jbr-api" file=".*" regex="true"/>
          <trust group="com.jetbrains.intellij.driver" file=".*" regex="true"/>
+         <trust group="com.jetbrains.intellij.idea" name="idea" file=".*" regex="true"/>
          <trust group="com.jetbrains.intellij.idea" name="ideaIC" file=".*" regex="true"/>
          <trust group="com.jetbrains.intellij.idea" name="ideaIU" file=".*" regex="true"/>
          <trust group="com.jetbrains.intellij.java" file=".*" regex="true"/>
          <trust group="com.jetbrains.intellij.platform" file=".*" regex="true"/>
          <trust group="com.jetbrains.intellij.tools" file=".*" regex="true"/>
+         <trust group="idea" name="idea" file=".*" regex="true"/>
          <trust group="idea" name="ideaIC" file=".*" regex="true"/>
+         <trust group="idea" name="ideaIU" file=".*" regex="true"/>
          <trust group="org.jetbrains.intellij.plugins" name="verifier-cli" file=".*" regex="true"/>
       </trusted-artifacts>
    </configuration>
