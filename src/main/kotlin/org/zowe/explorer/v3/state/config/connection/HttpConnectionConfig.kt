@@ -34,7 +34,8 @@ open class HttpConnectionConfig(
   zVersion: ZVersion = ZVersion.ZOS_2_3,
   ussOwner: String = "",
   var basePath: String = "/",
-  var rejectUnauthorized: Boolean = true
+  var rejectUnauthorized: Boolean = true,
+  var isHostnameVerified: Boolean = false
 ) : ConnectionConfig(uuid, configType, name, scheme, host, port, zVersion, ussOwner) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -42,6 +43,7 @@ open class HttpConnectionConfig(
     if (!super.equals(other)) return false
 
     if (rejectUnauthorized != other.rejectUnauthorized) return false
+    if (isHostnameVerified != other.isHostnameVerified) return false
     if (basePath != other.basePath) return false
 
     return true
@@ -50,6 +52,7 @@ open class HttpConnectionConfig(
   override fun hashCode(): Int {
     var result = super.hashCode()
     result = 31 * result + rejectUnauthorized.hashCode()
+    result = 31 * result + isHostnameVerified.hashCode()
     result = 31 * result + basePath.hashCode()
     return result
   }

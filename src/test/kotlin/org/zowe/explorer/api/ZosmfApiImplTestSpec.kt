@@ -17,40 +17,29 @@ package org.zowe.explorer.api
 
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.net.ssl.ConfirmingTrustManager
-import org.zowe.explorer.config.connect.ConnectionConfig
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import okhttp3.*
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.testutils.MockkAwareShouldSpec
 import org.zowe.kotlinsdk.buildApi
 import org.zowe.kotlinsdk.buildApiWithBytesConverter
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import kotlin.reflect.KFunction
+import javax.net.ssl.*
 
 class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
   context("api module: ZosmfApiImpl") {
     var sslFactoryActual: SSLSocketFactory? = null
     var trustManagerActual: TrustManager? = null
+    var hostnameVerifierActual: HostnameVerifier? = null
+    var interceptorActual: Interceptor? = null
 
     val safeTrustManagerMock = mockk<ConfirmingTrustManager>()
     val safeSslContextMock = mockk<SSLContext> {
       every { socketFactory } returns mockk()
     }
-
-    val unsafeSslContextMock = mockk<SSLContext> {
-      every { init(any(), any(), any()) } answers {}
-      every { socketFactory } returns mockk()
-    }
-
-    val sslContextGetInstanceMock: (String) -> SSLContext = SSLContext::getInstance
-    mockkStatic(sslContextGetInstanceMock as KFunction<*>)
-    every { sslContextGetInstanceMock("TLSv1.2") } returns unsafeSslContextMock
 
     val certManagerMock = mockk<CertificateManager> {
       every { trustManager } returns safeTrustManagerMock
@@ -65,9 +54,15 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       every { connectTimeout(any(), TimeUnit.MINUTES) } returns this
       every { connectionPool(any<ConnectionPool>()) } returns this
       every { dispatcher(any<Dispatcher>()) } returns this
-      every { addInterceptor(any<Interceptor>()) } returns this
+      every { addInterceptor(any<Interceptor>()) } answers {
+        interceptorActual = firstArg()
+        this@mockk
+      }
       every { connectionSpecs(any<List<ConnectionSpec>>()) } returns this
-      every { hostnameVerifier(any()) } returns this
+      every { hostnameVerifier(any()) } answers {
+        hostnameVerifierActual = firstArg()
+        this@mockk
+      }
       every { build() } returns mockk()
     }
 
@@ -85,9 +80,10 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
     beforeEach {
       sslFactoryActual = null
       trustManagerActual = null
+      hostnameVerifierActual = null
     }
 
-    should("check that getApi returns safe OkHttpClient without bytes converter when self-signed certificates are not allowed") {
+    should("getApi uses CertificateManager trust when self-signed certificates are not allowed") {
       mockkConstructor(OkHttpClient.Builder::class)
       every {
         anyConstructed<OkHttpClient.Builder>()
@@ -104,15 +100,17 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       }
 
       val zosmfApiImpl = ZosmfApiImpl()
-      val resutlActual = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
+      val resultActual = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
 
-      assertSoftly { buildApiFunResultMockk shouldBe resutlActual }
+      assertSoftly { buildApiFunResultMockk shouldBe resultActual }
       assertSoftly { sslFactoryActual shouldNotBe null }
       assertSoftly { trustManagerActual shouldNotBe null }
       assertSoftly { sslFactoryActual shouldBe safeSslContextMock.socketFactory }
       assertSoftly { trustManagerActual shouldBe safeTrustManagerMock }
+      assertSoftly { hostnameVerifierActual shouldBe null }
     }
-    should("check that getApi returns already initialized safe OkHttpClient without bytes converter when self-signed certificates are not allowed") {
+
+    should("getApi returns already initialized OkHttpClient when called again with same connection") {
       mockkConstructor(OkHttpClient.Builder::class)
       every {
         anyConstructed<OkHttpClient.Builder>()
@@ -129,17 +127,17 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       }
 
       val zosmfApiImpl = ZosmfApiImpl()
-      val resutlActual1 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
-      val resutlActual2 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
+      val resultActual1 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
+      val resultActual2 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
 
-      assertSoftly { buildApiFunResultMockk shouldBe resutlActual1 }
-      assertSoftly { buildApiFunResultMockk shouldBe resutlActual2 }
-      assertSoftly { resutlActual1 shouldBe resutlActual2 }
-      // Lazy is not initialized the second time
+      assertSoftly { buildApiFunResultMockk shouldBe resultActual1 }
+      assertSoftly { buildApiFunResultMockk shouldBe resultActual2 }
+      assertSoftly { resultActual1 shouldBe resultActual2 }
       assertSoftly { sslFactoryActual shouldBe null }
       assertSoftly { trustManagerActual shouldBe null }
     }
-    should("check that getApi returns safe OkHttpClient with bytes converter when self-signed certificates are not allowed") {
+
+    should("getApiWithBytesConverter uses CertificateManager trust when self-signed certificates are not allowed") {
       mockkConstructor(OkHttpClient.Builder::class)
       every {
         anyConstructed<OkHttpClient.Builder>()
@@ -156,14 +154,14 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       }
 
       val zosmfApiImpl = ZosmfApiImpl()
-      val resutlActual = zosmfApiImpl.getApiWithBytesConverter(Any::class.java, connectionConfig)
+      val resultActual = zosmfApiImpl.getApiWithBytesConverter(Any::class.java, connectionConfig)
 
-      assertSoftly { buildApiWithBytesConverterFunResultMockk shouldBe resutlActual }
-      // Lazy is not initialized the second time
+      assertSoftly { buildApiWithBytesConverterFunResultMockk shouldBe resultActual }
       assertSoftly { sslFactoryActual shouldBe null }
       assertSoftly { trustManagerActual shouldBe null }
     }
-    should("check that getApi returns unsafe OkHttpClient without bytes converter when self-signed certificates are allowed") {
+
+    should("getApi uses CertificateManager trust with ConfirmingHostnameVerifier when self-signed certificates are allowed") {
       mockkConstructor(OkHttpClient.Builder::class)
       every {
         anyConstructed<OkHttpClient.Builder>()
@@ -180,15 +178,18 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       }
 
       val zosmfApiImpl = ZosmfApiImpl()
-      val resutlActual = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
+      val resultActual = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
 
-      assertSoftly { buildApiFunResultMockk shouldBe resutlActual }
+      assertSoftly { buildApiFunResultMockk shouldBe resultActual }
       assertSoftly { sslFactoryActual shouldNotBe null }
       assertSoftly { trustManagerActual shouldNotBe null }
-      assertSoftly { sslFactoryActual shouldBe unsafeSslContextMock.socketFactory }
-      assertSoftly { trustManagerActual shouldNotBe safeTrustManagerMock }
+      assertSoftly { sslFactoryActual shouldBe safeSslContextMock.socketFactory }
+      assertSoftly { trustManagerActual shouldBe safeTrustManagerMock }
+      assertSoftly { hostnameVerifierActual shouldNotBe null }
+      assertSoftly { (hostnameVerifierActual is ConfirmingHostnameVerifier) shouldBe true }
     }
-    should("check that getApi returns already initialized unsafe OkHttpClient without bytes converter when self-signed certificates are allowed") {
+
+    should("getApi returns already initialized OkHttpClient when called again with self-signed allowed") {
       mockkConstructor(OkHttpClient.Builder::class)
       every {
         anyConstructed<OkHttpClient.Builder>()
@@ -205,17 +206,17 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       }
 
       val zosmfApiImpl = ZosmfApiImpl()
-      val resutlActual1 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
-      val resutlActual2 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
+      val resultActual1 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
+      val resultActual2 = zosmfApiImpl.getApi(Any::class.java, connectionConfig)
 
-      assertSoftly { buildApiFunResultMockk shouldBe resutlActual1 }
-      assertSoftly { buildApiFunResultMockk shouldBe resutlActual2 }
-      assertSoftly { resutlActual1 shouldBe resutlActual2 }
-      // Lazy is not initialized the second time
+      assertSoftly { buildApiFunResultMockk shouldBe resultActual1 }
+      assertSoftly { buildApiFunResultMockk shouldBe resultActual2 }
+      assertSoftly { resultActual1 shouldBe resultActual2 }
       assertSoftly { sslFactoryActual shouldBe null }
       assertSoftly { trustManagerActual shouldBe null }
     }
-    should("check that getApi returns unsafe OkHttpClient with bytes converter when self-signed certificates are allowed") {
+
+    should("getApiWithBytesConverter uses CertificateManager trust with ConfirmingHostnameVerifier when self-signed certificates are allowed") {
       mockkConstructor(OkHttpClient.Builder::class)
       every {
         anyConstructed<OkHttpClient.Builder>()
@@ -232,12 +233,29 @@ class ZosmfApiImplTestSpec : MockkAwareShouldSpec({
       }
 
       val zosmfApiImpl = ZosmfApiImpl()
-      val resutlActual = zosmfApiImpl.getApiWithBytesConverter(Any::class.java, connectionConfig)
+      val resultActual = zosmfApiImpl.getApiWithBytesConverter(Any::class.java, connectionConfig)
 
-      assertSoftly { buildApiWithBytesConverterFunResultMockk shouldBe resutlActual }
-      // Lazy is not initialized the second time
+      assertSoftly { buildApiWithBytesConverterFunResultMockk shouldBe resultActual }
       assertSoftly { sslFactoryActual shouldBe null }
       assertSoftly { trustManagerActual shouldBe null }
+    }
+
+    should("the registered interceptor adds the CSRF header to the request") {
+      var requestActual: Request? = null
+      val responseMock = mockk<Response>()
+      val chainMock = mockk<Interceptor.Chain> {
+        every { request() } returns Request.Builder().url("https://test.com").build()
+        every { proceed(any<Request>()) } answers {
+          requestActual = firstArg()
+          responseMock
+        }
+      }
+
+      val resultActual = interceptorActual?.intercept(chainMock)
+
+      assertSoftly { resultActual shouldBe responseMock }
+      assertSoftly { requestActual?.header("X-CSRF-ZOSMF-HEADER") shouldBe "" }
     }
   }
+
 })

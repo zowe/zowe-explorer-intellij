@@ -25,6 +25,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
@@ -141,6 +142,30 @@ class GetFilePropertiesActionTestSpec : AppInitShouldSpec("explorer/actions/GetF
           }
           val nodeData = spyk(NodeData(fileLikeDsNode, mockVirtualFile, null))
           every { fileUnit.connectionConfig } returns null
+          every { fileView.mySelectedNodesData } returns listOf(nodeData)
+
+          GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+
+          verify(exactly = 0) { anyConstructed<DatasetPropertiesDialog>().showAndGet() }
+        }
+
+        should("not show the dialog when connection config is not of the ConnectionConfig type") {
+          val mockVirtualFile = mockk<MFVirtualFile>()
+          val otherConnectionConfig = object : ConnectionConfigBase() {
+            override var name = "other_connection"
+            override val url = "https://other.com:1234"
+            override val zoweConfigPath: String? = null
+          }
+          val otherUnit = mockk<ExplorerUnit<ConnectionConfigBase>> {
+            every { connectionConfig } returns otherConnectionConfig
+          }
+          val fileLikeDsNode = mockk<FileLikeDatasetNode> {
+            every { virtualFile } returns mockVirtualFile
+            @Suppress("UNCHECKED_CAST")
+            every { unit } returns otherUnit as ExplorerUnit<ConnectionConfig>
+            every { explorer } returns mockExplorer
+          }
+          val nodeData = spyk(NodeData(fileLikeDsNode, mockVirtualFile, null))
           every { fileView.mySelectedNodesData } returns listOf(nodeData)
 
           GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
