@@ -44,6 +44,15 @@ data class SandboxState(
     val clonedConfigState = ConfigStateV2(clonedCollections, configState.settings.clone())
     return SandboxState(clonedConfigState, credentials.map { it.clone() }.toMutableList())
   }
+
+  /**
+   * Represent the sandbox state as a string. The credentials rows are not rendered,
+   * only their amount is reported, to avoid exposing the secrets through the state's string representation
+   * @return the string representation of the sandbox state without the credentials contents
+   */
+  override fun toString(): String {
+    return "SandboxState(configState=$configState, credentials=<${credentials.size} entries>)"
+  }
 }
 
 /**
