@@ -16,6 +16,7 @@
 
 package org.zowe.explorer.zowe.service
 
+import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -358,6 +359,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       zoweConfig ?: throw Exception("Cannot get $type Zowe config")
 
       val allConnectionsToTest = zoweConfig.getListOfZosmfConnections()
+      if (!confirmUnsecureConnectionsUsage(allConnectionsToTest)) return
       val uniqueConnectionsToTest = allConnectionsToTest.filterIndexed { _, element ->
         allConnectionsToTest.filter {
           it.host == element.host &&
@@ -417,6 +419,41 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         // TODO: notification here
       }
     }
+  }
+
+  /**
+   * Ask the user to confirm the usage of the Zowe config profiles that are not protected by a valid TLS connection,
+   * that is the profiles using "http" protocol and/or disabling the certificates validation.
+   * @param zosmfConnections all the z/OSMF connections found in the Zowe config file
+   * @return true if there are no unsecure profiles or the user agreed to proceed with them, false otherwise
+   */
+  private fun confirmUnsecureConnectionsUsage(zosmfConnections: List<ZOSConnection>): Boolean {
+    val unsecureConnections = zosmfConnections
+      .filter { it.protocol.equals("http", true) || !(it.rejectUnauthorized ?: true) }
+    if (unsecureConnections.isEmpty()) return true
+
+    var proceed = false
+    runInEdtAndWait {
+      val choice = Messages.showDialog(
+        myProject,
+        "The Zowe config file contains unsecure profiles (HTTP instead of HTTP(s) and/or disabled certificates " +
+            "validation): ${unsecureConnections.joinToString(separator = ", ") { it.profileName }}.\n" +
+            "Using such profiles is not recommended. You do this at your own peril and risk, and we do not bear any " +
+            "responsibility for the possible consequences of using this type of connection.\n" +
+            "Please contact your system administrator to configure your system to be able to create a secure connection.\n\n" +
+            "Do you want to proceed anyway?",
+        "Attempt to Add Unsecured Connections",
+        arrayOf(
+          "Back to Safety",
+          "Proceed"
+        ),
+        0,
+        AllIcons.General.WarningDialog,
+        null
+      )
+      proceed = choice == 1
+    }
+    return proceed
   }
 
   /**
@@ -590,6 +627,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
   /**
    * Converts ZoweConfig to ConnectionConfig.
+   * An absent "rejectUnauthorized" property is treated as "true", the same way as Zowe CLI does,
+   * so that the certificates validation is not silently disabled for the imported profiles.
    * @param uuid - uuid returned connection.
    * @return converted ConnectionConfig.
    */
@@ -602,7 +641,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
     val domain = "${host}:${zosmfPort}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
-    val isAllowSelfSigned = !(rejectUnauthorized ?: false)
+    val isAllowSelfSigned = !(rejectUnauthorized ?: true)
 
     return ConnectionConfig(
       uuid,
