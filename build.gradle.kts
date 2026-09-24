@@ -193,8 +193,10 @@ intellijPlatform {
       select {
         channels = listOf(ProductRelease.Channel.RELEASE)
       }
-      create(IntelliJPlatformType.IntellijIdea, "LATEST-EAP-SNAPSHOT") {
-        useInstaller = false
+      if (descriptor.getUntil().orNull == null) {
+        create(IntelliJPlatformType.IntellijIdea, "LATEST-EAP-SNAPSHOT") {
+          useInstaller = false
+        }
       }
     }
   }
