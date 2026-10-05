@@ -6,7 +6,14 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ### Features
 
+* Feature: z/OSMF certificates: IntelliJ CertificateManager, accept-and-store flow, strict hostname verification ([bfcf880e](https://github.com/zowe/zowe-explorer-intellij/commit/bfcf880e))
+* Feature: Explicit user consent for cleartext HTTP z/OSMF connections carrying Basic-auth credentials ([bd4f538e](https://github.com/zowe/zowe-explorer-intellij/commit/bd4f538e))
+* Feature: Additional Gradle wrapper validations, bootstrap_gradlew.sh removed ([0f6c193f](https://github.com/zowe/zowe-explorer-intellij/commit/0f6c193f))
+
 ### Bugfixes
+
+* Bugfix: rejectUnauthorized is treated as true for zowe.config.json if it is not specified explicitly ([a05d1b44](https://github.com/zowe/zowe-explorer-intellij/commit/a05d1b44))
+* Bugfix: Password is not displayed as a plain string for the Credentials class ([110c9389](https://github.com/zowe/zowe-explorer-intellij/commit/110c9389))
 
 ## [2.4.0]
 
