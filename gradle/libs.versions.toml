@@ -1,23 +1,23 @@
 [versions]
 # libraries
 retrofit2 = "3.0.0"
-junit-jupiter = "6.1.0"
-okhttp3 = "5.4.0"
+junit-jupiter = "6.1.3"
+okhttp3 = "5.5.0"
 mockk = "1.14.11"
-kotest = "6.1.11"
+kotest = "6.2.5"
 jgrapht = "1.5.3"
 keytar = "1.0.0"
 zowe-kotlin-sdk = "1.0.0-rc.1"
 dotenv = "6.5.1"
-ktor = "3.4.1"
-json-schema-validator = "0.5.2"
+ktor = "3.6.0"
+json-schema-validator = "0.5.5"
 
 # plugins
-gradle-platform-plugin = "2.16.0"
-sonarqube = "7.2.2.6593"
+gradle-platform-plugin = "2.19.0"
+sonarqube = "7.5.0.8588"
 changelog = "2.5.0"
-kover = "0.9.8"
-dependencycheck = "12.1.9"
+kover = "0.9.11"
+dependencycheck = "12.1.6"
 
 [libraries]
 # build deps

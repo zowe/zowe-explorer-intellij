@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -73,6 +74,38 @@ class EditorUtilsTestSpec : MockkAwareShouldSpec({
       requestDocumentWriting(editorMock)
 
       assertSoftly { isFileWritable shouldBe false }
+    }
+
+    should("isMfVirtualFile. Check if the file is marked as a mainframe virtual file") {
+      val virtualFileMock = mockk<VirtualFile> {
+        every { getUserData(MF_VIRTUAL_FILE) } returns true
+      }
+
+      assertSoftly { virtualFileMock.isMfVirtualFile() shouldBe true }
+    }
+
+    should("isMfVirtualFile. Check if the file is not marked as a mainframe virtual file") {
+      val virtualFileMock = mockk<VirtualFile> {
+        every { getUserData(MF_VIRTUAL_FILE) } returns null
+      }
+
+      assertSoftly { virtualFileMock.isMfVirtualFile() shouldBe false }
+    }
+
+    should("isUssVirtualFile. Check if the file is marked as a USS virtual file") {
+      val virtualFileMock = mockk<VirtualFile> {
+        every { getUserData(USS_VIRTUAL_FILE) } returns true
+      }
+
+      assertSoftly { virtualFileMock.isUssVirtualFile() shouldBe true }
+    }
+
+    should("isUssVirtualFile. Check if the file is not marked as a USS virtual file") {
+      val virtualFileMock = mockk<VirtualFile> {
+        every { getUserData(USS_VIRTUAL_FILE) } returns null
+      }
+
+      assertSoftly { virtualFileMock.isUssVirtualFile() shouldBe false }
     }
   }
 })

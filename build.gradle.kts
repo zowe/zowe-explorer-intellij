@@ -14,7 +14,9 @@
  */
 
 import org.jetbrains.changelog.Changelog
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Duration
 import java.time.LocalDate
@@ -120,6 +122,8 @@ dependencies {
   intellijPlatform {
 //  useInstaller - TO TEST EAP:
     intellijIdea(descriptor.sdkVersion) { useInstaller = false }
+//  Legacy (until 2026.1):
+//    intellijIdeaCommunity(descriptor.sdkVersion) { useInstaller = false }
     jetbrainsRuntime()
     pluginVerifier()
     testFramework(TestFrameworkType.Platform)
@@ -176,7 +180,14 @@ intellijPlatform {
   }
   pluginVerification {
     ides {
-      recommended()
+      select {
+        channels = listOf(ProductRelease.Channel.RELEASE)
+      }
+      if (descriptor.getUntil().orNull == null) {
+        create(IntelliJPlatformType.IntellijIdea, "LATEST-EAP-SNAPSHOT") {
+          useInstaller = false
+        }
+      }
     }
   }
 }

@@ -77,7 +77,8 @@ class MemberToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOp
     }
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
-      isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned
+      isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned,
+      isAllowCleartext = requesterWithUrl.second.isAllowCleartext
     ).copyToDatasetMember(
       authorizationToken = requesterWithUrl.first.connectionConfig.authToken,
       body = CopyDataZOS.CopyFromDataset(

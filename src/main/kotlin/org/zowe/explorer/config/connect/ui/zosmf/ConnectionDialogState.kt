@@ -37,18 +37,29 @@ data class ConnectionDialogState(
   override var password: CharArray = charArrayOf(),
   override var owner: String = "",
   var isAllowSsl: Boolean = false,
+  var isAllowCleartext: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
   var zoweConfigPath: String? = null,
   override var mode: DialogMode = DialogMode.CREATE
 ) : ConnectionDialogStateBase<ConnectionConfig>() {
 
   override var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion, zoweConfigPath, owner)
+    get() = ConnectionConfig(
+      connectionUuid,
+      connectionName,
+      connectionUrl,
+      isAllowSsl,
+      zVersion,
+      zoweConfigPath,
+      owner,
+      isAllowCleartext = isAllowCleartext
+    )
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
       connectionUrl = value.url
       isAllowSsl = value.isAllowSelfSigned
+      isAllowCleartext = value.isAllowCleartext
       zVersion = value.zVersion
       owner = value.owner
     }
@@ -69,6 +80,7 @@ data class ConnectionDialogState(
       username = username,
       password = password,
       isAllowSsl = isAllowSsl,
+      isAllowCleartext = isAllowCleartext,
       zoweConfigPath = zoweConfigPath,
       owner = owner
     )
@@ -79,6 +91,7 @@ data class ConnectionDialogState(
     if (other !is ConnectionDialogState) return false
 
     if (isAllowSsl != other.isAllowSsl) return false
+    if (isAllowCleartext != other.isAllowCleartext) return false
     if (connectionUuid != other.connectionUuid) return false
     if (connectionName != other.connectionName) return false
     if (connectionUrl != other.connectionUrl) return false
@@ -94,6 +107,7 @@ data class ConnectionDialogState(
 
   override fun hashCode(): Int {
     var result = isAllowSsl.hashCode()
+    result = 31 * result + isAllowCleartext.hashCode()
     result = 31 * result + connectionUuid.hashCode()
     result = 31 * result + connectionName.hashCode()
     result = 31 * result + connectionUrl.hashCode()
@@ -134,6 +148,7 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     username = username,
     password = password,
     isAllowSsl = this.isAllowSelfSigned,
+    isAllowCleartext = this.isAllowCleartext,
     zVersion = this.zVersion,
     zoweConfigPath = this.zoweConfigPath,
     owner = owner

@@ -151,6 +151,7 @@ class RenameActionTestSpec : AppInitShouldSpec("explorer/actions/RenameAction", 
           every { name } returns "testName"
           every { url } returns "testUrl"
           every { isAllowSelfSigned } returns true
+          every { isAllowCleartext } returns false
           every { zVersion } returns ZVersion.ZOS_2_3
           every { owner } returns "testOwner"
         }
@@ -228,6 +229,7 @@ class RenameActionTestSpec : AppInitShouldSpec("explorer/actions/RenameAction", 
           every { name } returns "testName"
           every { url } returns "testUrl"
           every { isAllowSelfSigned } returns true
+          every { isAllowCleartext } returns false
           every { zVersion } returns ZVersion.ZOS_2_3
           every { owner } returns "testOwner"
         }
@@ -285,6 +287,7 @@ class RenameActionTestSpec : AppInitShouldSpec("explorer/actions/RenameAction", 
           every { name } returns "testName"
           every { url } returns "testUrl"
           every { isAllowSelfSigned } returns true
+          every { isAllowCleartext } returns false
           every { zVersion } returns ZVersion.ZOS_2_3
           every { owner } returns "testOwner"
         }

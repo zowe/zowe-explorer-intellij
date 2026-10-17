@@ -79,6 +79,7 @@ class RenameOperationRunnerTestSpec : AppInitShouldSpec("v3/operations/RenameOpe
           every { name } returns "test_old_name"
           every { url } returns "test_url"
           every { isAllowSelfSigned } returns true
+          every { isAllowCleartext } returns false
           every { zVersion } returns ZVersion.ZOS_3_1
           every { owner } returns "TSTOWNR"
         }

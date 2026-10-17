@@ -72,7 +72,8 @@ class MemberToUssFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
     val to = destinationAttributes.path + USS_DELIMITER + (operation.newName ?: sourceAttributes.name)
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
-      isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned
+      isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned,
+      isAllowCleartext = requesterWithUrl.second.isAllowCleartext
     ).copyDatasetOrMemberToUss(
       authorizationToken = requesterWithUrl.first.connectionConfig.authToken,
       body = CopyDataUSS.CopyFromDataset(

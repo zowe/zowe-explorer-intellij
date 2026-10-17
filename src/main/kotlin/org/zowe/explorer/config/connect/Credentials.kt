@@ -53,11 +53,16 @@ class Credentials {
     return result
   }
 
+  /**
+   * Represent the credentials as a string. The password is never included in the result,
+   * as the string representation could be exposed to the IDE logs, crash reports or debugger views
+   * @return the string representation of the credentials with the redacted password
+   */
   override fun toString(): String {
     return "Credentials{" +
         "connectionConfigUuid='" + configUuid + '\'' +
         ", username='" + username + '\'' +
-        ", password='" + password + '\'' +
+        ", password='***'" +
         '}'
   }
 }

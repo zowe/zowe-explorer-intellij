@@ -33,6 +33,7 @@ interface ZosmfApi {
     apiClass: Class<out Api>,
     url: String,
     isAllowSelfSigned: Boolean,
+    isAllowCleartext: Boolean = false,
     useBytesConverter: Boolean = false
   ): Api
 
@@ -62,8 +63,9 @@ inline fun <reified Api : Any> apiWithBytesConverter(connectionConfig: Connectio
  * Returns API class object from z/OSMF API instance.
  * @param url url address of the remote system.
  * @param isAllowSelfSigned whether to allow self-signed certificates.
+ * @param isAllowCleartext whether the connection is explicitly allowed to use unencrypted HTTP transport.
  * @return API class object.
  */
-inline fun <reified Api : Any> api(url: String, isAllowSelfSigned: Boolean): Api {
-  return ZosmfApi.getService().getApi(Api::class.java, url, isAllowSelfSigned)
+inline fun <reified Api : Any> api(url: String, isAllowSelfSigned: Boolean, isAllowCleartext: Boolean = false): Api {
+  return ZosmfApi.getService().getApi(Api::class.java, url, isAllowSelfSigned, isAllowCleartext)
 }

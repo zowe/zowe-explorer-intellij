@@ -94,7 +94,8 @@ class RenameAction : AnAction() {
             oldConnectionConfig.url,
             oldConnectionConfig.isAllowSelfSigned,
             oldConnectionConfig.zVersion,
-            oldConnectionConfig.owner
+            oldConnectionConfig.owner,
+            oldConnectionConfig.isAllowCleartext
           )
           val newRequester = UssRequesterNew(newConnectionConfig)
           OperationsService.getService()

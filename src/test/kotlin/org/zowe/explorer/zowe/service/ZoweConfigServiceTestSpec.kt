@@ -191,8 +191,11 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
       var addOrUpdateCalledCount = 0
       var infoOperationCount = 0
       var zosInfoOperationCount = 0
+      var unsecureWarningCount = 0
+      var unsecureWarningChoice = 1
 
       mockkStatic(NotificationGroupManager::getInstance)
+      mockkStatic(Messages::class)
 
       val parseConfigJsonRef: (InputStream) -> ZoweConfig = ::parseConfigJson
       mockkStatic(parseConfigJsonRef as KFunction<*>)
@@ -202,6 +205,17 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
         addOrUpdateCalledCount = 0
         infoOperationCount = 0
         zosInfoOperationCount = 0
+        unsecureWarningCount = 0
+        unsecureWarningChoice = 1
+
+        every {
+          Messages.showDialog(
+            any<Project>(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any<Icon>(), any()
+          )
+        } answers {
+          unsecureWarningCount += 1
+          unsecureWarningChoice
+        }
 
         every {
           configServiceCrudableMock.getAll(any<Class<out ConnectionConfig>>())
@@ -298,6 +312,144 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
         assertSoftly { infoOperationCount shouldBe 1 }
         assertSoftly { zosInfoOperationCount shouldBe 1 }
         assertSoftly { addOrUpdateCalledCount shouldBe 1 }
+      }
+
+      should("add a connection with the certificates validation enabled cause 'rejectUnauthorized' is not specified") {
+        var addedConnection: ConnectionConfig? = null
+
+        every {
+          dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (firstArg<Operation<*>>()) {
+            is InfoOperation -> mockk<SystemsResponse>()
+            is ZOSInfoOperation -> mockk<InfoResponse> { every { zosVersion } returns "04.28.00" }
+            else -> mockk<Any>()
+          }
+        }
+
+        every {
+          configServiceCrudableMock.addOrUpdate(any<ConnectionConfig>())
+        } answers {
+          addedConnection = firstArg<ConnectionConfig>()
+          firstArg<ConnectionConfig>().optional
+        }
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          emptyList<ConnectionConfig>().stream()
+        }
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns "test_profile"
+              every { basePath } returns "test/base/path"
+              every { host } returns "test.com"
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns null
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        val zoweConfigService = ZoweConfigServiceImpl(projectMock)
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        zoweConfigService
+          .addOrUpdateZoweConfig(scanProject = false, checkConnection = false, ZoweConfigType.LOCAL)
+
+        assertSoftly { addedConnection?.isAllowSelfSigned shouldBe false }
+        assertSoftly { addedConnection?.isAllowCleartext shouldBe false }
+        assertSoftly { unsecureWarningCount shouldBe 0 }
+      }
+
+      should("add a connection with the cleartext transport allowed cause the profile protocol is 'http'") {
+        var addedConnection: ConnectionConfig? = null
+
+        every {
+          dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (firstArg<Operation<*>>()) {
+            is InfoOperation -> mockk<SystemsResponse>()
+            is ZOSInfoOperation -> mockk<InfoResponse> { every { zosVersion } returns "04.28.00" }
+            else -> mockk<Any>()
+          }
+        }
+
+        every {
+          configServiceCrudableMock.addOrUpdate(any<ConnectionConfig>())
+        } answers {
+          addedConnection = firstArg<ConnectionConfig>()
+          firstArg<ConnectionConfig>().optional
+        }
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          emptyList<ConnectionConfig>().stream()
+        }
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns "test_profile"
+              every { basePath } returns "/test/base/path"
+              every { host } returns "test.com"
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "http"
+              every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        val zoweConfigService = ZoweConfigServiceImpl(projectMock)
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        zoweConfigService
+          .addOrUpdateZoweConfig(scanProject = false, checkConnection = false, ZoweConfigType.LOCAL)
+
+        assertSoftly { addedConnection?.isAllowCleartext shouldBe true }
+        assertSoftly { addedConnection?.url shouldBe "http://test.com:1234/test/base/path" }
+        assertSoftly { unsecureWarningCount shouldBe 1 }
+      }
+
+      should("not add any connection cause the user declined the unsecure Zowe config profiles usage") {
+        unsecureWarningChoice = 0
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { profileName } returns "test_profile"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns false
+            }
+          )
+        }
+
+        val zoweConfigService = ZoweConfigServiceImpl(projectMock)
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        zoweConfigService
+          .addOrUpdateZoweConfig(scanProject = false, checkConnection = false, ZoweConfigType.LOCAL)
+
+        assertSoftly { unsecureWarningCount shouldBe 1 }
+        assertSoftly { setCredentialsCalledCount shouldBe 0 }
+        assertSoftly { addOrUpdateCalledCount shouldBe 0 }
       }
 
       should("cancel testing Zowe config connections") {
@@ -1422,6 +1574,142 @@ class ZoweConfigServiceTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServ
         val zoweConfigState = zoweConfigService.getZoweConfigState(false, ZoweConfigType.LOCAL)
 
         assertSoftly { zoweConfigState shouldBe ZoweConfigState.SYNCHRONIZED }
+      }
+
+      should("return NEED_TO_UPDATE config state for the local Zowe config cause the saved username is changed") {
+        every { credentialService.getUsernameByKey(any<String>()) } returns "OTHUSR"
+
+        val localConnectionConfig = ConnectionConfig()
+        localConnectionConfig.name = "$ZOWE_PROJECT_PREFIX${ZoweConfigType.LOCAL}-$testProfileName/${projectMock.name}"
+        localConnectionConfig.zoweConfigPath = "${projectMock.basePath}/$ZOWE_CONFIG_NAME"
+        localConnectionConfig.url = "$testProtocol://$testHost:$testPort$testBasePath"
+        localConnectionConfig.isAllowSelfSigned = testIsAllowSelfSigned
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          listOf(localConnectionConfig).stream()
+        }
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { user } returns testUsername
+              every { password } returns testPassword
+              every { profileName } returns testProfileName
+              every { basePath } returns testBasePath
+              every { host } returns testHost
+              every { zosmfPort } returns testPort
+              every { protocol } returns testProtocol
+              every { rejectUnauthorized } returns !testIsAllowSelfSigned
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        val zoweConfigService = spyk(ZoweConfigServiceImpl(projectMock), recordPrivateCalls = true)
+        every {
+          zoweConfigService["findExistingConnection"](any<ZoweConfigType>(), any<String>())
+        } returns localConnectionConfig
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        val zoweConfigState = zoweConfigService.getZoweConfigState(false, ZoweConfigType.LOCAL)
+
+        assertSoftly { zoweConfigState shouldBe ZoweConfigState.NEED_TO_UPDATE }
+      }
+
+      should("return NEED_TO_UPDATE config state for the local Zowe config cause the saved password is changed") {
+        every { credentialService.getPasswordByKey(any<String>()) } returns "OTHPWD".toCharArray()
+
+        val localConnectionConfig = ConnectionConfig()
+        localConnectionConfig.name = "$ZOWE_PROJECT_PREFIX${ZoweConfigType.LOCAL}-$testProfileName/${projectMock.name}"
+        localConnectionConfig.zoweConfigPath = "${projectMock.basePath}/$ZOWE_CONFIG_NAME"
+        localConnectionConfig.url = "$testProtocol://$testHost:$testPort$testBasePath"
+        localConnectionConfig.isAllowSelfSigned = testIsAllowSelfSigned
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          listOf(localConnectionConfig).stream()
+        }
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { user } returns testUsername
+              every { password } returns testPassword
+              every { profileName } returns testProfileName
+              every { basePath } returns testBasePath
+              every { host } returns testHost
+              every { zosmfPort } returns testPort
+              every { protocol } returns testProtocol
+              every { rejectUnauthorized } returns !testIsAllowSelfSigned
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        val zoweConfigService = spyk(ZoweConfigServiceImpl(projectMock), recordPrivateCalls = true)
+        every {
+          zoweConfigService["findExistingConnection"](any<ZoweConfigType>(), any<String>())
+        } returns localConnectionConfig
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        val zoweConfigState = zoweConfigService.getZoweConfigState(false, ZoweConfigType.LOCAL)
+
+        assertSoftly { zoweConfigState shouldBe ZoweConfigState.NEED_TO_UPDATE }
+      }
+
+      should("return NEED_TO_UPDATE config state for the local Zowe config cause the saved credentials are not accessible") {
+        every { credentialService.getUsernameByKey(any<String>()) } throws IllegalStateException("credentials are locked")
+        every { credentialService.getPasswordByKey(any<String>()) } throws IllegalStateException("credentials are locked")
+
+        val localConnectionConfig = ConnectionConfig()
+        localConnectionConfig.name = "$ZOWE_PROJECT_PREFIX${ZoweConfigType.LOCAL}-$testProfileName/${projectMock.name}"
+        localConnectionConfig.zoweConfigPath = "${projectMock.basePath}/$ZOWE_CONFIG_NAME"
+        localConnectionConfig.url = "$testProtocol://$testHost:$testPort$testBasePath"
+        localConnectionConfig.isAllowSelfSigned = testIsAllowSelfSigned
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          listOf(localConnectionConfig).stream()
+        }
+
+        val localZoweConfig: ZoweConfig = mockk {
+          every {
+            getListOfZosmfConnections()
+          } returns listOf(
+            mockk {
+              every { user } returns testUsername
+              every { password } returns testPassword
+              every { profileName } returns testProfileName
+              every { basePath } returns testBasePath
+              every { host } returns testHost
+              every { zosmfPort } returns testPort
+              every { protocol } returns testProtocol
+              every { rejectUnauthorized } returns !testIsAllowSelfSigned
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        val zoweConfigService = spyk(ZoweConfigServiceImpl(projectMock), recordPrivateCalls = true)
+        every {
+          zoweConfigService["findExistingConnection"](any<ZoweConfigType>(), any<String>())
+        } returns localConnectionConfig
+        zoweConfigService.localZoweConfig = localZoweConfig
+
+        val zoweConfigState = zoweConfigService.getZoweConfigState(false, ZoweConfigType.LOCAL)
+
+        assertSoftly { zoweConfigState shouldBe ZoweConfigState.NEED_TO_UPDATE }
       }
 
       should("return NEED_TO_UPDATE config state for the global Zowe config cause the config is changed") {
